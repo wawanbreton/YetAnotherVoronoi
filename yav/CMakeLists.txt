@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.20)
+
 include(ExternalProject)
 
 set(CXXOPTS_INSTALL_DIR "${CMAKE_BINARY_DIR}/external/cxxopts")
