@@ -3,14 +3,21 @@
 
 #pragma once
 
-#include "yav/space/Primitive.h"
-#include "yav/voronoi/Cell.h"
-
 #include <memory>
 #include <vector>
 
-namespace yav::voronoi
+namespace yav
 {
+
+namespace space
+{
+class Primitive;
+}
+
+namespace voronoi
+{
+
+class Cell;
 
 /** Full analytical Voronoi diagram with all generated cells and patches. */
 class Diagram
@@ -26,4 +33,6 @@ private:
     std::vector<std::shared_ptr<Cell>> cells_;
 };
 
-} // namespace yav::voronoi
+} // namespace voronoi
+
+} // namespace yav

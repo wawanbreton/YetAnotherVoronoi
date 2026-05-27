@@ -24,11 +24,6 @@ double Paraboloid::evaluateAt(const geometry::Point3& position) const
     return scale_ * (delta_x * delta_x + delta_y * delta_y) - delta_z + offset_;
 }
 
-std::string Paraboloid::surfaceName() const
-{
-    return "Paraboloid";
-}
-
 const geometry::Point3& Paraboloid::focus() const
 {
     return focus_;

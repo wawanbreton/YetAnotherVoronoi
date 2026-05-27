@@ -3,14 +3,17 @@
 
 #pragma once
 
-#include "yav/voronoi/equisurface/AbstractBisector.h"
-
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace yav::voronoi
 {
+
+namespace equisurface
+{
+class AbstractBisector;
+}
 
 /** Portion of a cell boundary attached to one bisector and optional constraints. */
 class CellPatch : public std::enable_shared_from_this<CellPatch>

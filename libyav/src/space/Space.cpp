@@ -3,11 +3,13 @@
 
 #include "yav/space/Space.h"
 
+#include <algorithm>
+
+#include "yav/space/Primitive.h"
 #include "yav/space/site/Edge.h"
 #include "yav/space/site/Triangle.h"
 #include "yav/space/site/Vertex.h"
 
-#include <ranges>
 
 namespace yav::space
 {

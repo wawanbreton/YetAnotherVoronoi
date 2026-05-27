@@ -5,6 +5,8 @@
 
 #include <ranges>
 
+#include "yav/voronoi/Cell.h"
+
 namespace yav::voronoi
 {
 
@@ -12,7 +14,7 @@ Diagram::Diagram() = default;
 
 void Diagram::addCell(const std::shared_ptr<Cell>& cell)
 {
-    if (!cell)
+    if (! cell)
     {
         return;
     }

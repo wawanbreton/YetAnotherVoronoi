@@ -3,12 +3,22 @@
 
 #pragma once
 
-#include "yav/space/site/AbstractSite.h"
-#include "yav/voronoi/equisurface/AbstractBisector.h"
-
 #include <memory>
 
-namespace yav::generator::bisector
+namespace yav
+{
+
+namespace voronoi::equisurface
+{
+class AbstractBisector;
+}
+
+namespace space::site
+{
+class AbstractSite;
+}
+
+namespace generator::bisector
 {
 
 /** Polymorphic bisector builder for one pair of site categories. */
@@ -20,7 +30,10 @@ public:
 
     virtual std::shared_ptr<voronoi::equisurface::AbstractBisector> generate(
         const std::shared_ptr<space::site::AbstractSite>& first_site,
-        const std::shared_ptr<space::site::AbstractSite>& second_site) const = 0;
+        const std::shared_ptr<space::site::AbstractSite>& second_site) const
+        = 0;
 };
 
-} // namespace yav::generator::bisector
+} // namespace generator::bisector
+
+} // namespace yav

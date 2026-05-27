@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
-
 #include <string>
+
+#include "yav/geometry/Point3.h"
 
 namespace yav::voronoi::equisurface
 {
@@ -18,7 +18,6 @@ public:
     virtual ~AbstractBisector();
 
     virtual double evaluateAt(const geometry::Point3& position) const = 0;
-    virtual std::string surfaceName() const = 0;
 };
 
 } // namespace yav::voronoi::equisurface

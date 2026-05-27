@@ -3,13 +3,16 @@
 
 #pragma once
 
-#include "yav/space/site/AbstractSite.h"
-
 #include <memory>
 #include <vector>
 
 namespace yav::space
 {
+
+namespace site
+{
+class AbstractSite;
+}
 
 /** Input primitive grouping one logical object and all associated sites. */
 class Primitive

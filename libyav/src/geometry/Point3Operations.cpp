@@ -3,10 +3,11 @@
 
 #include "yav/geometry/Point3Operations.h"
 
-#include <boost/geometry/arithmetic/arithmetic.hpp>
-#include <boost/geometry/core/access.hpp>
-
 #include <cmath>
+
+#include <boost/geometry/arithmetic/arithmetic.hpp>
+#include <boost/geometry/arithmetic/dot_product.hpp>
+#include <boost/geometry/core/access.hpp>
 
 namespace yav::geometry
 {
@@ -40,9 +41,7 @@ double Point3Operations::meanZFromSegment(const std::array<Point3, 2>& vertices)
 
 double Point3Operations::meanZFromTriangle(const std::array<Point3, 3>& vertices)
 {
-    return (boost::geometry::get<2>(vertices[0]) + boost::geometry::get<2>(vertices[1])
-               + boost::geometry::get<2>(vertices[2]))
-        / 3.0;
+    return (boost::geometry::get<2>(vertices[0]) + boost::geometry::get<2>(vertices[1]) + boost::geometry::get<2>(vertices[2])) / 3.0;
 }
 
 } // namespace yav::geometry

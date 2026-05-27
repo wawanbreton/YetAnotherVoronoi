@@ -3,7 +3,8 @@
 
 #pragma once
 
-#include <boost/geometry.hpp>
+#include <boost/geometry/core/cs.hpp>
+#include <boost/geometry/geometries/point.hpp>
 
 namespace yav::geometry
 {

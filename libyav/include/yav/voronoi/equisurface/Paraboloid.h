@@ -16,7 +16,6 @@ public:
     Paraboloid(const geometry::Point3& focus, double scale, double offset);
 
     double evaluateAt(const geometry::Point3& position) const override;
-    std::string surfaceName() const override;
 
     const geometry::Point3& focus() const;
     double scale() const;

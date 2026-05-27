@@ -3,14 +3,21 @@
 
 #pragma once
 
-#include "yav/space/Primitive.h"
-#include "yav/voronoi/CellPatch.h"
-
 #include <memory>
 #include <vector>
 
-namespace yav::voronoi
+namespace yav
 {
+
+namespace space
+{
+class Primitive;
+}
+
+namespace voronoi
+{
+
+class CellPatch;
 
 /** Voronoi cell associated with one input primitive. */
 class Cell
@@ -27,4 +34,6 @@ private:
     std::vector<std::shared_ptr<CellPatch>> patches_;
 };
 
-} // namespace yav::voronoi
+} // namespace voronoi
+
+} // namespace yav

@@ -3,10 +3,6 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
-
-#include <string>
-
 namespace yav::generator::region
 {
 
@@ -16,9 +12,6 @@ class AbstractVoronoiRegion
 public:
     AbstractVoronoiRegion();
     virtual ~AbstractVoronoiRegion();
-
-    virtual bool contains(const geometry::Point3& position) const = 0;
-    virtual std::string regionName() const = 0;
 };
 
 } // namespace yav::generator::region

@@ -3,6 +3,11 @@
 
 #include "yav/generator/Generator.h"
 
+#include <algorithm>
+#include <ranges>
+
+#include <spdlog/spdlog.h>
+
 #include "yav/generator/bisector/EdgeEdgeBisectorGenerator.h"
 #include "yav/generator/bisector/EdgeVertexBisectorGenerator.h"
 #include "yav/generator/bisector/FaceEdgeBisectorGenerator.h"
@@ -13,14 +18,15 @@
 #include "yav/generator/region/HalfPlaneSlice.h"
 #include "yav/generator/region/Slab.h"
 #include "yav/geometry/Point3Operations.h"
+#include "yav/space/Primitive.h"
+#include "yav/space/Space.h"
 #include "yav/space/site/Edge.h"
 #include "yav/space/site/Triangle.h"
 #include "yav/space/site/Vertex.h"
+#include "yav/voronoi/Cell.h"
+#include "yav/voronoi/CellPatch.h"
+#include "yav/voronoi/Diagram.h"
 
-#include <spdlog/spdlog.h>
-
-#include <algorithm>
-#include <ranges>
 
 namespace yav::generator
 {
@@ -44,7 +50,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
         input_space.primitives(),
         [&output_diagram](const std::shared_ptr<space::Primitive>& primitive)
         {
-            if (!primitive)
+            if (! primitive)
             {
                 spdlog::error("Encountered null primitive while initializing Voronoi cells");
                 return;
@@ -62,7 +68,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
             const auto& first_primitive = primitives[first_primitive_index];
             const auto& second_primitive = primitives[second_primitive_index];
 
-            if (!first_primitive || !second_primitive)
+            if (! first_primitive || ! second_primitive)
             {
                 spdlog::error("Encountered null primitive while generating bisector patches");
                 continue;
@@ -72,14 +78,14 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
             {
                 for (const auto& second_site : second_primitive->sites())
                 {
-                    if (!first_site || !second_site)
+                    if (! first_site || ! second_site)
                     {
                         spdlog::error("Encountered null site while generating bisector patches");
                         continue;
                     }
 
                     const auto generated_bisector = generateBisector(first_site, second_site);
-                    if (!generated_bisector)
+                    if (! generated_bisector)
                     {
                         spdlog::warn(
                             "No bisector generator produced a bisector for site pair {} / {}",
@@ -90,7 +96,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
 
                     const auto first_cell = output_diagram.findCell(first_primitive);
                     const auto second_cell = output_diagram.findCell(second_primitive);
-                    if (!first_cell || !second_cell)
+                    if (! first_cell || ! second_cell)
                     {
                         spdlog::error("Cannot attach generated patch because one of the target cells is missing");
                         continue;
@@ -119,7 +125,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
         primitives,
         [this](const std::shared_ptr<space::Primitive>& primitive)
         {
-            if (!primitive)
+            if (! primitive)
             {
                 return;
             }
@@ -135,13 +141,14 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                     return buildRegionForSite(current_site);
                 });
 
-            const std::size_t valid_region_count =
-                std::ranges::count_if(generated_regions, [](const auto& region) { return static_cast<bool>(region); });
+            const std::size_t valid_region_count = std::ranges::count_if(
+                generated_regions,
+                [](const auto& region)
+                {
+                    return static_cast<bool>(region);
+                });
 
-            spdlog::debug(
-                "Generated {} local regions for primitive at {}",
-                valid_region_count,
-                static_cast<const void*>(primitive.get()));
+            spdlog::debug("Generated {} local regions for primitive at {}", valid_region_count, static_cast<const void*>(primitive.get()));
         });
 
     return output_diagram;
@@ -153,7 +160,7 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> Generator::generateBisec
 {
     for (const auto& bisector_generator : bisector_generators_)
     {
-        if (!bisector_generator)
+        if (! bisector_generator)
         {
             continue;
         }
@@ -168,10 +175,9 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> Generator::generateBisec
     return nullptr;
 }
 
-std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
-    const std::shared_ptr<space::site::AbstractSite>& site) const
+std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(const std::shared_ptr<space::site::AbstractSite>& site) const
 {
-    if (!site)
+    if (! site)
     {
         spdlog::error("Cannot generate region from a null site");
         return nullptr;
@@ -180,7 +186,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
     if (site->siteKind() == space::site::SiteKind::Triangle)
     {
         const auto triangle_site = std::dynamic_pointer_cast<space::site::Triangle>(site);
-        if (!triangle_site)
+        if (! triangle_site)
         {
             spdlog::error("Triangle site kind was declared but cast failed");
             return nullptr;
@@ -193,7 +199,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
     if (site->siteKind() == space::site::SiteKind::Edge)
     {
         const auto edge_site = std::dynamic_pointer_cast<space::site::Edge>(site);
-        if (!edge_site)
+        if (! edge_site)
         {
             spdlog::error("Edge site kind was declared but cast failed");
             return nullptr;
@@ -206,7 +212,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
     if (site->siteKind() == space::site::SiteKind::Vertex)
     {
         const auto vertex_site = std::dynamic_pointer_cast<space::site::Vertex>(site);
-        if (!vertex_site)
+        if (! vertex_site)
         {
             spdlog::error("Vertex site kind was declared but cast failed");
             return nullptr;

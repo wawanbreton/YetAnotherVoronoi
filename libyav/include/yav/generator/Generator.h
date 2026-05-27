@@ -3,16 +3,44 @@
 
 #pragma once
 
-#include "yav/generator/bisector/AbstractBisectorGenerator.h"
-#include "yav/generator/region/AbstractVoronoiRegion.h"
-#include "yav/space/Space.h"
-#include "yav/voronoi/Diagram.h"
-
 #include <memory>
 #include <vector>
 
-namespace yav::generator
+namespace yav
 {
+
+namespace voronoi
+{
+class Diagram;
+}
+
+namespace space
+{
+class Space;
+
+namespace site
+{
+class AbstractSite;
+}
+} // namespace space
+
+namespace voronoi::equisurface
+{
+class AbstractBisector;
+}
+
+namespace generator
+{
+
+namespace bisector
+{
+class AbstractBisectorGenerator;
+}
+
+namespace region
+{
+class AbstractVoronoiRegion;
+}
 
 /** Main analytical Voronoi pipeline orchestrating bisectors and cell patches. */
 class Generator
@@ -27,10 +55,11 @@ private:
         const std::shared_ptr<space::site::AbstractSite>& first_site,
         const std::shared_ptr<space::site::AbstractSite>& second_site) const;
 
-    std::shared_ptr<region::AbstractVoronoiRegion> buildRegionForSite(
-        const std::shared_ptr<space::site::AbstractSite>& site) const;
+    std::shared_ptr<region::AbstractVoronoiRegion> buildRegionForSite(const std::shared_ptr<space::site::AbstractSite>& site) const;
 
     std::vector<std::shared_ptr<bisector::AbstractBisectorGenerator>> bisector_generators_;
 };
 
-} // namespace yav::generator
+} // namespace generator
+
+} // namespace yav

@@ -3,15 +3,16 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
-#include "yav/space/Primitive.h"
-
 #include <array>
 #include <memory>
 #include <vector>
 
+#include "yav/geometry/Point3.h"
+
 namespace yav::space
 {
+
+class Primitive;
 
 /** Top-level user input container for Voronoi diagram generation. */
 class Space

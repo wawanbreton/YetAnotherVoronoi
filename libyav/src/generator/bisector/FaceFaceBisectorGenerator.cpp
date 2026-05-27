@@ -3,11 +3,12 @@
 
 #include "yav/generator/bisector/FaceFaceBisectorGenerator.h"
 
+#include <boost/geometry/arithmetic/arithmetic.hpp>
+#include <boost/geometry/arithmetic/dot_product.hpp>
+
 #include "yav/geometry/Point3Operations.h"
 #include "yav/space/site/Triangle.h"
 #include "yav/voronoi/equisurface/Plane.h"
-
-#include <boost/geometry/arithmetic/arithmetic.hpp>
 
 namespace yav::generator::bisector
 {
@@ -20,7 +21,7 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceFaceBisectorGenerato
     const auto first_triangle = std::dynamic_pointer_cast<space::site::Triangle>(first_site);
     const auto second_triangle = std::dynamic_pointer_cast<space::site::Triangle>(second_site);
 
-    if (!first_triangle || !second_triangle)
+    if (! first_triangle || ! second_triangle)
     {
         return nullptr;
     }

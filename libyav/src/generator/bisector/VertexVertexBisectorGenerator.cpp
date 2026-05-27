@@ -3,11 +3,12 @@
 
 #include "yav/generator/bisector/VertexVertexBisectorGenerator.h"
 
+#include <boost/geometry/arithmetic/arithmetic.hpp>
+#include <boost/geometry/arithmetic/dot_product.hpp>
+
 #include "yav/geometry/Point3Operations.h"
 #include "yav/space/site/Vertex.h"
 #include "yav/voronoi/equisurface/Plane.h"
-
-#include <boost/geometry/arithmetic/arithmetic.hpp>
 
 namespace yav::generator::bisector
 {
@@ -21,7 +22,7 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> VertexVertexBisectorGene
     const auto first_vertex = std::dynamic_pointer_cast<space::site::Vertex>(first_site);
     const auto second_vertex = std::dynamic_pointer_cast<space::site::Vertex>(second_site);
 
-    if (!first_vertex || !second_vertex)
+    if (! first_vertex || ! second_vertex)
     {
         return nullptr;
     }

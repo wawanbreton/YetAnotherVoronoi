@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
 #include "yav/generator/region/AbstractVoronoiRegion.h"
+#include "yav/geometry/Point3.h"
 
 namespace yav::generator::region
 {
@@ -14,9 +14,6 @@ class Slab final : public AbstractVoronoiRegion
 {
 public:
     Slab(const geometry::Point3& normal, double minimum_projection, double maximum_projection);
-
-    bool contains(const geometry::Point3& position) const override;
-    std::string regionName() const override;
 
 private:
     geometry::Point3 normal_;

@@ -3,8 +3,8 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
 #include "yav/generator/region/AbstractVoronoiRegion.h"
+#include "yav/geometry/Point3.h"
 
 namespace yav::generator::region
 {
@@ -14,9 +14,6 @@ class Cone final : public AbstractVoronoiRegion
 {
 public:
     Cone(const geometry::Point3& apex, const geometry::Point3& axis, double aperture_radians);
-
-    bool contains(const geometry::Point3& position) const override;
-    std::string regionName() const override;
 
 private:
     geometry::Point3 apex_;

@@ -16,7 +16,6 @@ public:
     Plane(const geometry::Point3& normal, double offset);
 
     double evaluateAt(const geometry::Point3& position) const override;
-    std::string surfaceName() const override;
 
     const geometry::Point3& normal() const;
     double offset() const;

@@ -3,7 +3,7 @@
 
 #include "yav/voronoi/equisurface/Plane.h"
 
-#include <boost/geometry/arithmetic/arithmetic.hpp>
+#include <boost/geometry/arithmetic/dot_product.hpp>
 
 namespace yav::voronoi::equisurface
 {
@@ -17,11 +17,6 @@ Plane::Plane(const geometry::Point3& normal, const double offset)
 double Plane::evaluateAt(const geometry::Point3& position) const
 {
     return boost::geometry::dot_product(normal_, position) + offset_;
-}
-
-std::string Plane::surfaceName() const
-{
-    return "Plane";
 }
 
 const geometry::Point3& Plane::normal() const

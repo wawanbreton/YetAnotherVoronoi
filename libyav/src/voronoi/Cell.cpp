@@ -20,7 +20,7 @@ std::shared_ptr<space::Primitive> Cell::primitive() const
 
 void Cell::addPatch(const std::shared_ptr<CellPatch>& patch)
 {
-    if (!patch)
+    if (! patch)
     {
         spdlog::error("Cannot add a null patch to cell");
         return;
