@@ -3,6 +3,10 @@
 
 #pragma once
 
+#include "yav/generator/Generator.h"
+#include "yav/space/Space.h"
+#include "yav/voronoi/Diagram.h"
+
 #include <string>
 
 namespace yav
@@ -10,4 +14,4 @@ namespace yav
 
 std::string version();
 
-}
+} // namespace yav

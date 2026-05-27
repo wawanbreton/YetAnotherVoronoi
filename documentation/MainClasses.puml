@@ -1,0 +1,78 @@
+@startuml
+skinparam classAttributeIconSize 0
+
+package "yav::space" {
+  class Space
+  class Primitive
+
+  package "site" {
+    abstract class AbstractSite
+    class Triangle
+    class Edge
+    class Vertex
+  }
+
+  Space "1" o-- "*" Primitive
+  Primitive "1" o-- "*" AbstractSite
+  AbstractSite <|-- Triangle
+  AbstractSite <|-- Edge
+  AbstractSite <|-- Vertex
+}
+
+package "yav::voronoi" {
+  class Diagram
+  class Cell
+  class CellPatch
+
+  package "equisurface" {
+    abstract class AbstractBisector
+    class Plane
+    class Paraboloid
+  }
+
+  Diagram "1" o-- "*" Cell
+  Cell "1" o-- "*" CellPatch
+  CellPatch --> AbstractBisector
+  AbstractBisector <|-- Plane
+  AbstractBisector <|-- Paraboloid
+  CellPatch "*" --> "*" CellPatch : adjacency
+}
+
+package "yav::generator" {
+  class Generator
+
+  package "bisector" {
+    abstract class AbstractBisectorGenerator
+    class FaceFaceBisectorGenerator
+    class FaceEdgeBisectorGenerator
+    class FaceVertexBisectorGenerator
+    class EdgeEdgeBisectorGenerator
+    class EdgeVertexBisectorGenerator
+    class VertexVertexBisectorGenerator
+  }
+
+  package "region" {
+    abstract class AbstractVoronoiRegion
+    class Slab
+    class HalfPlaneSlice
+    class Cone
+  }
+
+  Generator o-- "*" AbstractBisectorGenerator
+  AbstractBisectorGenerator <|-- FaceFaceBisectorGenerator
+  AbstractBisectorGenerator <|-- FaceEdgeBisectorGenerator
+  AbstractBisectorGenerator <|-- FaceVertexBisectorGenerator
+  AbstractBisectorGenerator <|-- EdgeEdgeBisectorGenerator
+  AbstractBisectorGenerator <|-- EdgeVertexBisectorGenerator
+  AbstractBisectorGenerator <|-- VertexVertexBisectorGenerator
+
+  AbstractVoronoiRegion <|-- Slab
+  AbstractVoronoiRegion <|-- HalfPlaneSlice
+  AbstractVoronoiRegion <|-- Cone
+
+  Generator --> Space
+  Generator --> Diagram
+  Generator --> AbstractVoronoiRegion
+  AbstractBisectorGenerator --> AbstractBisector
+}
+@enduml
