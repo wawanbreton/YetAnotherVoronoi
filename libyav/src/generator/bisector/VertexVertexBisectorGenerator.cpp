@@ -7,6 +7,8 @@
 #include "yav/space/site/Vertex.h"
 #include "yav/voronoi/equisurface/Plane.h"
 
+#include <boost/geometry/arithmetic/arithmetic.hpp>
+
 namespace yav::generator::bisector
 {
 
@@ -24,10 +26,10 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> VertexVertexBisectorGene
         return nullptr;
     }
 
-    const geometry::Point3 normal =
-        geometry::Point3Operations::subtract(second_vertex->position(), first_vertex->position());
+    geometry::Point3 normal = second_vertex->position();
+    boost::geometry::subtract_point(normal, first_vertex->position());
     const geometry::Point3 midpoint = geometry::Point3Operations::midpoint(first_vertex->position(), second_vertex->position());
-    const double offset = -geometry::Point3Operations::dotProduct(normal, midpoint);
+    const double offset = -boost::geometry::dot_product(normal, midpoint);
 
     return std::make_shared<voronoi::equisurface::Plane>(normal, offset);
 }

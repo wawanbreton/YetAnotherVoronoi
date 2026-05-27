@@ -17,7 +17,6 @@
 #include "yav/space/site/Triangle.h"
 #include "yav/space/site/Vertex.h"
 
-#include <boost/geometry/core/access.hpp>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>
@@ -188,7 +187,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
         }
 
         const double mean_z = geometry::Point3Operations::meanZFromTriangle(triangle_site->vertices());
-        return std::make_shared<region::Slab>(geometry::Point3Operations::makePoint(0.0, 0.0, 1.0), mean_z - 1.0, mean_z + 1.0);
+        return std::make_shared<region::Slab>(geometry::Point3{ 0.0, 0.0, 1.0 }, mean_z - 1.0, mean_z + 1.0);
     }
 
     if (site->siteKind() == space::site::SiteKind::Edge)
@@ -201,7 +200,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
         }
 
         const double mean_z = geometry::Point3Operations::meanZFromSegment(edge_site->vertices());
-        return std::make_shared<region::HalfPlaneSlice>(geometry::Point3Operations::makePoint(0.0, 0.0, 1.0), -mean_z);
+        return std::make_shared<region::HalfPlaneSlice>(geometry::Point3{ 0.0, 0.0, 1.0 }, -mean_z);
     }
 
     if (site->siteKind() == space::site::SiteKind::Vertex)
@@ -213,7 +212,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
             return nullptr;
         }
 
-        return std::make_shared<region::Cone>(vertex_site->position(), geometry::Point3Operations::makePoint(0.0, 0.0, 1.0), 0.75);
+        return std::make_shared<region::Cone>(vertex_site->position(), geometry::Point3{ 0.0, 0.0, 1.0 }, 0.75);
     }
 
     spdlog::error("Unsupported site kind in region generation");
