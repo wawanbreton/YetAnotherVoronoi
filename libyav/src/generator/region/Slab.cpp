@@ -3,7 +3,7 @@
 
 #include "yav/generator/region/Slab.h"
 
-#include <boost/geometry/access.hpp>
+#include <boost/geometry/core/access.hpp>
 
 namespace yav::generator::region
 {

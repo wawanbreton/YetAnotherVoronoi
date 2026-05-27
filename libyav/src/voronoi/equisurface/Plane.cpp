@@ -3,7 +3,7 @@
 
 #include "yav/voronoi/equisurface/Plane.h"
 
-#include <boost/geometry/access.hpp>
+#include <boost/geometry/core/access.hpp>
 
 namespace yav::voronoi::equisurface
 {
