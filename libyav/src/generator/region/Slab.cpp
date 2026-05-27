@@ -3,21 +3,10 @@
 
 #include "yav/generator/region/Slab.h"
 
-#include <boost/geometry/core/access.hpp>
+#include "yav/geometry/Point3Operations.h"
 
 namespace yav::generator::region
 {
-namespace
-{
-
-double dotProduct(const geometry::Point3& first_value, const geometry::Point3& second_value)
-{
-    return boost::geometry::get<0>(first_value) * boost::geometry::get<0>(second_value)
-        + boost::geometry::get<1>(first_value) * boost::geometry::get<1>(second_value)
-        + boost::geometry::get<2>(first_value) * boost::geometry::get<2>(second_value);
-}
-
-} // namespace
 
 Slab::Slab(const geometry::Point3& normal, const double minimum_projection, const double maximum_projection)
     : normal_(normal)
@@ -28,7 +17,7 @@ Slab::Slab(const geometry::Point3& normal, const double minimum_projection, cons
 
 bool Slab::contains(const geometry::Point3& position) const
 {
-    const double projection = dotProduct(normal_, position);
+    const double projection = geometry::Point3Operations::dotProduct(normal_, position);
     return projection >= minimum_projection_ && projection <= maximum_projection_;
 }
 

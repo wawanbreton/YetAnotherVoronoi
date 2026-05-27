@@ -3,10 +3,10 @@
 
 #include "yav/generator/bisector/FaceFaceBisectorGenerator.h"
 
+#include "yav/geometry/Point3Operations.h"
 #include "yav/space/site/Triangle.h"
 #include "yav/voronoi/equisurface/Plane.h"
 
-#include <boost/geometry/core/access.hpp>
 #include <spdlog/spdlog.h>
 
 namespace yav::generator::bisector
@@ -14,53 +14,16 @@ namespace yav::generator::bisector
 namespace
 {
 
-geometry::Point3 add(const geometry::Point3& first_value, const geometry::Point3& second_value)
-{
-    geometry::Point3 output;
-    boost::geometry::set<0>(output, boost::geometry::get<0>(first_value) + boost::geometry::get<0>(second_value));
-    boost::geometry::set<1>(output, boost::geometry::get<1>(first_value) + boost::geometry::get<1>(second_value));
-    boost::geometry::set<2>(output, boost::geometry::get<2>(first_value) + boost::geometry::get<2>(second_value));
-    return output;
-}
-
-geometry::Point3 scale(const geometry::Point3& value, const double factor)
-{
-    geometry::Point3 output;
-    boost::geometry::set<0>(output, boost::geometry::get<0>(value) * factor);
-    boost::geometry::set<1>(output, boost::geometry::get<1>(value) * factor);
-    boost::geometry::set<2>(output, boost::geometry::get<2>(value) * factor);
-    return output;
-}
-
-geometry::Point3 subtract(const geometry::Point3& first_value, const geometry::Point3& second_value)
-{
-    return add(first_value, scale(second_value, -1.0));
-}
-
-double dotProduct(const geometry::Point3& first_value, const geometry::Point3& second_value)
-{
-    return boost::geometry::get<0>(first_value) * boost::geometry::get<0>(second_value)
-        + boost::geometry::get<1>(first_value) * boost::geometry::get<1>(second_value)
-        + boost::geometry::get<2>(first_value) * boost::geometry::get<2>(second_value);
-}
-
 geometry::Point3 centroid(const std::array<geometry::Point3, 3>& vertices)
 {
-    geometry::Point3 output{};
-    output = add(output, vertices[0]);
-    output = add(output, vertices[1]);
-    output = add(output, vertices[2]);
-    return scale(output, 1.0 / 3.0);
+    auto output = geometry::Point3Operations::add(vertices[0], vertices[1]);
+    output = geometry::Point3Operations::add(output, vertices[2]);
+    return geometry::Point3Operations::scale(output, 1.0 / 3.0);
 }
 
 } // namespace
 
 FaceFaceBisectorGenerator::FaceFaceBisectorGenerator() = default;
-
-bool FaceFaceBisectorGenerator::canHandle(const space::site::SiteKind first_kind, const space::site::SiteKind second_kind) const
-{
-    return first_kind == space::site::SiteKind::Triangle && second_kind == space::site::SiteKind::Triangle;
-}
 
 std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceFaceBisectorGenerator::generate(
     const std::shared_ptr<space::site::AbstractSite>& first_site,
@@ -71,15 +34,14 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceFaceBisectorGenerato
 
     if (!first_triangle || !second_triangle)
     {
-        spdlog::error("FaceFaceBisectorGenerator requires two triangle sites");
         return nullptr;
     }
 
     const geometry::Point3 first_center = centroid(first_triangle->vertices());
     const geometry::Point3 second_center = centroid(second_triangle->vertices());
-    const geometry::Point3 normal = subtract(second_center, first_center);
-    const geometry::Point3 midpoint = scale(add(first_center, second_center), 0.5);
-    const double offset = -dotProduct(normal, midpoint);
+    const geometry::Point3 normal = geometry::Point3Operations::subtract(second_center, first_center);
+    const geometry::Point3 midpoint = geometry::Point3Operations::midpoint(first_center, second_center);
+    const double offset = -geometry::Point3Operations::dotProduct(normal, midpoint);
 
     return std::make_shared<voronoi::equisurface::Plane>(normal, offset);
 }

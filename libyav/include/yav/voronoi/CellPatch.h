@@ -5,7 +5,6 @@
 
 #include "yav/voronoi/equisurface/AbstractBisector.h"
 
-#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -17,9 +16,8 @@ namespace yav::voronoi
 class CellPatch : public std::enable_shared_from_this<CellPatch>
 {
 public:
-    explicit CellPatch(std::size_t patch_id);
+    CellPatch();
 
-    std::size_t patchId() const;
     void setBisector(const std::shared_ptr<equisurface::AbstractBisector>& bisector);
     std::shared_ptr<equisurface::AbstractBisector> bisector() const;
 
@@ -30,7 +28,6 @@ public:
     const std::vector<std::weak_ptr<CellPatch>>& adjacentPatches() const;
 
 private:
-    std::size_t patch_id_;
     std::shared_ptr<equisurface::AbstractBisector> bisector_;
     std::vector<std::string> constraints_;
     std::vector<std::weak_ptr<CellPatch>> adjacent_patches_;

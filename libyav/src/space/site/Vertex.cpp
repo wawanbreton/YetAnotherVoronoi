@@ -6,9 +6,8 @@
 namespace yav::space::site
 {
 
-Vertex::Vertex(const std::size_t site_id, const geometry::Point3& position)
-    : AbstractSite(site_id)
-    , position_(position)
+Vertex::Vertex(const geometry::Point3& position)
+    : position_(position)
 {
 }
 

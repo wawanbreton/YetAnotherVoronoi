@@ -8,21 +8,13 @@
 namespace yav::voronoi
 {
 
-CellPatch::CellPatch(const std::size_t patch_id)
-    : patch_id_(patch_id)
-{
-}
-
-std::size_t CellPatch::patchId() const
-{
-    return patch_id_;
-}
+CellPatch::CellPatch() = default;
 
 void CellPatch::setBisector(const std::shared_ptr<equisurface::AbstractBisector>& bisector)
 {
     if (!bisector)
     {
-        spdlog::error("Cannot assign a null bisector to patch {}", patch_id_);
+        spdlog::error("Cannot assign a null bisector to patch");
         return;
     }
 
@@ -48,7 +40,7 @@ void CellPatch::addAdjacentPatch(const std::shared_ptr<CellPatch>& patch)
 {
     if (!patch)
     {
-        spdlog::error("Cannot add a null adjacent patch to patch {}", patch_id_);
+        spdlog::error("Cannot add a null adjacent patch");
         return;
     }
 

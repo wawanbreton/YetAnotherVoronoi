@@ -3,9 +3,9 @@
 
 #pragma once
 
+#include "yav/space/Primitive.h"
 #include "yav/voronoi/CellPatch.h"
 
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -16,14 +16,14 @@ namespace yav::voronoi
 class Cell
 {
 public:
-    explicit Cell(std::size_t primitive_id);
+    explicit Cell(const std::shared_ptr<space::Primitive>& primitive);
 
-    std::size_t primitiveId() const;
+    std::shared_ptr<space::Primitive> primitive() const;
     void addPatch(const std::shared_ptr<CellPatch>& patch);
     const std::vector<std::shared_ptr<CellPatch>>& patches() const;
 
 private:
-    std::size_t primitive_id_;
+    std::shared_ptr<space::Primitive> primitive_;
     std::vector<std::shared_ptr<CellPatch>> patches_;
 };
 

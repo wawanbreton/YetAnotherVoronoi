@@ -15,7 +15,7 @@ namespace yav::space::site
 class Triangle final : public AbstractSite
 {
 public:
-    Triangle(std::size_t site_id, const std::array<geometry::Point3, 3>& vertices);
+    explicit Triangle(const std::array<geometry::Point3, 3>& vertices);
 
     SiteKind siteKind() const override;
     const std::array<geometry::Point3, 3>& vertices() const;
