@@ -13,7 +13,7 @@ namespace yav::space::site
 class Vertex final : public AbstractSite
 {
 public:
-    Vertex(std::size_t site_id, const geometry::Point3& position);
+    explicit Vertex(const geometry::Point3& position);
 
     SiteKind siteKind() const override;
     const geometry::Point3& position() const;

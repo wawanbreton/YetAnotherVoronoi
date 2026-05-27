@@ -12,6 +12,7 @@
 #include "yav/generator/region/Cone.h"
 #include "yav/generator/region/HalfPlaneSlice.h"
 #include "yav/generator/region/Slab.h"
+#include "yav/geometry/Point3Operations.h"
 #include "yav/space/site/Edge.h"
 #include "yav/space/site/Triangle.h"
 #include "yav/space/site/Vertex.h"
@@ -24,26 +25,6 @@
 
 namespace yav::generator
 {
-namespace
-{
-
-geometry::Point3 makePoint(const double x, const double y, const double z)
-{
-    geometry::Point3 output;
-    boost::geometry::set<0>(output, x);
-    boost::geometry::set<1>(output, y);
-    boost::geometry::set<2>(output, z);
-    return output;
-}
-
-double averageZ(const std::array<geometry::Point3, 3>& vertices)
-{
-    return (boost::geometry::get<2>(vertices[0]) + boost::geometry::get<2>(vertices[1])
-               + boost::geometry::get<2>(vertices[2]))
-        / 3.0;
-}
-
-} // namespace
 
 Generator::Generator()
     : bisector_generators_(
@@ -70,10 +51,8 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                 return;
             }
 
-            output_diagram.addCell(std::make_shared<voronoi::Cell>(primitive->primitiveId()));
+            output_diagram.addCell(std::make_shared<voronoi::Cell>(primitive));
         });
-
-    std::size_t patch_id = 0;
 
     const auto& primitives = input_space.primitives();
     for (std::size_t first_primitive_index = 0; first_primitive_index < primitives.size(); ++first_primitive_index)
@@ -100,38 +79,30 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                         continue;
                     }
 
-                    const auto bisector_generator =
-                        findBisectorGenerator(first_site->siteKind(), second_site->siteKind());
-
-                    if (!bisector_generator)
+                    const auto generated_bisector = generateBisector(first_site, second_site);
+                    if (!generated_bisector)
                     {
                         spdlog::warn(
-                            "No bisector generator registered for site pair {} / {}",
+                            "No bisector generator produced a bisector for site pair {} / {}",
                             static_cast<int>(first_site->siteKind()),
                             static_cast<int>(second_site->siteKind()));
                         continue;
                     }
 
-                    const auto generated_bisector = bisector_generator->generate(first_site, second_site);
-                    if (!generated_bisector)
-                    {
-                        continue;
-                    }
-
-                    const auto first_cell = output_diagram.findCell(first_primitive->primitiveId());
-                    const auto second_cell = output_diagram.findCell(second_primitive->primitiveId());
+                    const auto first_cell = output_diagram.findCell(first_primitive);
+                    const auto second_cell = output_diagram.findCell(second_primitive);
                     if (!first_cell || !second_cell)
                     {
                         spdlog::error("Cannot attach generated patch because one of the target cells is missing");
                         continue;
                     }
 
-                    const auto first_patch = std::make_shared<voronoi::CellPatch>(patch_id++);
+                    const auto first_patch = std::make_shared<voronoi::CellPatch>();
                     first_patch->setBisector(generated_bisector);
                     // TODO: formal constraints model is not defined yet, so this remains a placeholder.
                     first_patch->addConstraint("placeholder: pending formal clipping constraints model");
 
-                    const auto second_patch = std::make_shared<voronoi::CellPatch>(patch_id++);
+                    const auto second_patch = std::make_shared<voronoi::CellPatch>();
                     second_patch->setBisector(generated_bisector);
                     second_patch->addConstraint("placeholder: pending formal clipping constraints model");
 
@@ -169,31 +140,33 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                 std::ranges::count_if(generated_regions, [](const auto& region) { return static_cast<bool>(region); });
 
             spdlog::debug(
-                "Generated {} local regions for primitive {}",
+                "Generated {} local regions for primitive at {}",
                 valid_region_count,
-                primitive->primitiveId());
+                static_cast<const void*>(primitive.get()));
         });
 
     return output_diagram;
 }
 
-std::shared_ptr<bisector::AbstractBisectorGenerator> Generator::findBisectorGenerator(
-    const space::site::SiteKind first_kind,
-    const space::site::SiteKind second_kind) const
+std::shared_ptr<voronoi::equisurface::AbstractBisector> Generator::generateBisector(
+    const std::shared_ptr<space::site::AbstractSite>& first_site,
+    const std::shared_ptr<space::site::AbstractSite>& second_site) const
 {
-    const auto matching_generator_iterator = std::ranges::find_if(
-        bisector_generators_,
-        [first_kind, second_kind](const std::shared_ptr<bisector::AbstractBisectorGenerator>& bisector_generator)
-        {
-            return bisector_generator && bisector_generator->canHandle(first_kind, second_kind);
-        });
-
-    if (matching_generator_iterator == bisector_generators_.end())
+    for (const auto& bisector_generator : bisector_generators_)
     {
-        return nullptr;
+        if (!bisector_generator)
+        {
+            continue;
+        }
+
+        const auto generated_bisector = bisector_generator->generate(first_site, second_site);
+        if (generated_bisector)
+        {
+            return generated_bisector;
+        }
     }
 
-    return *matching_generator_iterator;
+    return nullptr;
 }
 
 std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
@@ -214,8 +187,8 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
             return nullptr;
         }
 
-        const double mean_z = averageZ(triangle_site->vertices());
-        return std::make_shared<region::Slab>(makePoint(0.0, 0.0, 1.0), mean_z - 1.0, mean_z + 1.0);
+        const double mean_z = geometry::Point3Operations::meanZFromTriangle(triangle_site->vertices());
+        return std::make_shared<region::Slab>(geometry::Point3Operations::makePoint(0.0, 0.0, 1.0), mean_z - 1.0, mean_z + 1.0);
     }
 
     if (site->siteKind() == space::site::SiteKind::Edge)
@@ -227,9 +200,8 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
             return nullptr;
         }
 
-        const double mean_z =
-            (boost::geometry::get<2>(edge_site->vertices()[0]) + boost::geometry::get<2>(edge_site->vertices()[1])) / 2.0;
-        return std::make_shared<region::HalfPlaneSlice>(makePoint(0.0, 0.0, 1.0), -mean_z);
+        const double mean_z = geometry::Point3Operations::meanZFromSegment(edge_site->vertices());
+        return std::make_shared<region::HalfPlaneSlice>(geometry::Point3Operations::makePoint(0.0, 0.0, 1.0), -mean_z);
     }
 
     if (site->siteKind() == space::site::SiteKind::Vertex)
@@ -241,7 +213,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(
             return nullptr;
         }
 
-        return std::make_shared<region::Cone>(vertex_site->position(), makePoint(0.0, 0.0, 1.0), 0.75);
+        return std::make_shared<region::Cone>(vertex_site->position(), geometry::Point3Operations::makePoint(0.0, 0.0, 1.0), 0.75);
     }
 
     spdlog::error("Unsupported site kind in region generation");

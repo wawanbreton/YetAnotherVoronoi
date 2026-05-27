@@ -6,9 +6,8 @@
 namespace yav::space::site
 {
 
-Triangle::Triangle(const std::size_t site_id, const std::array<geometry::Point3, 3>& vertices)
-    : AbstractSite(site_id)
-    , vertices_(vertices)
+Triangle::Triangle(const std::array<geometry::Point3, 3>& vertices)
+    : vertices_(vertices)
 {
 }
 

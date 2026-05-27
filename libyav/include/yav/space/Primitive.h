@@ -5,7 +5,6 @@
 
 #include "yav/space/site/AbstractSite.h"
 
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -16,14 +15,12 @@ namespace yav::space
 class Primitive
 {
 public:
-    explicit Primitive(std::size_t primitive_id);
+    Primitive();
 
-    std::size_t primitiveId() const;
     void addSite(const std::shared_ptr<site::AbstractSite>& site);
     const std::vector<std::shared_ptr<site::AbstractSite>>& sites() const;
 
 private:
-    std::size_t primitive_id_;
     std::vector<std::shared_ptr<site::AbstractSite>> sites_;
 };
 

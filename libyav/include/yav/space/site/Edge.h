@@ -15,7 +15,7 @@ namespace yav::space::site
 class Edge final : public AbstractSite
 {
 public:
-    Edge(std::size_t site_id, const std::array<geometry::Point3, 2>& vertices);
+    explicit Edge(const std::array<geometry::Point3, 2>& vertices);
 
     SiteKind siteKind() const override;
     const std::array<geometry::Point3, 2>& vertices() const;

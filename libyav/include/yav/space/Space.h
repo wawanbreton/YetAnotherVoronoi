@@ -7,7 +7,6 @@
 #include "yav/space/Primitive.h"
 
 #include <array>
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -27,11 +26,6 @@ public:
     const std::vector<std::shared_ptr<Primitive>>& primitives() const;
 
 private:
-    std::size_t acquirePrimitiveId();
-    std::size_t acquireSiteId();
-
-    std::size_t next_primitive_id_;
-    std::size_t next_site_id_;
     std::vector<std::shared_ptr<Primitive>> primitives_;
 };
 

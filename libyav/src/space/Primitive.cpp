@@ -8,21 +8,13 @@
 namespace yav::space
 {
 
-Primitive::Primitive(const std::size_t primitive_id)
-    : primitive_id_(primitive_id)
-{
-}
-
-std::size_t Primitive::primitiveId() const
-{
-    return primitive_id_;
-}
+Primitive::Primitive() = default;
 
 void Primitive::addSite(const std::shared_ptr<site::AbstractSite>& site)
 {
     if (!site)
     {
-        spdlog::error("Cannot add a null site to primitive {}", primitive_id_);
+        spdlog::error("Cannot add a null site to primitive");
         return;
     }
 

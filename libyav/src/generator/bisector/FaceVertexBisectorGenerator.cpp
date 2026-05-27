@@ -3,35 +3,17 @@
 
 #include "yav/generator/bisector/FaceVertexBisectorGenerator.h"
 
+#include "yav/geometry/Point3Operations.h"
 #include "yav/space/site/Triangle.h"
 #include "yav/space/site/Vertex.h"
 #include "yav/voronoi/equisurface/Paraboloid.h"
 
 #include <boost/geometry/core/access.hpp>
-#include <spdlog/spdlog.h>
 
 namespace yav::generator::bisector
 {
-namespace
-{
-
-double averageZ(const std::array<geometry::Point3, 3>& vertices)
-{
-    return (boost::geometry::get<2>(vertices[0]) + boost::geometry::get<2>(vertices[1])
-               + boost::geometry::get<2>(vertices[2]))
-        / 3.0;
-}
-
-} // namespace
 
 FaceVertexBisectorGenerator::FaceVertexBisectorGenerator() = default;
-
-bool FaceVertexBisectorGenerator::canHandle(const space::site::SiteKind first_kind, const space::site::SiteKind second_kind) const
-{
-    const bool direct_order = first_kind == space::site::SiteKind::Triangle && second_kind == space::site::SiteKind::Vertex;
-    const bool reverse_order = first_kind == space::site::SiteKind::Vertex && second_kind == space::site::SiteKind::Triangle;
-    return direct_order || reverse_order;
-}
 
 std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceVertexBisectorGenerator::generate(
     const std::shared_ptr<space::site::AbstractSite>& first_site,
@@ -48,11 +30,11 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceVertexBisectorGenera
 
     if (!triangle_site || !vertex_site)
     {
-        spdlog::error("FaceVertexBisectorGenerator requires one triangle and one vertex site");
         return nullptr;
     }
 
-    const double offset = averageZ(triangle_site->vertices()) - boost::geometry::get<2>(vertex_site->position());
+    const double offset = geometry::Point3Operations::meanZFromTriangle(triangle_site->vertices())
+        - boost::geometry::get<2>(vertex_site->position());
     return std::make_shared<voronoi::equisurface::Paraboloid>(vertex_site->position(), 1.0, offset);
 }
 

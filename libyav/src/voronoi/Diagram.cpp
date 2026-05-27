@@ -20,13 +20,13 @@ void Diagram::addCell(const std::shared_ptr<Cell>& cell)
     cells_.push_back(cell);
 }
 
-std::shared_ptr<Cell> Diagram::findCell(const std::size_t primitive_id) const
+std::shared_ptr<Cell> Diagram::findCell(const std::shared_ptr<space::Primitive>& primitive) const
 {
     const auto matching_cell_iterator = std::ranges::find_if(
         cells_,
-        [primitive_id](const std::shared_ptr<Cell>& cell)
+        [&primitive](const std::shared_ptr<Cell>& cell)
         {
-            return cell && cell->primitiveId() == primitive_id;
+            return cell && cell->primitive() == primitive;
         });
 
     if (matching_cell_iterator == cells_.end())

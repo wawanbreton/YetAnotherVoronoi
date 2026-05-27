@@ -3,9 +3,9 @@
 
 #pragma once
 
+#include "yav/space/Primitive.h"
 #include "yav/voronoi/Cell.h"
 
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -19,7 +19,7 @@ public:
     Diagram();
 
     void addCell(const std::shared_ptr<Cell>& cell);
-    std::shared_ptr<Cell> findCell(std::size_t primitive_id) const;
+    std::shared_ptr<Cell> findCell(const std::shared_ptr<space::Primitive>& primitive) const;
     const std::vector<std::shared_ptr<Cell>>& cells() const;
 
 private:

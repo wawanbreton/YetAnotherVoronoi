@@ -23,9 +23,9 @@ public:
     voronoi::Diagram generate(const space::Space& input_space) const;
 
 private:
-    std::shared_ptr<bisector::AbstractBisectorGenerator> findBisectorGenerator(
-        space::site::SiteKind first_kind,
-        space::site::SiteKind second_kind) const;
+    std::shared_ptr<voronoi::equisurface::AbstractBisector> generateBisector(
+        const std::shared_ptr<space::site::AbstractSite>& first_site,
+        const std::shared_ptr<space::site::AbstractSite>& second_site) const;
 
     std::shared_ptr<region::AbstractVoronoiRegion> buildRegionForSite(
         const std::shared_ptr<space::site::AbstractSite>& site) const;

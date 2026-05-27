@@ -6,16 +6,8 @@
 namespace yav::space::site
 {
 
-AbstractSite::AbstractSite(const std::size_t site_id)
-    : site_id_(site_id)
-{
-}
+AbstractSite::AbstractSite() = default;
 
 AbstractSite::~AbstractSite() = default;
-
-std::size_t AbstractSite::siteId() const
-{
-    return site_id_;
-}
 
 } // namespace yav::space::site

@@ -6,9 +6,8 @@
 namespace yav::space::site
 {
 
-Edge::Edge(const std::size_t site_id, const std::array<geometry::Point3, 2>& vertices)
-    : AbstractSite(site_id)
-    , vertices_(vertices)
+Edge::Edge(const std::array<geometry::Point3, 2>& vertices)
+    : vertices_(vertices)
 {
 }
 

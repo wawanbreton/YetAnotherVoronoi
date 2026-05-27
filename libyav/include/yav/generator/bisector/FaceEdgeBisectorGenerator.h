@@ -14,7 +14,6 @@ class FaceEdgeBisectorGenerator final : public AbstractBisectorGenerator
 public:
     FaceEdgeBisectorGenerator();
 
-    bool canHandle(space::site::SiteKind first_kind, space::site::SiteKind second_kind) const override;
     std::shared_ptr<voronoi::equisurface::AbstractBisector> generate(
         const std::shared_ptr<space::site::AbstractSite>& first_site,
         const std::shared_ptr<space::site::AbstractSite>& second_site) const override;

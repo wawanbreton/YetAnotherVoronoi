@@ -5,8 +5,6 @@
 
 #include "yav/space/site/SiteKind.h"
 
-#include <cstddef>
-
 namespace yav::space::site
 {
 
@@ -14,14 +12,10 @@ namespace yav::space::site
 class AbstractSite
 {
 public:
-    explicit AbstractSite(std::size_t site_id);
+    AbstractSite();
     virtual ~AbstractSite();
 
-    std::size_t siteId() const;
     virtual SiteKind siteKind() const = 0;
-
-private:
-    std::size_t site_id_;
 };
 
 } // namespace yav::space::site
