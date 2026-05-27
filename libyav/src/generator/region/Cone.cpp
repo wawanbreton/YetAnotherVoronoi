@@ -5,6 +5,7 @@
 
 #include "yav/geometry/Point3Operations.h"
 
+#include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <algorithm>
 #include <cmath>
 
@@ -20,7 +21,8 @@ Cone::Cone(const geometry::Point3& apex, const geometry::Point3& axis, const dou
 
 bool Cone::contains(const geometry::Point3& position) const
 {
-    const geometry::Point3 direction_vector = geometry::Point3Operations::subtract(position, apex_);
+    geometry::Point3 direction_vector = position;
+    boost::geometry::subtract_point(direction_vector, apex_);
     const double direction_norm = geometry::Point3Operations::norm(direction_vector);
     const double axis_norm = geometry::Point3Operations::norm(axis_);
 
@@ -29,7 +31,7 @@ bool Cone::contains(const geometry::Point3& position) const
         return true;
     }
 
-    const double cosine_value = geometry::Point3Operations::dotProduct(direction_vector, axis_) / (direction_norm * axis_norm);
+    const double cosine_value = boost::geometry::dot_product(direction_vector, axis_) / (direction_norm * axis_norm);
     const double clamped_cosine_value = std::clamp(cosine_value, -1.0, 1.0);
     const double angle = std::acos(clamped_cosine_value);
 

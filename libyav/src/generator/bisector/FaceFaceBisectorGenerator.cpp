@@ -7,22 +7,10 @@
 #include "yav/space/site/Triangle.h"
 #include "yav/voronoi/equisurface/Plane.h"
 
-#include <spdlog/spdlog.h>
+#include <boost/geometry/arithmetic/arithmetic.hpp>
 
 namespace yav::generator::bisector
 {
-namespace
-{
-
-geometry::Point3 centroid(const std::array<geometry::Point3, 3>& vertices)
-{
-    auto output = geometry::Point3Operations::add(vertices[0], vertices[1]);
-    output = geometry::Point3Operations::add(output, vertices[2]);
-    return geometry::Point3Operations::scale(output, 1.0 / 3.0);
-}
-
-} // namespace
-
 FaceFaceBisectorGenerator::FaceFaceBisectorGenerator() = default;
 
 std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceFaceBisectorGenerator::generate(
@@ -37,11 +25,12 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceFaceBisectorGenerato
         return nullptr;
     }
 
-    const geometry::Point3 first_center = centroid(first_triangle->vertices());
-    const geometry::Point3 second_center = centroid(second_triangle->vertices());
-    const geometry::Point3 normal = geometry::Point3Operations::subtract(second_center, first_center);
+    const geometry::Point3 first_center = geometry::Point3Operations::centroidFromTriangle(first_triangle->vertices());
+    const geometry::Point3 second_center = geometry::Point3Operations::centroidFromTriangle(second_triangle->vertices());
+    geometry::Point3 normal = second_center;
+    boost::geometry::subtract_point(normal, first_center);
     const geometry::Point3 midpoint = geometry::Point3Operations::midpoint(first_center, second_center);
-    const double offset = -geometry::Point3Operations::dotProduct(normal, midpoint);
+    const double offset = -boost::geometry::dot_product(normal, midpoint);
 
     return std::make_shared<voronoi::equisurface::Plane>(normal, offset);
 }

@@ -3,7 +3,7 @@
 
 #include "yav/generator/region/Slab.h"
 
-#include "yav/geometry/Point3Operations.h"
+#include <boost/geometry/arithmetic/arithmetic.hpp>
 
 namespace yav::generator::region
 {
@@ -17,7 +17,7 @@ Slab::Slab(const geometry::Point3& normal, const double minimum_projection, cons
 
 bool Slab::contains(const geometry::Point3& position) const
 {
-    const double projection = geometry::Point3Operations::dotProduct(normal_, position);
+    const double projection = boost::geometry::dot_product(normal_, position);
     return projection >= minimum_projection_ && projection <= maximum_projection_;
 }
 
