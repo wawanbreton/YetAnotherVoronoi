@@ -16,7 +16,7 @@
 #include "yav/space/site/Triangle.h"
 #include "yav/space/site/Vertex.h"
 
-#include <boost/geometry/access.hpp>
+#include <boost/geometry/core/access.hpp>
 #include <spdlog/spdlog.h>
 
 #include <algorithm>

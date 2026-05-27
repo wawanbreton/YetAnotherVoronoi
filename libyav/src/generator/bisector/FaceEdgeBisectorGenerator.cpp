@@ -7,7 +7,7 @@
 #include "yav/space/site/Triangle.h"
 #include "yav/voronoi/equisurface/Paraboloid.h"
 
-#include <boost/geometry/access.hpp>
+#include <boost/geometry/core/access.hpp>
 #include <spdlog/spdlog.h>
 
 namespace yav::generator::bisector

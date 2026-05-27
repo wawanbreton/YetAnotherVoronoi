@@ -3,8 +3,9 @@
 
 #include "yav/generator/region/Cone.h"
 
-#include <boost/geometry/access.hpp>
+#include <boost/geometry/core/access.hpp>
 
+#include <algorithm>
 #include <cmath>
 
 namespace yav::generator::region

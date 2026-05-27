@@ -6,7 +6,7 @@
 #include "yav/space/site/Vertex.h"
 #include "yav/voronoi/equisurface/Plane.h"
 
-#include <boost/geometry/access.hpp>
+#include <boost/geometry/core/access.hpp>
 #include <spdlog/spdlog.h>
 
 namespace yav::generator::bisector
