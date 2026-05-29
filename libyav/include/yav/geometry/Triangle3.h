@@ -3,9 +3,12 @@
 
 #pragma once
 
+#include <vector>
+
 #include <boost/geometry/algorithms/append.hpp>
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/core/exterior_ring.hpp>
+#include <boost/geometry/core/interior_rings.hpp>
 #include <boost/geometry/core/ring_type.hpp>
 #include <boost/geometry/geometries/register/point.hpp>
 #include <boost/geometry/geometries/register/ring.hpp>
@@ -43,11 +46,35 @@ struct point_type<yav::geometry::Triangle3>
 };
 
 template<>
+struct ring_const_type<yav::geometry::Triangle3>
+{
+    using type = boost::geometry::model::ring<yav::geometry::Point3>;
+};
+
+template<>
+struct ring_mutable_type<yav::geometry::Triangle3>
+{
+    using type = boost::geometry::model::ring<yav::geometry::Point3>;
+};
+
+template<>
 struct exterior_ring<yav::geometry::Triangle3>
 {
-    static inline auto get(const yav::geometry::Triangle3& triangle)
+    using ring_type = boost::geometry::model::ring<yav::geometry::Point3>;
+
+    static inline ring_type get(yav::geometry::Triangle3& triangle)
     {
-        boost::geometry::model::ring<yav::geometry::Point3> ring;
+        ring_type ring;
+        boost::geometry::append(ring, triangle.p1);
+        boost::geometry::append(ring, triangle.p2);
+        boost::geometry::append(ring, triangle.p3);
+        boost::geometry::append(ring, triangle.p1);
+        return ring;
+    }
+
+    static inline ring_type get(const yav::geometry::Triangle3& triangle)
+    {
+        ring_type ring;
         boost::geometry::append(ring, triangle.p1);
         boost::geometry::append(ring, triangle.p2);
         boost::geometry::append(ring, triangle.p3);
@@ -57,27 +84,31 @@ struct exterior_ring<yav::geometry::Triangle3>
 };
 
 template<>
-struct ring_const_type<yav::geometry::Triangle3>
-{
-    using type = yav::geometry::Point3;
-};
-
-template<>
-struct ring_mutable_type<yav::geometry::Triangle3>
-{
-    using type = yav::geometry::Point3;
-};
-
-template<>
 struct interior_const_type<yav::geometry::Triangle3>
 {
-    using type = std::vector<yav::geometry::Point3>;
+    using type = std::vector<boost::geometry::model::ring<yav::geometry::Point3>>;
 };
 
 template<>
 struct interior_mutable_type<yav::geometry::Triangle3>
 {
-    using type = std::vector<yav::geometry::Point3>;
+    using type = std::vector<boost::geometry::model::ring<yav::geometry::Point3>>;
+};
+
+template<>
+struct interior_rings<yav::geometry::Triangle3>
+{
+    using interior_type = std::vector<boost::geometry::model::ring<yav::geometry::Point3>>;
+
+    static inline interior_type get(yav::geometry::Triangle3&)
+    {
+        return {};
+    }
+
+    static inline interior_type get(const yav::geometry::Triangle3&)
+    {
+        return {};
+    }
 };
 } // namespace boost::geometry::traits
 
