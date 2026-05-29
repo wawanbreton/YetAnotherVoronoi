@@ -6,8 +6,8 @@
 namespace yav::space::site
 {
 
-Triangle::Triangle(const std::array<geometry::Point3, 3>& vertices)
-    : vertices_(vertices)
+Triangle::Triangle(const geometry::Triangle3& triangle)
+    : triangle_(triangle)
 {
 }
 
@@ -16,9 +16,9 @@ SiteKind Triangle::siteKind() const
     return SiteKind::Triangle;
 }
 
-const std::array<geometry::Point3, 3>& Triangle::vertices() const
+const geometry::Triangle3& Triangle::triangle() const
 {
-    return vertices_;
+    return triangle_;
 }
 
 } // namespace yav::space::site

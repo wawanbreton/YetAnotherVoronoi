@@ -20,21 +20,20 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceEdgeBisectorGenerato
     auto triangle_site = std::dynamic_pointer_cast<space::site::Triangle>(first_site);
     auto edge_site = std::dynamic_pointer_cast<space::site::Edge>(second_site);
 
-    if (!triangle_site || !edge_site)
+    if (! triangle_site || ! edge_site)
     {
         triangle_site = std::dynamic_pointer_cast<space::site::Triangle>(second_site);
         edge_site = std::dynamic_pointer_cast<space::site::Edge>(first_site);
     }
 
-    if (!triangle_site || !edge_site)
+    if (! triangle_site || ! edge_site)
     {
         return nullptr;
     }
 
-    const geometry::Point3 edge_midpoint =
-        geometry::Point3Operations::midpoint(edge_site->vertices()[0], edge_site->vertices()[1]);
-    const double offset = geometry::Point3Operations::meanZFromTriangle(triangle_site->vertices())
-        - geometry::Point3Operations::meanZFromSegment(edge_site->vertices());
+    const geometry::Point3 edge_midpoint = geometry::Point3Operations::midpoint(edge_site->segment().first, edge_site->segment().second);
+    const double offset = geometry::Point3Operations::meanZFromTriangle(triangle_site->triangle())
+                        - geometry::Point3Operations::meanZFromSegment(edge_site->segment());
 
     return std::make_shared<voronoi::equisurface::Paraboloid>(edge_midpoint, 1.0, offset);
 }

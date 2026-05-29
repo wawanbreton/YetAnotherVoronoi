@@ -32,13 +32,12 @@ namespace yav::generator
 {
 
 Generator::Generator()
-    : bisector_generators_(
-          { std::make_shared<bisector::FaceFaceBisectorGenerator>(),
-            std::make_shared<bisector::FaceEdgeBisectorGenerator>(),
-            std::make_shared<bisector::FaceVertexBisectorGenerator>(),
-            std::make_shared<bisector::EdgeEdgeBisectorGenerator>(),
-            std::make_shared<bisector::EdgeVertexBisectorGenerator>(),
-            std::make_shared<bisector::VertexVertexBisectorGenerator>() })
+    : bisector_generators_({ std::make_shared<bisector::FaceFaceBisectorGenerator>(),
+                             std::make_shared<bisector::FaceEdgeBisectorGenerator>(),
+                             std::make_shared<bisector::FaceVertexBisectorGenerator>(),
+                             std::make_shared<bisector::EdgeEdgeBisectorGenerator>(),
+                             std::make_shared<bisector::EdgeVertexBisectorGenerator>(),
+                             std::make_shared<bisector::VertexVertexBisectorGenerator>() })
 {
 }
 
@@ -50,73 +49,54 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
         input_space.primitives(),
         [&output_diagram](const std::shared_ptr<space::Primitive>& primitive)
         {
-            if (! primitive)
-            {
-                spdlog::error("Encountered null primitive while initializing Voronoi cells");
-                return;
-            }
-
             output_diagram.addCell(std::make_shared<voronoi::Cell>(primitive));
         });
 
     const auto& primitives = input_space.primitives();
-    for (std::size_t first_primitive_index = 0; first_primitive_index < primitives.size(); ++first_primitive_index)
+    for (const auto& [first_primitive, second_primitive] : primitives | std::views::adjacent<2>)
     {
-        for (std::size_t second_primitive_index = first_primitive_index + 1; second_primitive_index < primitives.size();
-             ++second_primitive_index)
+        for (const auto& first_site : first_primitive->sites())
         {
-            const auto& first_primitive = primitives[first_primitive_index];
-            const auto& second_primitive = primitives[second_primitive_index];
-
-            if (! first_primitive || ! second_primitive)
+            for (const auto& second_site : second_primitive->sites())
             {
-                spdlog::error("Encountered null primitive while generating bisector patches");
-                continue;
-            }
-
-            for (const auto& first_site : first_primitive->sites())
-            {
-                for (const auto& second_site : second_primitive->sites())
+                if (! first_site || ! second_site)
                 {
-                    if (! first_site || ! second_site)
-                    {
-                        spdlog::error("Encountered null site while generating bisector patches");
-                        continue;
-                    }
-
-                    const auto generated_bisector = generateBisector(first_site, second_site);
-                    if (! generated_bisector)
-                    {
-                        spdlog::warn(
-                            "No bisector generator produced a bisector for site pair {} / {}",
-                            static_cast<int>(first_site->siteKind()),
-                            static_cast<int>(second_site->siteKind()));
-                        continue;
-                    }
-
-                    const auto first_cell = output_diagram.findCell(first_primitive);
-                    const auto second_cell = output_diagram.findCell(second_primitive);
-                    if (! first_cell || ! second_cell)
-                    {
-                        spdlog::error("Cannot attach generated patch because one of the target cells is missing");
-                        continue;
-                    }
-
-                    const auto first_patch = std::make_shared<voronoi::CellPatch>();
-                    first_patch->setBisector(generated_bisector);
-                    // TODO: formal constraints model is not defined yet, so this remains a placeholder.
-                    first_patch->addConstraint("placeholder: pending formal clipping constraints model");
-
-                    const auto second_patch = std::make_shared<voronoi::CellPatch>();
-                    second_patch->setBisector(generated_bisector);
-                    second_patch->addConstraint("placeholder: pending formal clipping constraints model");
-
-                    first_patch->addAdjacentPatch(second_patch);
-                    second_patch->addAdjacentPatch(first_patch);
-
-                    first_cell->addPatch(first_patch);
-                    second_cell->addPatch(second_patch);
+                    spdlog::error("Encountered null site while generating bisector patches");
+                    continue;
                 }
+
+                const auto generated_bisector = generateBisector(first_site, second_site);
+                if (! generated_bisector)
+                {
+                    spdlog::warn(
+                        "No bisector generator produced a bisector for site pair {} / {}",
+                        static_cast<int>(first_site->siteKind()),
+                        static_cast<int>(second_site->siteKind()));
+                    continue;
+                }
+
+                const auto first_cell = output_diagram.findCell(first_primitive);
+                const auto second_cell = output_diagram.findCell(second_primitive);
+                if (! first_cell || ! second_cell)
+                {
+                    spdlog::error("Cannot attach generated patch because one of the target cells is missing");
+                    continue;
+                }
+
+                const auto first_patch = std::make_shared<voronoi::CellPatch>();
+                first_patch->setBisector(generated_bisector);
+                // TODO: formal constraints model is not defined yet, so this remains a placeholder.
+                first_patch->addConstraint("placeholder: pending formal clipping constraints model");
+
+                const auto second_patch = std::make_shared<voronoi::CellPatch>();
+                second_patch->setBisector(generated_bisector);
+                second_patch->addConstraint("placeholder: pending formal clipping constraints model");
+
+                first_patch->addAdjacentPatch(second_patch);
+                second_patch->addAdjacentPatch(first_patch);
+
+                first_cell->addPatch(first_patch);
+                second_cell->addPatch(second_patch);
             }
         }
     }
@@ -192,7 +172,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(con
             return nullptr;
         }
 
-        const double mean_z = geometry::Point3Operations::meanZFromTriangle(triangle_site->vertices());
+        const double mean_z = geometry::Point3Operations::meanZFromTriangle(triangle_site->triangle());
         return std::make_shared<region::Slab>(geometry::Point3{ 0.0, 0.0, 1.0 }, mean_z - 1.0, mean_z + 1.0);
     }
 
@@ -205,7 +185,7 @@ std::shared_ptr<region::AbstractVoronoiRegion> Generator::buildRegionForSite(con
             return nullptr;
         }
 
-        const double mean_z = geometry::Point3Operations::meanZFromSegment(edge_site->vertices());
+        const double mean_z = geometry::Point3Operations::meanZFromSegment(edge_site->segment());
         return std::make_shared<region::HalfPlaneSlice>(geometry::Point3{ 0.0, 0.0, 1.0 }, -mean_z);
     }
 

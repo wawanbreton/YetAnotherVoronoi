@@ -6,8 +6,8 @@
 namespace yav::space::site
 {
 
-Edge::Edge(const std::array<geometry::Point3, 2>& vertices)
-    : vertices_(vertices)
+Edge::Edge(const geometry::Segment3& segment)
+    : segment_(segment)
 {
 }
 
@@ -16,9 +16,9 @@ SiteKind Edge::siteKind() const
     return SiteKind::Edge;
 }
 
-const std::array<geometry::Point3, 2>& Edge::vertices() const
+const geometry::Segment3& Edge::segment() const
 {
-    return vertices_;
+    return segment_;
 }
 
 } // namespace yav::space::site

@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
-#include "yav/space/site/AbstractSite.h"
-
 #include <array>
+
+#include "yav/geometry/Triangle3.h"
+#include "yav/space/site/AbstractSite.h"
 
 namespace yav::space::site
 {
@@ -15,13 +15,13 @@ namespace yav::space::site
 class Triangle final : public AbstractSite
 {
 public:
-    explicit Triangle(const std::array<geometry::Point3, 3>& vertices);
+    explicit Triangle(const geometry::Triangle3& vertices);
 
     SiteKind siteKind() const override;
-    const std::array<geometry::Point3, 3>& vertices() const;
+    const geometry::Triangle3& triangle() const;
 
 private:
-    std::array<geometry::Point3, 3> vertices_;
+    geometry::Triangle3 triangle_;
 };
 
 } // namespace yav::space::site

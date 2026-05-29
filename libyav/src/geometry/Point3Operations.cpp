@@ -5,6 +5,7 @@
 
 #include <cmath>
 
+#include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/core/access.hpp>
@@ -20,11 +21,11 @@ Point3 Point3Operations::midpoint(const Point3& first_value, const Point3& secon
     return output;
 }
 
-Point3 Point3Operations::centroidFromTriangle(const std::array<Point3, 3>& vertices)
+Point3 Point3Operations::centroidFromTriangle(const geometry::Triangle3& triangle)
 {
-    Point3 output = vertices[0];
-    boost::geometry::add_point(output, vertices[1]);
-    boost::geometry::add_point(output, vertices[2]);
+    Point3 output = triangle.p1;
+    boost::geometry::add_point(output, triangle.p2);
+    boost::geometry::add_point(output, triangle.p3);
     boost::geometry::multiply_value(output, 1.0 / 3.0);
     return output;
 }
@@ -34,14 +35,14 @@ double Point3Operations::norm(const Point3& value)
     return std::sqrt(boost::geometry::dot_product(value, value));
 }
 
-double Point3Operations::meanZFromSegment(const std::array<Point3, 2>& vertices)
+double Point3Operations::meanZFromSegment(const geometry::Segment3& segment)
 {
-    return (boost::geometry::get<2>(vertices[0]) + boost::geometry::get<2>(vertices[1])) / 2.0;
+    return (boost::geometry::get<2>(segment.first) + boost::geometry::get<2>(segment.second)) / 2.0;
 }
 
-double Point3Operations::meanZFromTriangle(const std::array<Point3, 3>& vertices)
+double Point3Operations::meanZFromTriangle(const geometry::Triangle3& triangle)
 {
-    return (boost::geometry::get<2>(vertices[0]) + boost::geometry::get<2>(vertices[1]) + boost::geometry::get<2>(vertices[2])) / 3.0;
+    return (boost::geometry::get<2>(triangle.p1) + boost::geometry::get<2>(triangle.p2) + boost::geometry::get<2>(triangle.p3)) / 3.0;
 }
 
 } // namespace yav::geometry

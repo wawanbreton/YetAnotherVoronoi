@@ -3,10 +3,10 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
-#include "yav/space/site/AbstractSite.h"
-
 #include <array>
+
+#include "yav/geometry/Segment3.h"
+#include "yav/space/site/AbstractSite.h"
 
 namespace yav::space::site
 {
@@ -15,13 +15,13 @@ namespace yav::space::site
 class Edge final : public AbstractSite
 {
 public:
-    explicit Edge(const std::array<geometry::Point3, 2>& vertices);
+    explicit Edge(const geometry::Segment3& segment);
 
     SiteKind siteKind() const override;
-    const std::array<geometry::Point3, 2>& vertices() const;
+    const geometry::Segment3& segment() const;
 
 private:
-    std::array<geometry::Point3, 2> vertices_;
+    geometry::Segment3 segment_;
 };
 
 } // namespace yav::space::site

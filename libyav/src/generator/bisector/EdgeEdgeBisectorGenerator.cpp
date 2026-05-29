@@ -28,8 +28,9 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> EdgeEdgeBisectorGenerato
         return nullptr;
     }
 
-    const geometry::Point3 first_midpoint = geometry::Point3Operations::midpoint(first_edge->vertices()[0], first_edge->vertices()[1]);
-    const geometry::Point3 second_midpoint = geometry::Point3Operations::midpoint(second_edge->vertices()[0], second_edge->vertices()[1]);
+    const geometry::Point3 first_midpoint = geometry::Point3Operations::midpoint(first_edge->segment().first, first_edge->segment().second);
+    const geometry::Point3 second_midpoint
+        = geometry::Point3Operations::midpoint(second_edge->segment().first, second_edge->segment().second);
 
     geometry::Point3 normal = second_midpoint;
     boost::geometry::subtract_point(normal, first_midpoint);

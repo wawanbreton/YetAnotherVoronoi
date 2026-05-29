@@ -3,9 +3,11 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
-
 #include <array>
+
+#include "yav/geometry/Point3.h"
+#include "yav/geometry/Segment3.h"
+#include "yav/geometry/Triangle3.h"
 
 namespace yav::geometry
 {
@@ -15,10 +17,10 @@ class Point3Operations
 {
 public:
     static Point3 midpoint(const Point3& first_value, const Point3& second_value);
-    static Point3 centroidFromTriangle(const std::array<Point3, 3>& vertices);
+    static Point3 centroidFromTriangle(const geometry::Triangle3& triangle);
     static double norm(const Point3& value);
-    static double meanZFromSegment(const std::array<Point3, 2>& vertices);
-    static double meanZFromTriangle(const std::array<Point3, 3>& vertices);
+    static double meanZFromSegment(const geometry::Segment3& segment);
+    static double meanZFromTriangle(const geometry::Triangle3& triangle);
 };
 
 } // namespace yav::geometry

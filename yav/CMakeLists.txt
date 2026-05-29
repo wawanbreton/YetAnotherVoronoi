@@ -1,27 +1,29 @@
 cmake_minimum_required(VERSION 3.20)
 
-include(ExternalProject)
+include(FetchContent)
 
-set(CXXOPTS_INSTALL_DIR "${CMAKE_BINARY_DIR}/external/cxxopts")
-file(MAKE_DIRECTORY "${CXXOPTS_INSTALL_DIR}/include")
+set(CXXOPTS_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(CXXOPTS_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 
-ExternalProject_Add(cxxopts_external
+FetchContent_Declare(
+  cxxopts
   GIT_REPOSITORY https://github.com/jarro2783/cxxopts.git
   GIT_TAG v3.2.0
-  UPDATE_DISCONNECTED 1
-  CMAKE_ARGS
-    -DCMAKE_INSTALL_PREFIX=${CXXOPTS_INSTALL_DIR}
-    -DCXXOPTS_BUILD_EXAMPLES=OFF
-    -DCXXOPTS_BUILD_TESTS=OFF
-    -DCXXOPTS_BUILD_DOCS=OFF
 )
 
-add_library(cxxopts::cxxopts INTERFACE IMPORTED GLOBAL)
-set_target_properties(cxxopts::cxxopts PROPERTIES
-  INTERFACE_INCLUDE_DIRECTORIES "${CXXOPTS_INSTALL_DIR}/include"
+FetchContent_MakeAvailable(cxxopts)
+
+set(TINYOBJLOADER_COMPILATION_SHARED ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
+  rapidobj
+  GIT_REPOSITORY https://github.com/guybrush77/rapidobj.git
+  GIT_TAG v1.1
 )
-add_dependencies(cxxopts::cxxopts cxxopts_external)
+
+FetchContent_MakeAvailable(rapidobj)
+
 
 add_executable(yav src/main.cpp)
-target_link_libraries(yav PRIVATE yav::libyav cxxopts::cxxopts)
+target_link_libraries(yav PRIVATE yav::libyav cxxopts::cxxopts rapidobj)
 target_compile_features(yav PRIVATE cxx_std_17)

@@ -8,6 +8,8 @@
 #include <vector>
 
 #include "yav/geometry/Point3.h"
+#include "yav/geometry/Segment3.h"
+#include "yav/geometry/Triangle3.h"
 
 namespace yav::space
 {
@@ -20,9 +22,9 @@ class Space
 public:
     Space();
 
-    std::shared_ptr<Primitive> addFace(const std::array<geometry::Point3, 3>& triangle_vertices);
-    std::shared_ptr<Primitive> addEdge(const std::array<geometry::Point3, 2>& edge_vertices);
-    std::shared_ptr<Primitive> addVertex(const geometry::Point3& vertex_position);
+    std::shared_ptr<Primitive> addFace(const geometry::Triangle3& triangle);
+    std::shared_ptr<Primitive> addEdge(const geometry::Segment3& segment);
+    std::shared_ptr<Primitive> addVertex(const geometry::Point3& vertex);
 
     const std::vector<std::shared_ptr<Primitive>>& primitives() const;
 
