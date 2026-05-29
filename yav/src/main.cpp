@@ -125,7 +125,8 @@ int main(int argc, char** argv)
         }
     }
 
-    yav::voronoi::Diagram voronoi_diagram;
+    yav::generator::Generator generator;
+    const yav::voronoi::Diagram voronoi_diagram = generator.generate(space);
 
     return 0;
 }
