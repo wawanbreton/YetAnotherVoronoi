@@ -3,13 +3,10 @@
 
 #pragma once
 
-#include <boost/geometry/algorithms/append.hpp>
+#include <boost/geometry/core/access.hpp>
 #include <boost/geometry/core/cs.hpp>
-#include <boost/geometry/core/exterior_ring.hpp>
-#include <boost/geometry/core/ring_type.hpp>
-#include <boost/geometry/geometries/register/point.hpp>
-#include <boost/geometry/geometries/register/ring.hpp>
-#include <boost/geometry/geometries/ring.hpp>
+#include <boost/geometry/core/tags.hpp>
+#include <boost/geometry/geometries/triangle.hpp>
 #include <fmt/format.h>
 
 #include "yav/geometry/Point3.h"
@@ -33,7 +30,7 @@ namespace boost::geometry::traits
 template<>
 struct tag<yav::geometry::Triangle3>
 {
-    using type = polygon_tag;
+    using type = triangle_tag;
 };
 
 template<>
@@ -42,42 +39,42 @@ struct point_type<yav::geometry::Triangle3>
     using type = yav::geometry::Point3;
 };
 
-template<>
-struct exterior_ring<yav::geometry::Triangle3>
+template<std::size_t Index, std::size_t Dimension>
+struct indexed_access<yav::geometry::Triangle3, Index, Dimension>
 {
-    static inline auto get(const yav::geometry::Triangle3& triangle)
+    static inline double get(const yav::geometry::Triangle3& triangle)
     {
-        boost::geometry::model::ring<yav::geometry::Point3> ring;
-        boost::geometry::append(ring, triangle.p1);
-        boost::geometry::append(ring, triangle.p2);
-        boost::geometry::append(ring, triangle.p3);
-        boost::geometry::append(ring, triangle.p1);
-        return ring;
+        static_assert(Index < 3, "Triangle3 index out of bounds");
+        if constexpr (Index == 0)
+        {
+            return boost::geometry::get<Dimension>(triangle.p1);
+        }
+        else if constexpr (Index == 1)
+        {
+            return boost::geometry::get<Dimension>(triangle.p2);
+        }
+        else
+        {
+            return boost::geometry::get<Dimension>(triangle.p3);
+        }
     }
-};
 
-template<>
-struct ring_const_type<yav::geometry::Triangle3>
-{
-    using type = yav::geometry::Point3;
-};
-
-template<>
-struct ring_mutable_type<yav::geometry::Triangle3>
-{
-    using type = yav::geometry::Point3;
-};
-
-template<>
-struct interior_const_type<yav::geometry::Triangle3>
-{
-    using type = std::vector<yav::geometry::Point3>;
-};
-
-template<>
-struct interior_mutable_type<yav::geometry::Triangle3>
-{
-    using type = std::vector<yav::geometry::Point3>;
+    static inline void set(yav::geometry::Triangle3& triangle, const double value)
+    {
+        static_assert(Index < 3, "Triangle3 index out of bounds");
+        if constexpr (Index == 0)
+        {
+            boost::geometry::set<Dimension>(triangle.p1, value);
+        }
+        else if constexpr (Index == 1)
+        {
+            boost::geometry::set<Dimension>(triangle.p2, value);
+        }
+        else
+        {
+            boost::geometry::set<Dimension>(triangle.p3, value);
+        }
+    }
 };
 } // namespace boost::geometry::traits
 

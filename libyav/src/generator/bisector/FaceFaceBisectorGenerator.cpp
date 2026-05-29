@@ -3,6 +3,7 @@
 
 #include "yav/generator/bisector/FaceFaceBisectorGenerator.h"
 
+#include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 
@@ -26,8 +27,10 @@ std::shared_ptr<voronoi::equisurface::AbstractBisector> FaceFaceBisectorGenerato
         return nullptr;
     }
 
-    const geometry::Point3 first_center = geometry::Point3Operations::centroidFromTriangle(first_triangle->triangle());
-    const geometry::Point3 second_center = geometry::Point3Operations::centroidFromTriangle(second_triangle->triangle());
+    geometry::Point3 first_center;
+    boost::geometry::centroid(first_triangle->triangle(), first_center);
+    geometry::Point3 second_center;
+    boost::geometry::centroid(second_triangle->triangle(), second_center);
     geometry::Point3 normal = second_center;
     boost::geometry::subtract_point(normal, first_center);
     const geometry::Point3 midpoint = geometry::Point3Operations::midpoint(first_center, second_center);

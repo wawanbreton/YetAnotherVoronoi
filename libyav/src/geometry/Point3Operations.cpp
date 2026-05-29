@@ -5,7 +5,6 @@
 
 #include <cmath>
 
-#include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/core/access.hpp>
@@ -18,15 +17,6 @@ Point3 Point3Operations::midpoint(const Point3& first_value, const Point3& secon
     Point3 output = first_value;
     boost::geometry::add_point(output, second_value);
     boost::geometry::multiply_value(output, 0.5);
-    return output;
-}
-
-Point3 Point3Operations::centroidFromTriangle(const geometry::Triangle3& triangle)
-{
-    Point3 output = triangle.p1;
-    boost::geometry::add_point(output, triangle.p2);
-    boost::geometry::add_point(output, triangle.p3);
-    boost::geometry::multiply_value(output, 1.0 / 3.0);
     return output;
 }
 
