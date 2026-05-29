@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <boost/geometry/algorithms/append.hpp>
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/core/exterior_ring.hpp>
@@ -12,7 +14,6 @@
 #include <boost/geometry/geometries/register/ring.hpp>
 #include <boost/geometry/geometries/ring.hpp>
 #include <fmt/format.h>
-#include <vector>
 
 #include "yav/geometry/Point3.h"
 
@@ -45,6 +46,18 @@ struct point_type<yav::geometry::Triangle3>
 };
 
 template<>
+struct ring_const_type<yav::geometry::Triangle3>
+{
+    using type = boost::geometry::model::ring<yav::geometry::Point3>;
+};
+
+template<>
+struct ring_mutable_type<yav::geometry::Triangle3>
+{
+    using type = boost::geometry::model::ring<yav::geometry::Point3>;
+};
+
+template<>
 struct exterior_ring<yav::geometry::Triangle3>
 {
     using ring_type = boost::geometry::model::ring<yav::geometry::Point3>;
@@ -68,18 +81,6 @@ struct exterior_ring<yav::geometry::Triangle3>
         boost::geometry::append(ring, triangle.p1);
         return ring;
     }
-};
-
-template<>
-struct ring_const_type<yav::geometry::Triangle3>
-{
-    using type = boost::geometry::model::ring<yav::geometry::Point3>;
-};
-
-template<>
-struct ring_mutable_type<yav::geometry::Triangle3>
-{
-    using type = boost::geometry::model::ring<yav::geometry::Point3>;
 };
 
 template<>

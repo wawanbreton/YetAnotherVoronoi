@@ -11,6 +11,7 @@
 #include "yav/space/site/Triangle.h"
 #include "yav/voronoi/equisurface/Plane.h"
 
+
 namespace yav::generator::bisector
 {
 FaceFaceBisectorGenerator::FaceFaceBisectorGenerator() = default;
