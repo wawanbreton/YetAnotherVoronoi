@@ -20,27 +20,16 @@ std::shared_ptr<Primitive> Space::addFace(const std::array<geometry::Point3, 3>&
 {
     auto primitive = std::make_shared<Primitive>();
 
-    auto triangle_site = std::make_shared<site::Triangle>(triangle_vertices);
-    primitive->addSite(triangle_site);
+    primitive->addSite(std::make_shared<site::Triangle>(triangle_vertices));
 
-    std::array<std::array<geometry::Point3, 2>, 3> edge_vertices{};
-    edge_vertices[0] = { triangle_vertices[0], triangle_vertices[1] };
-    edge_vertices[1] = { triangle_vertices[1], triangle_vertices[2] };
-    edge_vertices[2] = { triangle_vertices[2], triangle_vertices[0] };
+    for (size_t i = 0; i < 3; ++i)
+    {
+        const geometry::Point3& vertex_start = triangle_vertices[i];
+        const geometry::Point3& vertex_end = triangle_vertices[(i + 1) % 3];
 
-    std::ranges::for_each(
-        edge_vertices,
-        [&primitive](const std::array<geometry::Point3, 2>& current_edge_vertices)
-        {
-            primitive->addSite(std::make_shared<site::Edge>(current_edge_vertices));
-        });
-
-    std::ranges::for_each(
-        triangle_vertices,
-        [&primitive](const geometry::Point3& current_vertex)
-        {
-            primitive->addSite(std::make_shared<site::Vertex>(current_vertex));
-        });
+        primitive->addSite(std::make_shared<site::Edge>(std::array<geometry::Point3, 2>{ vertex_start, vertex_end }));
+        primitive->addSite(std::make_shared<site::Vertex>(vertex_start));
+    }
 
     primitives_.push_back(primitive);
     return primitive;
@@ -52,12 +41,10 @@ std::shared_ptr<Primitive> Space::addEdge(const std::array<geometry::Point3, 2>&
 
     primitive->addSite(std::make_shared<site::Edge>(edge_vertices));
 
-    std::ranges::for_each(
-        edge_vertices,
-        [&primitive](const geometry::Point3& current_vertex)
-        {
-            primitive->addSite(std::make_shared<site::Vertex>(current_vertex));
-        });
+    for (const geometry::Point3& vertex : edge_vertices)
+    {
+        primitive->addSite(std::make_shared<site::Vertex>(vertex));
+    }
 
     primitives_.push_back(primitive);
     return primitive;
@@ -66,6 +53,7 @@ std::shared_ptr<Primitive> Space::addEdge(const std::array<geometry::Point3, 2>&
 std::shared_ptr<Primitive> Space::addVertex(const geometry::Point3& vertex_position)
 {
     auto primitive = std::make_shared<Primitive>();
+
     primitive->addSite(std::make_shared<site::Vertex>(vertex_position));
 
     primitives_.push_back(primitive);
