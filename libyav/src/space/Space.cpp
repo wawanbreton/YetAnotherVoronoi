@@ -18,7 +18,7 @@ Space::Space() = default;
 
 std::shared_ptr<Primitive> Space::addFace(const std::array<geometry::Point3, 3>& triangle_vertices)
 {
-    auto primitive = std::make_shared<Primitive>();
+    auto primitive = addPrimitive();
 
     primitive->addSite(std::make_shared<site::Triangle>(triangle_vertices));
 
@@ -31,13 +31,12 @@ std::shared_ptr<Primitive> Space::addFace(const std::array<geometry::Point3, 3>&
         primitive->addSite(std::make_shared<site::Vertex>(vertex_start));
     }
 
-    primitives_.push_back(primitive);
     return primitive;
 }
 
 std::shared_ptr<Primitive> Space::addEdge(const std::array<geometry::Point3, 2>& edge_vertices)
 {
-    auto primitive = std::make_shared<Primitive>();
+    auto primitive = addPrimitive();
 
     primitive->addSite(std::make_shared<site::Edge>(edge_vertices));
 
@@ -46,23 +45,28 @@ std::shared_ptr<Primitive> Space::addEdge(const std::array<geometry::Point3, 2>&
         primitive->addSite(std::make_shared<site::Vertex>(vertex));
     }
 
-    primitives_.push_back(primitive);
     return primitive;
 }
 
 std::shared_ptr<Primitive> Space::addVertex(const geometry::Point3& vertex_position)
 {
-    auto primitive = std::make_shared<Primitive>();
+    auto primitive = addPrimitive();
 
     primitive->addSite(std::make_shared<site::Vertex>(vertex_position));
 
-    primitives_.push_back(primitive);
     return primitive;
 }
 
 const std::vector<std::shared_ptr<Primitive>>& Space::primitives() const
 {
     return primitives_;
+}
+
+std::shared_ptr<Primitive> Space::addPrimitive()
+{
+    auto primitive = std::make_shared<Primitive>();
+    primitives_.push_back(primitive);
+    return primitive;
 }
 
 } // namespace yav::space

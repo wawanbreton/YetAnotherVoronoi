@@ -27,6 +27,8 @@ public:
     const std::vector<std::shared_ptr<Primitive>>& primitives() const;
 
 private:
+    std::shared_ptr<Primitive> addPrimitive();
+
     std::vector<std::shared_ptr<Primitive>> primitives_;
 };
 
