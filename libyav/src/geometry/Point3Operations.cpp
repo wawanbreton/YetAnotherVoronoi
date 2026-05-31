@@ -5,6 +5,7 @@
 
 #include <cmath>
 
+#include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/core/access.hpp>
@@ -27,12 +28,16 @@ double Point3Operations::norm(const Point3& value)
 
 double Point3Operations::meanZFromSegment(const geometry::Segment3& segment)
 {
-    return (boost::geometry::get<2>(segment.first) + boost::geometry::get<2>(segment.second)) / 2.0;
+    Point3 centroid;
+    boost::geometry::centroid(segment, centroid);
+    return boost::geometry::get<2>(centroid);
 }
 
 double Point3Operations::meanZFromTriangle(const geometry::Triangle3& triangle)
 {
-    return (boost::geometry::get<2>(triangle.p1) + boost::geometry::get<2>(triangle.p2) + boost::geometry::get<2>(triangle.p3)) / 3.0;
+    Point3 centroid;
+    boost::geometry::centroid(triangle, centroid);
+    return boost::geometry::get<2>(centroid);
 }
 
 } // namespace yav::geometry

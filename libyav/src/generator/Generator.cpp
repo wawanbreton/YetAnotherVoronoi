@@ -17,6 +17,8 @@
 #include <utility>
 #include <vector>
 
+#include <armadillo>
+#include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/core/access.hpp>
 #include <fmt/format.h>
@@ -40,7 +42,6 @@ namespace yav::generator
 namespace
 {
 
-constexpr double kDeterminantEpsilon = 1.0e-9;
 constexpr double kContainmentEpsilon = 1.0e-8;
 
 struct VertexPrimitive
@@ -78,43 +79,35 @@ double squaredNorm(const geometry::Point3& value)
 
 geometry::Point3 subtract(const geometry::Point3& lhs, const geometry::Point3& rhs)
 {
-    return geometry::Point3(
-        boost::geometry::get<0>(lhs) - boost::geometry::get<0>(rhs),
-        boost::geometry::get<1>(lhs) - boost::geometry::get<1>(rhs),
-        boost::geometry::get<2>(lhs) - boost::geometry::get<2>(rhs));
-}
-
-double determinant3x3(const std::array<std::array<double, 3>, 3>& matrix)
-{
-    return matrix[0][0] * (matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1])
-           - matrix[0][1] * (matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0])
-           + matrix[0][2] * (matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0]);
+    geometry::Point3 output = lhs;
+    boost::geometry::subtract_point(output, rhs);
+    return output;
 }
 
 std::optional<geometry::Point3> solveLinearSystem3x3(
     const std::array<std::array<double, 3>, 3>& matrix,
     const std::array<double, 3>& rhs)
 {
-    const double determinant = determinant3x3(matrix);
-    if (std::abs(determinant) <= kDeterminantEpsilon)
+    arma::mat33 coefficients;
+    arma::vec3 constants;
+
+    for (std::size_t row = 0; row < 3; ++row)
+    {
+        for (std::size_t column = 0; column < 3; ++column)
+        {
+            coefficients(row, column) = matrix[row][column];
+        }
+        constants(row) = rhs[row];
+    }
+
+    arma::vec3 solution;
+
+    if (! arma::solve(solution, coefficients, constants, arma::solve_opts::no_approx))
     {
         return std::nullopt;
     }
 
-    auto replace_column = [&matrix](const std::array<double, 3>& values, const std::size_t column)
-    {
-        auto replaced = matrix;
-        for (std::size_t row = 0; row < 3; ++row)
-        {
-            replaced[row][column] = values[row];
-        }
-        return replaced;
-    };
-
-    return geometry::Point3(
-        determinant3x3(replace_column(rhs, 0)) / determinant,
-        determinant3x3(replace_column(rhs, 1)) / determinant,
-        determinant3x3(replace_column(rhs, 2)) / determinant);
+    return geometry::Point3(solution(0), solution(1), solution(2));
 }
 
 std::optional<std::pair<geometry::Point3, double>> computeCircumsphere(

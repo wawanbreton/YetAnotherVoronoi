@@ -8,6 +8,8 @@ Minimal CMake scaffold for a small Voronoi-oriented workspace:
 
 ## Build
 
+Dependencies for `libyav`: Boost headers and Armadillo.
+
 ```bash
 cmake -S . -B build
 cmake --build build
