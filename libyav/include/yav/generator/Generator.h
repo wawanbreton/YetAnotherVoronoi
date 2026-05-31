@@ -37,11 +37,6 @@ namespace bisector
 class AbstractBisectorGenerator;
 }
 
-namespace region
-{
-class AbstractVoronoiRegion;
-}
-
 /** Main analytical Voronoi pipeline orchestrating bisectors and cell patches. */
 class Generator
 {
@@ -54,8 +49,6 @@ private:
     std::shared_ptr<voronoi::equisurface::AbstractBisector> generateBisector(
         const std::shared_ptr<space::site::AbstractSite>& first_site,
         const std::shared_ptr<space::site::AbstractSite>& second_site) const;
-
-    std::shared_ptr<region::AbstractVoronoiRegion> buildRegionForSite(const std::shared_ptr<space::site::AbstractSite>& site) const;
 
     std::vector<std::shared_ptr<bisector::AbstractBisectorGenerator>> bisector_generators_;
 };

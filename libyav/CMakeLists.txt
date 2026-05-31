@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 option(BUILD_LIBYAV_SHARED "Build libyav as a shared library" ON)
 
 include(FetchContent)
+find_package(Armadillo REQUIRED)
 
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
@@ -72,7 +73,9 @@ add_library(yav::libyav ALIAS libyav)
 target_include_directories(libyav
   PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+  PRIVATE
+    ${ARMADILLO_INCLUDE_DIRS}
 )
 
 target_compile_features(libyav PUBLIC cxx_std_23)
-target_link_libraries(libyav PUBLIC spdlog::spdlog fmt::fmt)
+target_link_libraries(libyav PUBLIC spdlog::spdlog fmt::fmt PRIVATE ${ARMADILLO_LIBRARIES})
