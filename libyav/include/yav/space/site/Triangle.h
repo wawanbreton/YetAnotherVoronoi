@@ -17,7 +17,6 @@ class Triangle final : public AbstractSite
 public:
     explicit Triangle(const geometry::Triangle3& vertices);
 
-    SiteKind siteKind() const override;
     const geometry::Triangle3& triangle() const;
 
 private:

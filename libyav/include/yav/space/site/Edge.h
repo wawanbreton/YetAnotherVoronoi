@@ -17,7 +17,6 @@ class Edge final : public AbstractSite
 public:
     explicit Edge(const geometry::Segment3& segment);
 
-    SiteKind siteKind() const override;
     const geometry::Segment3& segment() const;
 
 private:

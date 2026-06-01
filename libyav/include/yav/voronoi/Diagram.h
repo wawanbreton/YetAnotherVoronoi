@@ -4,7 +4,7 @@
 #pragma once
 
 #include <memory>
-#include <vector>
+#include <unordered_map>
 
 namespace yav
 {
@@ -25,12 +25,13 @@ class Diagram
 public:
     Diagram();
 
-    void addCell(const std::shared_ptr<Cell>& cell);
+    void addCell(const std::shared_ptr<space::Primitive>& primitive, const std::shared_ptr<Cell>& cell);
+
     std::shared_ptr<Cell> findCell(const std::shared_ptr<space::Primitive>& primitive) const;
-    const std::vector<std::shared_ptr<Cell>>& cells() const;
+    const std::unordered_map<std::shared_ptr<space::Primitive>, std::shared_ptr<Cell>>& cells() const;
 
 private:
-    std::vector<std::shared_ptr<Cell>> cells_;
+    std::unordered_map<std::shared_ptr<space::Primitive>, std::shared_ptr<Cell>> cells_;
 };
 
 } // namespace voronoi

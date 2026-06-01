@@ -3,17 +3,13 @@
 
 #include "yav/space/site/Edge.h"
 
+
 namespace yav::space::site
 {
 
 Edge::Edge(const geometry::Segment3& segment)
     : segment_(segment)
 {
-}
-
-SiteKind Edge::siteKind() const
-{
-    return SiteKind::Edge;
 }
 
 const geometry::Segment3& Edge::segment() const

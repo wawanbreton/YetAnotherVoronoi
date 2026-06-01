@@ -19,6 +19,8 @@ class AbstractBisector;
 class CellPatch : public std::enable_shared_from_this<CellPatch>
 {
 public:
+    using Ptr = std::shared_ptr<CellPatch>;
+
     CellPatch();
 
     void setBisector(const std::shared_ptr<equisurface::AbstractBisector>& bisector);

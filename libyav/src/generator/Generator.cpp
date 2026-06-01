@@ -4,11 +4,12 @@
 #include "yav/generator/Generator.h"
 
 #include <algorithm>
+#include <armadillo>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <memory>
-#include <limits>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -17,7 +18,6 @@
 #include <utility>
 #include <vector>
 
-#include <armadillo>
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/core/access.hpp>
@@ -62,8 +62,8 @@ struct SweepEvent
     Kind kind;
     double sweep_coordinate;
     std::vector<std::size_t> site_indices;
-    std::optional<geometry::Point3> sphere_center;
-    double sphere_radius = 0.0;
+    std::optional<geometry::Point3> sphere_center{};
+    double sphere_radius{ 0.0 };
 };
 
 struct PatchPair
@@ -77,16 +77,7 @@ double squaredNorm(const geometry::Point3& value)
     return boost::geometry::dot_product(value, value);
 }
 
-geometry::Point3 subtract(const geometry::Point3& lhs, const geometry::Point3& rhs)
-{
-    geometry::Point3 output = lhs;
-    boost::geometry::subtract_point(output, rhs);
-    return output;
-}
-
-std::optional<geometry::Point3> solveLinearSystem3x3(
-    const std::array<std::array<double, 3>, 3>& matrix,
-    const std::array<double, 3>& rhs)
+std::optional<geometry::Point3> solveLinearSystem3x3(const std::array<std::array<double, 3>, 3>& matrix, const std::array<double, 3>& rhs)
 {
     arma::mat33 coefficients;
     arma::vec3 constants;
@@ -110,17 +101,16 @@ std::optional<geometry::Point3> solveLinearSystem3x3(
     return geometry::Point3(solution(0), solution(1), solution(2));
 }
 
-std::optional<std::pair<geometry::Point3, double>> computeCircumsphere(
-    const std::array<std::shared_ptr<space::site::Vertex>, 4>& sites)
+std::optional<std::pair<geometry::Point3, double>> computeCircumsphere(const std::array<std::shared_ptr<space::site::Vertex>, 4>& sites)
 {
     const geometry::Point3& first_point = sites[0]->position();
 
-    std::array<std::array<double, 3>, 3> matrix {};
-    std::array<double, 3> rhs {};
+    std::array<std::array<double, 3>, 3> matrix{};
+    std::array<double, 3> rhs{};
 
     for (std::size_t row = 0; row < 3; ++row)
     {
-        const geometry::Point3 delta = subtract(sites[row + 1]->position(), first_point);
+        const geometry::Point3 delta = sites[row + 1]->position() - first_point;
         matrix[row] = {
             2.0 * boost::geometry::get<0>(delta),
             2.0 * boost::geometry::get<1>(delta),
@@ -135,7 +125,7 @@ std::optional<std::pair<geometry::Point3, double>> computeCircumsphere(
         return std::nullopt;
     }
 
-    const double radius = geometry::Point3Operations::norm(subtract(*center, first_point));
+    const double radius = geometry::Point3Operations::norm(*center - first_point);
     return std::make_pair(*center, radius);
 }
 
@@ -154,7 +144,7 @@ bool sphereIsEmpty(
             continue;
         }
 
-        const double squared_distance = squaredNorm(subtract(candidate.site->position(), center));
+        const double squared_distance = squaredNorm(candidate.site->position() - center);
         if (squared_distance < squared_radius - kContainmentEpsilon)
         {
             return false;
@@ -164,10 +154,8 @@ bool sphereIsEmpty(
     return true;
 }
 
-std::string makeBeachConstraint(
-    const space::site::Vertex& site,
-    const double sweep_coordinate,
-    const voronoi::equisurface::Paraboloid& paraboloid)
+std::string
+    makeBeachConstraint(const space::site::Vertex& site, const double sweep_coordinate, const voronoi::equisurface::Paraboloid& paraboloid)
 {
     return fmt::format(
         "fortune.beach focus={} sweep_z={} scale={} offset={}",
@@ -181,9 +169,7 @@ double beachHeightAt(const voronoi::equisurface::Paraboloid& paraboloid, const g
 {
     const double delta_x = boost::geometry::get<0>(position) - boost::geometry::get<0>(paraboloid.focus());
     const double delta_y = boost::geometry::get<1>(position) - boost::geometry::get<1>(paraboloid.focus());
-    return paraboloid.scale() * (delta_x * delta_x + delta_y * delta_y)
-           + boost::geometry::get<2>(paraboloid.focus())
-           + paraboloid.offset();
+    return paraboloid.scale() * (delta_x * delta_x + delta_y * delta_y) + boost::geometry::get<2>(paraboloid.focus()) + paraboloid.offset();
 }
 
 std::string makeSiteConstraint(const std::size_t site_index, const double sweep_coordinate)
@@ -229,93 +215,53 @@ Generator::Generator()
 voronoi::Diagram Generator::generate(const space::Space& input_space) const
 {
     voronoi::Diagram output_diagram;
-    std::map<std::size_t, std::shared_ptr<voronoi::Cell>> cells_by_index;
-    std::vector<VertexPrimitive> supported_vertices;
+    // std::map<std::size_t, std::shared_ptr<voronoi::Cell>> cells_by_index;
+    // std::vector<VertexPrimitive> supported_vertices;
 
-    const auto& primitives = input_space.primitives();
-    supported_vertices.reserve(primitives.size());
+    // const std::vector<std::shared_ptr<space::Primitive>>& primitives = input_space.primitives();
+    // supported_vertices.reserve(primitives.size());
 
-    for (std::size_t primitive_index = 0; primitive_index < primitives.size(); ++primitive_index)
+    // std::vector<space::site::AbstractSite::Ptr> sites;
+    std::vector<SweepEvent> events;
+
+    for (const space::Primitive::Ptr& primitive : input_space.primitives())
     {
-        const auto& primitive = primitives[primitive_index];
-        if (! primitive)
-        {
-            spdlog::error("Encountered null primitive while generating Voronoi cells");
-            continue;
-        }
-
         auto cell = std::make_shared<voronoi::Cell>(primitive);
-        output_diagram.addCell(cell);
-        cells_by_index.emplace(primitive_index, cell);
+        output_diagram.addCell(primitive, cell);
+        // cells_by_index.emplace(primitive_index, cell);
 
         std::shared_ptr<space::site::Vertex> vertex_site;
-        bool unsupported_site_kind = false;
+        // bool unsupported_site_kind = false;
 
-        for (const auto& site : primitive->sites())
+        for (const space::site::AbstractSite::Ptr& site : primitive->sites())
         {
-            if (! site)
+            if (const auto vertex_site = std::dynamic_pointer_cast<space::site::Vertex>(site))
             {
-                unsupported_site_kind = true;
-                break;
-            }
+                // sites.push_back(vertex_site);
 
-            if (site->siteKind() != space::site::SiteKind::Vertex)
+                events.push_back(SweepEvent{ SweepEvent::Kind::Site, vertex_site->position(), { vertex_primitive.index } });
+            }
+            else
             {
-                unsupported_site_kind = true;
-                break;
+                spdlog::warn("Sites other than vertices are not supported yet, ignoring");
             }
-
-            const auto cast_vertex = std::dynamic_pointer_cast<space::site::Vertex>(site);
-            if (! cast_vertex)
-            {
-                unsupported_site_kind = true;
-                break;
-            }
-
-            if (vertex_site)
-            {
-                unsupported_site_kind = true;
-                break;
-            }
-
-            vertex_site = cast_vertex;
         }
 
-        if (! vertex_site)
-        {
-            unsupported_site_kind = true;
-        }
-
-        if (unsupported_site_kind)
-        {
-            spdlog::warn(
-                "Skipping primitive {} because the 3D Fortune sweep currently supports only primitives with a single vertex site",
-                primitive_index);
-            continue;
-        }
-
-        supported_vertices.push_back({ primitive_index, primitive, vertex_site });
+        // supported_vertices.push_back({ primitive_index, primitive, vertex_site });
     }
 
-    if (supported_vertices.size() < 2)
+    if (events.size() < 2)
     {
-        spdlog::info("Need at least two supported vertex primitives to build a Voronoi diagram");
+        spdlog::error("Need at least two sites to build a Voronoi diagram");
         return output_diagram;
     }
 
-    std::vector<SweepEvent> events;
-    events.reserve(supported_vertices.size());
 
-    for (const auto& vertex_primitive : supported_vertices)
-    {
-        events.push_back({
-            SweepEvent::Kind::Site,
-            boost::geometry::get<2>(vertex_primitive.site->position()),
-            { vertex_primitive.index },
-            std::nullopt,
-            0.0,
-        });
-    }
+    // for (const space::site::AbstractSite::Ptr& site : sites)
+    // {
+    //     events.push_back(
+    //         { SweepEvent::Kind::Site, boost::geometry::get<2>(vertex_primitive.site->position()), { vertex_primitive.index } });
+    // }
 
     if (supported_vertices.size() == 2)
     {
@@ -349,7 +295,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
             {
                 for (std::size_t fourth_index = third_index + 1; fourth_index < supported_vertices.size(); ++fourth_index)
                 {
-                    const auto quadruple = std::array<std::shared_ptr<space::site::Vertex>, 4> {
+                    const auto quadruple = std::array<std::shared_ptr<space::site::Vertex>, 4>{
                         supported_vertices[first_index].site,
                         supported_vertices[second_index].site,
                         supported_vertices[third_index].site,
@@ -363,7 +309,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                     }
 
                     const auto& [center, radius] = *circumsphere;
-                    const std::set<std::size_t> excluded_indices {
+                    const std::set<std::size_t> excluded_indices{
                         supported_vertices[first_index].index,
                         supported_vertices[second_index].index,
                         supported_vertices[third_index].index,
@@ -419,9 +365,8 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
         return iterator == supported_vertices.end() ? nullptr : &*iterator;
     };
 
-    auto ensure_patch_pair = [this, &cells_by_index, &patch_pairs, &find_supported](
-                                 const std::size_t first_index,
-                                 const std::size_t second_index) -> PatchPair*
+    auto ensure_patch_pair =
+        [this, &cells_by_index, &patch_pairs, &find_supported](const std::size_t first_index, const std::size_t second_index) -> PatchPair*
     {
         const auto key = makeKey(first_index, second_index);
         auto iterator = patch_pairs.find(key);
@@ -450,7 +395,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
             return nullptr;
         }
 
-        PatchPair pair {
+        PatchPair pair{
             std::make_shared<voronoi::CellPatch>(),
             std::make_shared<voronoi::CellPatch>(),
         };
@@ -479,7 +424,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
         return target_index == key.first ? iterator->second.first : iterator->second.second;
     };
 
-    for (const auto& event : events)
+    for (const SweepEvent& event : events)
     {
         if (event.kind == SweepEvent::Kind::Site)
         {
@@ -491,7 +436,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
 
             active_sites.insert(activated_site->index);
             const double site_z = boost::geometry::get<2>(activated_site->site->position());
-            const double denominator = 2.0 * (site_z - event.sweep_coordinate + kDeterminantEpsilon);
+            const double denominator = 2.0 * (site_z - event.sweep_coordinate + kContainmentEpsilon);
             const double scale = denominator == 0.0 ? 0.0 : 1.0 / denominator;
             const double offset = (event.sweep_coordinate - site_z) / 2.0;
             auto [beach_iterator, inserted] = beach_surface.emplace(
@@ -499,10 +444,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                 voronoi::equisurface::Paraboloid(activated_site->site->position(), scale, offset));
             if (! inserted)
             {
-                beach_iterator->second = voronoi::equisurface::Paraboloid(
-                    activated_site->site->position(),
-                    scale,
-                    offset);
+                beach_iterator->second = voronoi::equisurface::Paraboloid(activated_site->site->position(), scale, offset);
             }
 
             std::vector<std::size_t> candidate_neighbours;
@@ -533,9 +475,7 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                         continue;
                     }
 
-                    const double neighbour_height = beachHeightAt(
-                        beach_iterator_for_neighbour->second,
-                        activated_site->site->position());
+                    const double neighbour_height = beachHeightAt(beach_iterator_for_neighbour->second, activated_site->site->position());
 
                     if (neighbour_height + kContainmentEpsilon < best_height)
                     {
@@ -552,15 +492,17 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
             for (const std::size_t neighbour_index : candidate_neighbours)
             {
                 PatchPair* patch_pair = ensure_patch_pair(activated_site->index, neighbour_index);
-                if (!patch_pair)
+                if (! patch_pair)
                 {
                     continue;
                 }
 
                 patch_pair->first->addConstraint(makeSiteConstraint(activated_site->index, event.sweep_coordinate));
                 patch_pair->second->addConstraint(makeSiteConstraint(activated_site->index, event.sweep_coordinate));
-                patch_pair->first->addConstraint(makeBeachConstraint(*activated_site->site, event.sweep_coordinate, beach_iterator->second));
-                patch_pair->second->addConstraint(makeBeachConstraint(*activated_site->site, event.sweep_coordinate, beach_iterator->second));
+                patch_pair->first->addConstraint(
+                    makeBeachConstraint(*activated_site->site, event.sweep_coordinate, beach_iterator->second));
+                patch_pair->second->addConstraint(
+                    makeBeachConstraint(*activated_site->site, event.sweep_coordinate, beach_iterator->second));
             }
 
             continue;
@@ -587,11 +529,8 @@ voronoi::Diagram Generator::generate(const space::Space& input_space) const
                     continue;
                 }
 
-                const std::string constraint = makeVertexConstraint(
-                    *event.sphere_center,
-                    event.sphere_radius,
-                    event.sweep_coordinate,
-                    event.site_indices);
+                const std::string constraint
+                    = makeVertexConstraint(*event.sphere_center, event.sphere_radius, event.sweep_coordinate, event.site_indices);
                 patch_pair->first->addConstraint(constraint);
                 patch_pair->second->addConstraint(constraint);
             }

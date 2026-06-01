@@ -23,9 +23,12 @@ class CellPatch;
 class Cell
 {
 public:
+    using Ptr = std::shared_ptr<Cell>;
+
     explicit Cell(const std::shared_ptr<space::Primitive>& primitive);
 
     std::shared_ptr<space::Primitive> primitive() const;
+
     void addPatch(const std::shared_ptr<CellPatch>& patch);
     const std::vector<std::shared_ptr<CellPatch>>& patches() const;
 

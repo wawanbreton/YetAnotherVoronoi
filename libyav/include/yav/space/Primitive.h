@@ -18,6 +18,8 @@ class AbstractSite;
 class Primitive
 {
 public:
+    using Ptr = std::shared_ptr<Primitive>;
+
     Primitive();
 
     void addSite(const std::shared_ptr<site::AbstractSite>& site);

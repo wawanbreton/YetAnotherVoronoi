@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include "yav/space/site/SiteKind.h"
+#include <memory>
 
 namespace yav::space::site
 {
@@ -12,10 +12,10 @@ namespace yav::space::site
 class AbstractSite
 {
 public:
+    using Ptr = std::shared_ptr<AbstractSite>;
+
     AbstractSite();
     virtual ~AbstractSite();
-
-    virtual SiteKind siteKind() const = 0;
 };
 
 } // namespace yav::space::site

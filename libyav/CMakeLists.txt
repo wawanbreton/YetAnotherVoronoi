@@ -3,7 +3,6 @@ cmake_minimum_required(VERSION 3.20)
 option(BUILD_LIBYAV_SHARED "Build libyav as a shared library" ON)
 
 include(FetchContent)
-find_package(Armadillo REQUIRED)
 
 set(BUILD_SHARED_LIBS ON CACHE BOOL "" FORCE)
 
@@ -26,6 +25,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(spdlog)
 
+FetchContent_Declare(
+  armadillo
+  GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code
+  GIT_TAG 15.2.6
+)
+
+FetchContent_MakeAvailable(armadillo)
+
 set(libyav_SRCS
   src/yav.cpp
 
@@ -43,6 +50,7 @@ set(libyav_SRCS
   src/generator/region/Slab.cpp
 
   src/geometry/Point3Operations.cpp
+  src/geometry/Point3.cpp
 
   src/space/Space.cpp
   src/space/Primitive.cpp
@@ -70,12 +78,6 @@ endif ()
 
 add_library(yav::libyav ALIAS libyav)
 
-target_include_directories(libyav
-  PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-  PRIVATE
-    ${ARMADILLO_INCLUDE_DIRS}
-)
-
+target_include_directories(libyav PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(libyav PUBLIC cxx_std_23)
-target_link_libraries(libyav PUBLIC spdlog::spdlog fmt::fmt PRIVATE ${ARMADILLO_LIBRARIES})
+target_link_libraries(libyav PUBLIC spdlog::spdlog fmt::fmt armadillo)

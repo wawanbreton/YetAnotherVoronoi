@@ -15,7 +15,6 @@ class Vertex final : public AbstractSite
 public:
     explicit Vertex(const geometry::Point3& position);
 
-    SiteKind siteKind() const override;
     const geometry::Point3& position() const;
 
 private:
