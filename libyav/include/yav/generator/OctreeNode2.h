@@ -46,16 +46,15 @@ public:
 
     void split();
 
-    bool isClosestPrimitiveSet(const size_t position) const;
+    const std::optional<ClosestPrimitive>& getClosestPrimitive(const size_t position) const;
 
-    void setClosestPrimitive(const size_t position, ClosestPrimitive&& closest_primitive);
+    void setClosestPrimitive(const size_t position, const std::optional<ClosestPrimitive>& closest_primitive);
 
     geometry::Point2 positionAt(const size_t position) const;
 
 private:
-    void setClosestPrimitive(const size_t position, const std::optional<ClosestPrimitive>& closest_primitive);
-
     static const std::array<geometry::Point2, 4> corner_deltas_;
+    static const double sqrt2;
 
     const geometry::Point2 center_;
     const double width_;
