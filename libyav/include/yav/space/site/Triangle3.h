@@ -12,10 +12,10 @@ namespace yav::space::site
 {
 
 /** Triangle site representing a 2D manifold piece in 3D space. */
-class Triangle final : public AbstractSite
+class Triangle3 final : public AbstractSite
 {
 public:
-    explicit Triangle(const geometry::Triangle3& vertices);
+    explicit Triangle3(const geometry::Triangle3& vertices);
 
     const geometry::Triangle3& triangle() const;
 

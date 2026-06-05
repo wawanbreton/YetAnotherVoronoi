@@ -3,22 +3,22 @@
 
 #pragma once
 
-#include "yav/geometry/Point3.h"
+#include "yav/geometry/Point2.h"
 #include "yav/space/site/AbstractSite.h"
 
 namespace yav::space::site
 {
 
 /** Vertex site represented by a single position in 3D. */
-class Vertex final : public AbstractSite
+class Vertex2 final : public AbstractSite
 {
 public:
-    explicit Vertex(const geometry::Point3& position);
+    explicit Vertex2(const geometry::Point2& position);
 
-    const geometry::Point3& position() const;
+    const geometry::Point2& position() const;
 
 private:
-    geometry::Point3 position_;
+    geometry::Point2 position_;
 };
 
 } // namespace yav::space::site

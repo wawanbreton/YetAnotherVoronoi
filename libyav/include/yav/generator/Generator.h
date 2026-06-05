@@ -16,26 +16,12 @@ class Diagram;
 
 namespace space
 {
-class Space;
-
-namespace site
-{
-class AbstractSite;
-}
+class AbstractSpace;
+class Space2;
 } // namespace space
-
-namespace voronoi::equisurface
-{
-class AbstractBisector;
-}
 
 namespace generator
 {
-
-namespace bisector
-{
-class AbstractBisectorGenerator;
-}
 
 /** Main analytical Voronoi pipeline orchestrating bisectors and cell patches. */
 class Generator
@@ -43,14 +29,7 @@ class Generator
 public:
     Generator();
 
-    voronoi::Diagram generate(const space::Space& input_space) const;
-
-private:
-    std::shared_ptr<voronoi::equisurface::AbstractBisector> generateBisector(
-        const std::shared_ptr<space::site::AbstractSite>& first_site,
-        const std::shared_ptr<space::site::AbstractSite>& second_site) const;
-
-    std::vector<std::shared_ptr<bisector::AbstractBisectorGenerator>> bisector_generators_;
+    voronoi::Diagram generate(const space::Space2& input_space) const;
 };
 
 } // namespace generator

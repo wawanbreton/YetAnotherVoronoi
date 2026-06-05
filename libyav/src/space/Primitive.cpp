@@ -8,22 +8,19 @@
 namespace yav::space
 {
 
-Primitive::Primitive() = default;
-
-void Primitive::addSite(const std::shared_ptr<site::AbstractSite>& site)
+Primitive::Primitive(const std::vector<std::shared_ptr<site::AbstractSite>>& sites)
+    : sites_(sites)
 {
-    if (!site)
-    {
-        spdlog::error("Cannot add a null site to primitive");
-        return;
-    }
-
-    sites_.push_back(site);
 }
 
 const std::vector<std::shared_ptr<site::AbstractSite>>& Primitive::sites() const
 {
     return sites_;
+}
+
+const double Primitive::distanceTo(const geometry::Point2& point) const
+{
+    return 0;
 }
 
 } // namespace yav::space

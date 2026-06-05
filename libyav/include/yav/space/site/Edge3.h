@@ -12,10 +12,10 @@ namespace yav::space::site
 {
 
 /** Edge site represented by two 3D endpoints. */
-class Edge final : public AbstractSite
+class Edge3 final : public AbstractSite
 {
 public:
-    explicit Edge(const geometry::Segment3& segment);
+    explicit Edge3(const geometry::Segment3& segment);
 
     const geometry::Segment3& segment() const;
 

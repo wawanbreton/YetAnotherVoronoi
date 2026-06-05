@@ -1,18 +1,18 @@
 // Copyright (C) 2026 Erwan MATHIEU
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "yav/space/site/Triangle.h"
+#include "yav/space/site/Triangle3.h"
 
 
 namespace yav::space::site
 {
 
-Triangle::Triangle(const geometry::Triangle3& triangle)
+Triangle3::Triangle3(const geometry::Triangle3& triangle)
     : triangle_(triangle)
 {
 }
 
-const geometry::Triangle3& Triangle::triangle() const
+const geometry::Triangle3& Triangle3::triangle() const
 {
     return triangle_;
 }

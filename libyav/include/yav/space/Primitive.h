@@ -6,6 +6,8 @@
 #include <memory>
 #include <vector>
 
+#include "yav/geometry/Point2.h"
+
 namespace yav::space
 {
 
@@ -20,13 +22,14 @@ class Primitive
 public:
     using Ptr = std::shared_ptr<Primitive>;
 
-    Primitive();
+    Primitive(const std::vector<std::shared_ptr<site::AbstractSite>>& sites);
 
-    void addSite(const std::shared_ptr<site::AbstractSite>& site);
     const std::vector<std::shared_ptr<site::AbstractSite>>& sites() const;
 
+    const double distanceTo(const geometry::Point2& point) const;
+
 private:
-    std::vector<std::shared_ptr<site::AbstractSite>> sites_;
+    const std::vector<std::shared_ptr<site::AbstractSite>> sites_;
 };
 
 } // namespace yav::space
