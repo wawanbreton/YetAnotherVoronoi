@@ -15,7 +15,10 @@
 namespace yav::space
 {
 
-class Primitive;
+namespace primitive
+{
+class AbstractPrimitive;
+}
 
 /** Top-level user input container for Voronoi diagram generation. */
 class Space2 : public AbstractSpace
@@ -23,8 +26,8 @@ class Space2 : public AbstractSpace
 public:
     Space2();
 
-    std::shared_ptr<Primitive> addEdge(const geometry::Segment2& segment);
-    std::shared_ptr<Primitive> addVertex(const geometry::Point2& vertex);
+    std::shared_ptr<primitive::AbstractPrimitive> addEdge(const geometry::Segment2& segment);
+    std::shared_ptr<primitive::AbstractPrimitive> addVertex(const geometry::Point2& vertex);
 
     yav::generator::ClosestPrimitive findClosestPrimitive(const geometry::Point2& position) const;
 };

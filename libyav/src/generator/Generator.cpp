@@ -17,7 +17,7 @@ Generator::Generator() = default;
 
 voronoi::Diagram Generator::generate(const space::Space2& input_space) const
 {
-    auto tree = std::make_shared<OctreeNode2>();
+    auto tree = std::make_shared<OctreeNode2>(geometry::Point2{}, 0.0);
     std::vector<OctreeNode2::Ptr> nodes_to_evaluate{ tree };
 
     while (! nodes_to_evaluate.empty())

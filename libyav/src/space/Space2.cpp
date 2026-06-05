@@ -3,13 +3,10 @@
 
 #include "yav/space/Space2.h"
 
-#include <algorithm>
-
 #include <spdlog/spdlog.h>
 
-#include "yav/space/Primitive.h"
-#include "yav/space/site/Edge2.h"
-#include "yav/space/site/Vertex2.h"
+#include "yav/space/primitive/Edge2.h"
+#include "yav/space/primitive/Vertex2.h"
 
 
 namespace yav::space
@@ -17,26 +14,25 @@ namespace yav::space
 
 Space2::Space2() = default;
 
-std::shared_ptr<Primitive> Space2::addEdge(const geometry::Segment2& edge)
+std::shared_ptr<primitive::AbstractPrimitive> Space2::addEdge(const geometry::Segment2& edge)
 {
-    spdlog::debug("Add edge {}", edge);
+    spdlog::debug("Add edge2 {}", edge);
 
-    return addPrimitive(
-        { std::make_shared<site::Edge2>(edge), std::make_shared<site::Vertex2>(edge.first), std::make_shared<site::Vertex2>(edge.second) });
+    return addPrimitive(std::make_shared<primitive::Edge2>(edge));
 }
 
-std::shared_ptr<Primitive> Space2::addVertex(const geometry::Point2& vertex)
+std::shared_ptr<primitive::AbstractPrimitive> Space2::addVertex(const geometry::Point2& vertex)
 {
-    spdlog::debug("Add vertex {}", vertex);
+    spdlog::debug("Add vertex3 {}", vertex);
 
-    return addPrimitive({ std::make_shared<site::Vertex2>(vertex) });
+    return addPrimitive(std::make_shared<primitive::Vertex2>(vertex));
 }
 
 generator::ClosestPrimitive Space2::findClosestPrimitive(const geometry::Point2& position) const
 {
     double closest_distance;
-    Primitive::Ptr closest_primitive;
-    for (const Primitive::Ptr& primitive : primitives())
+    primitive::AbstractPrimitive::Ptr closest_primitive;
+    for (const primitive::AbstractPrimitive::Ptr& primitive : primitives())
     {
         const double distance = primitive->distanceTo(position);
         if (! closest_primitive || distance < closest_distance)

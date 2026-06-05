@@ -9,9 +9,9 @@
 namespace yav
 {
 
-namespace space
+namespace space::primitive
 {
-class Primitive;
+class AbstractPrimitive;
 }
 
 namespace generator
@@ -19,7 +19,7 @@ namespace generator
 
 struct ClosestPrimitive
 {
-    std::shared_ptr<space::Primitive> primitive;
+    std::shared_ptr<space::primitive::AbstractPrimitive> primitive;
     double distance;
 };
 

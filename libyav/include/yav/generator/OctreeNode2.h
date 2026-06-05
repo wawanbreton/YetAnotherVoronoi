@@ -40,7 +40,7 @@ public:
         RightRear = static_cast<uint8_t>(XPosition::Right) | static_cast<uint8_t>(YPosition::Rear),
     };
 
-    explicit OctreeNode2();
+    explicit OctreeNode2(const geometry::Point2& center, const double width);
 
     bool isLeaf() const;
 
@@ -55,8 +55,10 @@ public:
 private:
     void setClosestPrimitive(const size_t position, const std::optional<ClosestPrimitive>& closest_primitive);
 
+    static const std::array<geometry::Point2, 4> corner_deltas_;
+
     const geometry::Point2 center_;
-    const geometry::Point2 half_width_;
+    const double width_;
     std::vector<Ptr> children_;
     std::array<std::optional<ClosestPrimitive>, 4> corners_closest_primitives_;
 };

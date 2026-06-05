@@ -25,38 +25,7 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(spdlog)
 
-set(libyav_SRCS
-  src/yav.cpp
-
-  src/generator/Generator.cpp
-  src/generator/OctreeNode2.cpp
-  src/generator/region/AbstractVoronoiRegion.cpp
-  src/generator/region/Cone.cpp
-  src/generator/region/HalfPlaneSlice.cpp
-  src/generator/region/Slab.cpp
-
-  src/geometry/Point3Operations.cpp
-  src/geometry/Point3.cpp
-  src/geometry/Point2.cpp
-
-  src/space/AbstractSpace.cpp
-  src/space/Space2.cpp
-  src/space/Space3.cpp
-  src/space/Primitive.cpp
-  src/space/site/AbstractSite.cpp
-  src/space/site/Edge3.cpp
-  src/space/site/Edge2.cpp
-  src/space/site/Triangle3.cpp
-  src/space/site/Vertex3.cpp
-  src/space/site/Vertex2.cpp
-
-  src/voronoi/Cell.cpp
-  src/voronoi/CellPatch.cpp
-  src/voronoi/Diagram.cpp
-  src/voronoi/equisurface/AbstractBisector.cpp
-  src/voronoi/equisurface/Paraboloid.cpp
-  src/voronoi/equisurface/Plane.cpp
-)
+file(GLOB_RECURSE libyav_SRCS CONFIGURE_DEPENDS src/*.cpp)
 
 if (BUILD_LIBYAV_SHARED)
   add_library(libyav SHARED ${libyav_SRCS}

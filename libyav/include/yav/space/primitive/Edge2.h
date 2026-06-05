@@ -3,24 +3,22 @@
 
 #pragma once
 
-#include <array>
-
 #include "yav/geometry/Segment2.h"
-#include "yav/space/site/AbstractSite.h"
+#include "yav/space/primitive/AbstractPrimitive.h"
 
-namespace yav::space::site
+namespace yav::space::primitive
 {
 
 /** Edge site represented by two 3D endpoints. */
-class Edge2 final : public AbstractSite
+class Edge2 final : public AbstractPrimitive
 {
 public:
     explicit Edge2(const geometry::Segment2& segment);
 
-    const geometry::Segment2& segment() const;
+    virtual double distanceTo(const geometry::Point2& point) const override;
 
 private:
     geometry::Segment2 segment_;
 };
 
-} // namespace yav::space::site
+} // namespace yav::space::primitive

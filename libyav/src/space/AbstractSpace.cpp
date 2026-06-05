@@ -3,27 +3,21 @@
 
 #include "yav/space/AbstractSpace.h"
 
-#include <algorithm>
-
-#include <spdlog/spdlog.h>
-
-#include "yav/space/Primitive.h"
-#include "yav/space/site/AbstractSite.h"
-
 
 namespace yav::space
 {
 
 AbstractSpace::AbstractSpace() = default;
 
-const std::vector<std::shared_ptr<Primitive>>& AbstractSpace::primitives() const
+const std::vector<std::shared_ptr<primitive::AbstractPrimitive>>& AbstractSpace::primitives() const
 {
     return primitives_;
 }
 
-std::shared_ptr<Primitive> AbstractSpace::addPrimitive(const std::vector<yav::space::site::AbstractSite::Ptr>& sites)
+std::shared_ptr<primitive::AbstractPrimitive> AbstractSpace::addPrimitive(const std::shared_ptr<primitive::AbstractPrimitive>& primitive)
 {
-    return primitives_.emplace_back(std::make_shared<Primitive>(sites));
+    primitives_.push_back(primitive);
+    return primitive;
 }
 
 } // namespace yav::space

@@ -17,6 +17,10 @@ using Point2 = boost::geometry::model::point<double, 2, boost::geometry::cs::car
 
 yav::geometry::Point2 operator-(const yav::geometry::Point2& lhs, const yav::geometry::Point2& rhs);
 
+yav::geometry::Point2 operator+(const yav::geometry::Point2& lhs, const yav::geometry::Point2& rhs);
+
+yav::geometry::Point2 operator*(const yav::geometry::Point2& point, const double scale);
+
 template<>
 struct fmt::formatter<yav::geometry::Point2> : formatter<std::string_view>
 {

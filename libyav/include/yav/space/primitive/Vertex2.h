@@ -4,21 +4,21 @@
 #pragma once
 
 #include "yav/geometry/Point2.h"
-#include "yav/space/site/AbstractSite.h"
+#include "yav/space/primitive/AbstractPrimitive.h"
 
-namespace yav::space::site
+namespace yav::space::primitive
 {
 
 /** Vertex site represented by a single position in 3D. */
-class Vertex2 final : public AbstractSite
+class Vertex2 final : public AbstractPrimitive
 {
 public:
     explicit Vertex2(const geometry::Point2& position);
 
-    const geometry::Point2& position() const;
+    virtual double distanceTo(const geometry::Point2& point) const override;
 
 private:
     geometry::Point2 position_;
 };
 
-} // namespace yav::space::site
+} // namespace yav::space::primitive

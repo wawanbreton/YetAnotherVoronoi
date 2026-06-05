@@ -8,7 +8,16 @@
 namespace yav::generator
 {
 
-OctreeNode2::OctreeNode2() = default;
+const std::array<geometry::Point2, 4> OctreeNode2::corner_deltas_{ geometry::Point2(-1, -1),
+                                                                   geometry::Point2(-1, 1),
+                                                                   geometry::Point2(1, -1),
+                                                                   geometry::Point2(1, 1) };
+
+OctreeNode2::OctreeNode2(const geometry::Point2& center, const double width)
+    : center_(center)
+    , width_(width)
+{
+}
 
 bool OctreeNode2::isLeaf() const
 {
@@ -19,9 +28,12 @@ void OctreeNode2::split()
 {
     children_.resize(4);
 
+    const double center_distance = std::sqrt(width_ / 4.0);
+    const double child_width = width_ / 2.0;
+
     for (size_t i = 0; i < children_.size(); ++i)
     {
-        auto child = std::make_shared<OctreeNode2>();
+        auto child = std::make_shared<OctreeNode2>(center_ + corner_deltas_[i] * center_distance, child_width);
         child->setClosestPrimitive(i, corners_closest_primitives_[i]);
         children_[i] = child;
     }
