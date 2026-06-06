@@ -3,11 +3,11 @@
 
 #include "yav/space/site/AbstractSite.h"
 
+#include <spdlog/spdlog.h>
+
 namespace yav::space::site
 {
 
 AbstractSite::AbstractSite() = default;
-
-AbstractSite::~AbstractSite() = default;
 
 } // namespace yav::space::site

@@ -12,6 +12,8 @@
 
 #include "yav/geometry/Point3.h"
 #include "yav/geometry/Segment3.h"
+#include "yav/voronoi/Cell.h"
+#include "yav/voronoi/CellPatch.h"
 #include "yav/yav.hpp"
 
 
@@ -127,6 +129,14 @@ int main(int argc, char** argv)
 
     yav::generator::Generator generator;
     const yav::voronoi::Diagram voronoi_diagram = generator.generate(space);
+
+    spdlog::info("Generated {} cells", voronoi_diagram.cells().size());
+    for (const yav::voronoi::Cell::Ptr& cell : voronoi_diagram.cells())
+    {
+        for (const yav::voronoi::CellPatch::Ptr& patch : cell->patches())
+        {
+        }
+    }
 
     return 0;
 }

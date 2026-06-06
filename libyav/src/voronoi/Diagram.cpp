@@ -3,45 +3,12 @@
 
 #include "yav/voronoi/Diagram.h"
 
-#include <ranges>
+#include <spdlog/spdlog.h>
 
-#include "yav/voronoi/Cell.h"
 
 namespace yav::voronoi
 {
 
 Diagram::Diagram() = default;
-
-void Diagram::addCell(const std::shared_ptr<Cell>& cell)
-{
-    if (! cell)
-    {
-        return;
-    }
-
-    cells_.push_back(cell);
-}
-
-std::shared_ptr<Cell> Diagram::findCell(const std::shared_ptr<space::Primitive>& primitive) const
-{
-    const auto matching_cell_iterator = std::ranges::find_if(
-        cells_,
-        [&primitive](const std::shared_ptr<Cell>& cell)
-        {
-            return cell && cell->primitive() == primitive;
-        });
-
-    if (matching_cell_iterator == cells_.end())
-    {
-        return nullptr;
-    }
-
-    return *matching_cell_iterator;
-}
-
-const std::vector<std::shared_ptr<Cell>>& Diagram::cells() const
-{
-    return cells_;
-}
 
 } // namespace yav::voronoi

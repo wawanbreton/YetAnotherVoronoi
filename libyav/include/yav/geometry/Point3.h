@@ -15,6 +15,8 @@ using Point3 = boost::geometry::model::point<double, 3, boost::geometry::cs::car
 } // namespace yav::geometry
 
 
+yav::geometry::Point3 operator-(const yav::geometry::Point3& lhs, const yav::geometry::Point3& rhs);
+
 template<>
 struct fmt::formatter<yav::geometry::Point3> : formatter<std::string_view>
 {

@@ -3,19 +3,21 @@
 
 #pragma once
 
-#include "yav/space/site/SiteKind.h"
+#include <memory>
+
+#include "yav/geometry/Point2.h"
 
 namespace yav::space::site
 {
 
-/** Base polymorphic site for geometric primitives participating in Voronoi generation. */
 class AbstractSite
 {
 public:
-    AbstractSite();
-    virtual ~AbstractSite();
+    using Ptr = std::shared_ptr<AbstractSite>;
 
-    virtual SiteKind siteKind() const = 0;
+    AbstractSite();
+
+    virtual double distanceTo(const geometry::Point2& point) const = 0;
 };
 
 } // namespace yav::space::site
