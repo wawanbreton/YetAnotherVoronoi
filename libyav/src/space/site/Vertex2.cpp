@@ -19,4 +19,14 @@ double Vertex2::distanceTo(const geometry::Point2& point) const
     return boost::geometry::distance(position_, point);
 }
 
+geometry::Point2 Vertex2::basePoint() const
+{
+    return position_;
+}
+
+std::vector<geometry::Point2> Vertex2::definingPoints() const
+{
+    return { position_ };
+}
+
 } // namespace yav::space::site

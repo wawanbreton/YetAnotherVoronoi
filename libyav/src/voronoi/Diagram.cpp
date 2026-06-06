@@ -5,10 +5,54 @@
 
 #include <spdlog/spdlog.h>
 
+#include "yav/voronoi/Cell.h"
+
 
 namespace yav::voronoi
 {
 
 Diagram::Diagram() = default;
+
+void Diagram::addBoundarySegment(
+    const geometry::Segment2& segment,
+    const std::vector<std::shared_ptr<space::site::AbstractSite>>& adjacent_sites)
+{
+    boundary_segments_.push_back(segment);
+
+    for (const auto& adjacent_site : adjacent_sites)
+    {
+        if (! adjacent_site)
+        {
+            spdlog::error("Ignoring boundary segment attachment to a null site");
+            continue;
+        }
+
+        findOrCreateCell(adjacent_site)->addBoundarySegment(segment);
+    }
+}
+
+const std::vector<geometry::Segment2>& Diagram::boundarySegments() const
+{
+    return boundary_segments_;
+}
+
+const std::vector<std::shared_ptr<Cell>>& Diagram::cells() const
+{
+    return cells_;
+}
+
+std::shared_ptr<Cell> Diagram::findOrCreateCell(const std::shared_ptr<space::site::AbstractSite>& site)
+{
+    const auto map_it = cells_by_site_.find(site.get());
+    if (map_it != cells_by_site_.end())
+    {
+        return map_it->second;
+    }
+
+    auto cell = std::make_shared<Cell>(site);
+    cells_by_site_.insert({ site.get(), cell });
+    cells_.push_back(cell);
+    return cell;
+}
 
 } // namespace yav::voronoi

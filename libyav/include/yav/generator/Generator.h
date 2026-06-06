@@ -16,20 +16,22 @@ class Diagram;
 
 namespace space
 {
-class AbstractSpace;
 class Space2;
 } // namespace space
 
 namespace generator
 {
 
-/** Main analytical Voronoi pipeline orchestrating bisectors and cell patches. */
+/** Main analytical Voronoi pipeline orchestrating the 2D quadtree approximation. */
 class Generator
 {
 public:
     Generator();
 
     voronoi::Diagram generate(const space::Space2& input_space) const;
+
+private:
+    static constexpr size_t maximum_quadtree_level_ = 6;
 };
 
 } // namespace generator
