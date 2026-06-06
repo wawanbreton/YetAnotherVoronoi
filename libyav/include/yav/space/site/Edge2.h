@@ -4,13 +4,13 @@
 #pragma once
 
 #include "yav/geometry/Segment2.h"
-#include "yav/space/primitive/AbstractPrimitive.h"
+#include "yav/space/site/AbstractSite.h"
 
-namespace yav::space::primitive
+namespace yav::space::site
 {
 
 /** Edge site represented by two 3D endpoints. */
-class Edge2 final : public AbstractPrimitive
+class Edge2 final : public AbstractSite
 {
 public:
     explicit Edge2(const geometry::Segment2& segment);
@@ -21,4 +21,4 @@ private:
     geometry::Segment2 segment_;
 };
 
-} // namespace yav::space::primitive
+} // namespace yav::space::site

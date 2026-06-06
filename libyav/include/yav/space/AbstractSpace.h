@@ -14,9 +14,9 @@ namespace site
 class AbstractSite;
 }
 
-namespace primitive
+namespace site
 {
-class AbstractPrimitive;
+class AbstractSite;
 }
 
 /** Top-level user input container for Voronoi diagram generation. */
@@ -25,13 +25,13 @@ class AbstractSpace
 public:
     AbstractSpace();
 
-    const std::vector<std::shared_ptr<primitive::AbstractPrimitive>>& primitives() const;
+    const std::vector<std::shared_ptr<site::AbstractSite>>& primitives() const;
 
 protected:
-    std::shared_ptr<primitive::AbstractPrimitive> addPrimitive(const std::shared_ptr<primitive::AbstractPrimitive>& primitive);
+    std::shared_ptr<site::AbstractSite> addSite(const std::shared_ptr<site::AbstractSite>& site);
 
 private:
-    std::vector<std::shared_ptr<primitive::AbstractPrimitive>> primitives_;
+    std::vector<std::shared_ptr<site::AbstractSite>> sites_;
 };
 
 } // namespace yav::space

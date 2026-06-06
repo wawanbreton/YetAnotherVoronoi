@@ -29,7 +29,7 @@ file(GLOB_RECURSE libyav_SRCS CONFIGURE_DEPENDS src/*.cpp)
 
 if (BUILD_LIBYAV_SHARED)
   add_library(libyav SHARED ${libyav_SRCS}
-    include/yav/generator/ClosestPrimitive.h)
+    include/yav/generator/ClosestSite.h)
   if (WIN32)
     set_target_properties(libyav PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
   endif ()
