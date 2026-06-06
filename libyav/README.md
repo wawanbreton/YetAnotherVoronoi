@@ -5,7 +5,6 @@ Minimal C++ library target for YetAnotherVoronoi.
 ## Dependencies
 
 - Boost headers (`boost::geometry`)
-- Armadillo (linear system solving)
 
 ## Build from root
 
