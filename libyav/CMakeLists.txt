@@ -25,6 +25,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(spdlog)
 
+FetchContent_Declare(
+  boost_geometry
+  GIT_REPOSITORY https://github.com/boostorg/geometry.git
+  GIT_TAG boost-1.91.0
+)
+
+FetchContent_MakeAvailable(boost_geometry)
+
 file(GLOB_RECURSE libyav_SRCS CONFIGURE_DEPENDS src/*.cpp)
 
 if (BUILD_LIBYAV_SHARED)
