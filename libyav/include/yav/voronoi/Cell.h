@@ -20,6 +20,8 @@ namespace yav::voronoi
 class Cell
 {
 public:
+    using Ptr = std::shared_ptr<Cell>;
+
     explicit Cell(const std::shared_ptr<space::site::AbstractSite>& site);
 
     const std::shared_ptr<space::site::AbstractSite>& site() const;

@@ -12,11 +12,12 @@
 #include <yav/space/Space2.h>
 #include <yav/space/site/Edge2.h>
 #include <yav/space/site/Vertex2.h>
+#include <yav/voronoi/Cell.h>
 #include <yav/voronoi/Diagram.h>
 
 
 VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
-    : min_zoom_(1)
+    : min_zoom_(35)
     , max_zoom_(40)
     , scene_(new QGraphicsScene(this))
 {
@@ -30,15 +31,27 @@ void VoronoiGraphicsView::setSpace(const yav::space::Space2& space)
     {
         if (const auto site_vertex2 = std::dynamic_pointer_cast<yav::space::site::Vertex2>(site))
         {
-            QRectF rect(0, 0, 0.1, 0.1);
+            QRectF rect(0, 0, 0.02, 0.02);
             rect.moveCenter(QPointF(site_vertex2->basePoint().get<0>(), site_vertex2->basePoint().get<1>()));
-            scene_->addEllipse(rect, Qt::NoPen, QBrush("#888888"));
+            scene_->addEllipse(rect, Qt::NoPen, QBrush("#e74c3c"));
         }
     }
 }
 
 void VoronoiGraphicsView::setDiagram(const yav::voronoi::Diagram& diagram)
 {
+    for (const yav::voronoi::Cell::Ptr& cell : diagram.cells())
+    {
+        for (const yav::geometry::Segment2& segment : cell->boundarySegments())
+        {
+            scene_->addLine(
+                segment.first.get<0>(),
+                segment.first.get<1>(),
+                segment.second.get<0>(),
+                segment.second.get<1>(),
+                QPen(QColor("#2ecc71"), 0.01));
+        }
+    }
 }
 
 void VoronoiGraphicsView::autoFit()
@@ -74,7 +87,7 @@ qreal VoronoiGraphicsView::getScaleFactor() const
 
 void VoronoiGraphicsView::wheelEvent(QWheelEvent* event)
 {
-    zoom(getActualZoom() + event->angleDelta().y() / 120);
+    zoom(getActualZoom() + event->angleDelta().y() / 200.0);
 }
 
 void VoronoiGraphicsView::mousePressEvent(QMouseEvent* event)
