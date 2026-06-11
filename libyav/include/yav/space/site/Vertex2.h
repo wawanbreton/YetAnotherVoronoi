@@ -9,13 +9,15 @@
 namespace yav::space::site
 {
 
-/** Vertex site represented by a single position in 3D. */
+/** Vertex site represented by a single position in 2D. */
 class Vertex2 final : public AbstractSite
 {
 public:
     explicit Vertex2(const geometry::Point2& position);
 
     virtual double distanceTo(const geometry::Point2& point) const override;
+    virtual geometry::Point2 basePoint() const override;
+    virtual std::vector<geometry::Point2> definingPoints() const override;
 
 private:
     geometry::Point2 position_;

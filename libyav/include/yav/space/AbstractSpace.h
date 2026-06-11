@@ -25,7 +25,7 @@ class AbstractSpace
 public:
     AbstractSpace();
 
-    const std::vector<std::shared_ptr<site::AbstractSite>>& primitives() const;
+    const std::vector<std::shared_ptr<site::AbstractSite>>& sites() const;
 
 protected:
     std::shared_ptr<site::AbstractSite> addSite(const std::shared_ptr<site::AbstractSite>& site);

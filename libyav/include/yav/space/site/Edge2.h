@@ -9,13 +9,15 @@
 namespace yav::space::site
 {
 
-/** Edge site represented by two 3D endpoints. */
+/** Segment site represented by two 2D endpoints. */
 class Edge2 final : public AbstractSite
 {
 public:
     explicit Edge2(const geometry::Segment2& segment);
 
     virtual double distanceTo(const geometry::Point2& point) const override;
+    virtual geometry::Point2 basePoint() const override;
+    virtual std::vector<geometry::Point2> definingPoints() const override;
 
 private:
     geometry::Segment2 segment_;

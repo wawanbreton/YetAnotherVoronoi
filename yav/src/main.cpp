@@ -10,10 +10,12 @@
 
 #include <spdlog/spdlog.h>
 
+#include "yav/generator/Generator.h"
 #include "yav/geometry/Point3.h"
 #include "yav/geometry/Segment3.h"
+#include "yav/space/Space2.h"
 #include "yav/voronoi/Cell.h"
-#include "yav/voronoi/CellPatch.h"
+#include "yav/voronoi/Diagram.h"
 #include "yav/yav.hpp"
 
 
@@ -52,7 +54,7 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    yav::space::Space space;
+    yav::space::Space2 space;
     std::set<int> used_vertices;
     std::set<std::pair<int, int>> used_edges;
     const rapidobj::Array<float>& positions = result.attributes.positions;
@@ -66,64 +68,64 @@ int main(int argc, char** argv)
     };
 
     // Triangles
-    for (const rapidobj::Shape& shape : result.shapes)
-    {
-        size_t offset = 0;
-        for (const uint8_t face_num_vertices : shape.mesh.num_face_vertices)
-        {
-            if (face_num_vertices == 3)
-            {
-                const rapidobj::Index& idx1 = shape.mesh.indices[offset + 0];
-                const rapidobj::Index& idx2 = shape.mesh.indices[offset + 1];
-                const rapidobj::Index& idx3 = shape.mesh.indices[offset + 2];
+    // for (const rapidobj::Shape& shape : result.shapes)
+    // {
+    //     size_t offset = 0;
+    //     for (const uint8_t face_num_vertices : shape.mesh.num_face_vertices)
+    //     {
+    //         if (face_num_vertices == 3)
+    //         {
+    //             const rapidobj::Index& idx1 = shape.mesh.indices[offset + 0];
+    //             const rapidobj::Index& idx2 = shape.mesh.indices[offset + 1];
+    //             const rapidobj::Index& idx3 = shape.mesh.indices[offset + 2];
 
-                space.addFace({ point_at_index(idx1), point_at_index(idx2), point_at_index(idx3) });
+    //             space.addFace({ point_at_index(idx1), point_at_index(idx2), point_at_index(idx3) });
 
-                used_vertices.insert(idx1.position_index);
-                used_vertices.insert(idx2.position_index);
-                used_vertices.insert(idx3.position_index);
-                used_edges.insert({ idx1.position_index, idx2.position_index });
-                used_edges.insert({ idx2.position_index, idx3.position_index });
-                used_edges.insert({ idx3.position_index, idx1.position_index });
-                used_edges.insert({ idx2.position_index, idx1.position_index });
-                used_edges.insert({ idx3.position_index, idx2.position_index });
-                used_edges.insert({ idx1.position_index, idx3.position_index });
-            }
+    //             used_vertices.insert(idx1.position_index);
+    //             used_vertices.insert(idx2.position_index);
+    //             used_vertices.insert(idx3.position_index);
+    //             used_edges.insert({ idx1.position_index, idx2.position_index });
+    //             used_edges.insert({ idx2.position_index, idx3.position_index });
+    //             used_edges.insert({ idx3.position_index, idx1.position_index });
+    //             used_edges.insert({ idx2.position_index, idx1.position_index });
+    //             used_edges.insert({ idx3.position_index, idx2.position_index });
+    //             used_edges.insert({ idx1.position_index, idx3.position_index });
+    //         }
 
-            offset += face_num_vertices;
-        }
-    }
+    //         offset += face_num_vertices;
+    //     }
+    // }
 
     // Loose edges
-    for (const rapidobj::Shape& shape : result.shapes)
-    {
-        size_t offset = 0;
-        for (const uint8_t line_num_vertices : shape.lines.num_line_vertices)
-        {
-            for (uint8_t i = 0; i < line_num_vertices - 1; ++i)
-            {
-                const rapidobj::Index& idx1 = shape.lines.indices[offset + i];
-                const rapidobj::Index& idx2 = shape.lines.indices[offset + i + 1];
+    // for (const rapidobj::Shape& shape : result.shapes)
+    // {
+    //     size_t offset = 0;
+    //     for (const uint8_t line_num_vertices : shape.lines.num_line_vertices)
+    //     {
+    //         for (uint8_t i = 0; i < line_num_vertices - 1; ++i)
+    //         {
+    //             const rapidobj::Index& idx1 = shape.lines.indices[offset + i];
+    //             const rapidobj::Index& idx2 = shape.lines.indices[offset + i + 1];
 
-                if (! std::ranges::contains(used_edges, std::make_pair(idx1.position_index, idx2.position_index)))
-                {
-                    space.addEdge({ point_at_index(idx1), point_at_index(idx2) });
+    //             if (! std::ranges::contains(used_edges, std::make_pair(idx1.position_index, idx2.position_index)))
+    //             {
+    //                 space.addEdge({ point_at_index(idx1), point_at_index(idx2) });
 
-                    used_vertices.insert(idx1.position_index);
-                    used_vertices.insert(idx2.position_index);
-                }
-            }
+    //                 used_vertices.insert(idx1.position_index);
+    //                 used_vertices.insert(idx2.position_index);
+    //             }
+    //         }
 
-            offset += line_num_vertices;
-        }
-    }
+    //         offset += line_num_vertices;
+    //     }
+    // }
 
     // Loose vertices
     for (const auto& [index, position] : result.attributes.positions | std::views::chunk(3) | std::views::enumerate)
     {
         if (! std::ranges::contains(used_vertices, index) && position.size() == 3)
         {
-            space.addVertex(yav::geometry::Point3(position[0], position[1], position[2]));
+            space.addVertex(yav::geometry::Point2(position[0], position[1]));
         }
     }
 
@@ -131,12 +133,6 @@ int main(int argc, char** argv)
     const yav::voronoi::Diagram voronoi_diagram = generator.generate(space);
 
     spdlog::info("Generated {} cells", voronoi_diagram.cells().size());
-    for (const yav::voronoi::Cell::Ptr& cell : voronoi_diagram.cells())
-    {
-        for (const yav::voronoi::CellPatch::Ptr& patch : cell->patches())
-        {
-        }
-    }
 
     return 0;
 }

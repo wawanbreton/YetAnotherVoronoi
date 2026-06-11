@@ -9,7 +9,7 @@ namespace yav::space
 
 AbstractSpace::AbstractSpace() = default;
 
-const std::vector<std::shared_ptr<site::AbstractSite>>& AbstractSpace::primitives() const
+const std::vector<std::shared_ptr<site::AbstractSite>>& AbstractSpace::sites() const
 {
     return sites_;
 }
