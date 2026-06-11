@@ -98,7 +98,7 @@ voronoi::Diagram Generator::generate(const space::Space2& input_space) const
 {
     voronoi::Diagram diagram;
 
-    if (input_space.primitives().empty())
+    if (input_space.sites().empty())
     {
         spdlog::warn("Requested Voronoi generation on an empty 2D space");
         return diagram;
@@ -120,7 +120,7 @@ voronoi::Diagram Generator::generate(const space::Space2& input_space) const
 
     spdlog::info(
         "Generated 2D Voronoi approximation from {} sites and {} quadtree leaves",
-        input_space.primitives().size(),
+        input_space.sites().size(),
         leaves.size());
 
     return diagram;

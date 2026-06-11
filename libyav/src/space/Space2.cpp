@@ -23,7 +23,7 @@ std::shared_ptr<site::AbstractSite> Space2::addEdge(const geometry::Segment2& ed
 
 std::shared_ptr<site::AbstractSite> Space2::addVertex(const geometry::Point2& vertex)
 {
-    spdlog::debug("Add vertex3 {}", vertex);
+    spdlog::debug("Add vertex2 {}", vertex);
 
     return addSite(std::make_shared<site::Vertex2>(vertex));
 }
@@ -32,7 +32,7 @@ generator::ClosestSite Space2::findClosestSite(const geometry::Point2& position)
 {
     double closest_distance;
     site::AbstractSite::Ptr closest_primitive;
-    for (const site::AbstractSite::Ptr& primitive : primitives())
+    for (const site::AbstractSite::Ptr& primitive : sites())
     {
         const double distance = primitive->distanceTo(position);
         if (! closest_primitive || distance < closest_distance)

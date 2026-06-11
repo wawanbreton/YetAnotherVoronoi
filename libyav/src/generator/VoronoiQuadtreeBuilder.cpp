@@ -62,7 +62,7 @@ std::vector<VoronoiQuadtreeNode::Ptr> VoronoiQuadtreeBuilder::build(const space:
 
 VoronoiQuadtreeNode::Ptr VoronoiQuadtreeBuilder::initialize(const space::Space2& input_space) const
 {
-    const auto& sites = input_space.primitives();
+    const auto& sites = input_space.sites();
     if (sites.empty())
     {
         spdlog::warn("Cannot initialize quadtree on an empty site set");
