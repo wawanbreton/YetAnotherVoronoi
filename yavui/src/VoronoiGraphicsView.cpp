@@ -18,7 +18,7 @@
 
 VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
     : min_zoom_(35)
-    , max_zoom_(40)
+    , max_zoom_(50)
     , scene_(new QGraphicsScene(this))
 {
     resetZoom();

@@ -3,12 +3,13 @@
 
 #include "yav/generator/Generator.h"
 
+#include <algorithm>
 #include <array>
+#include <queue>
 #include <unordered_set>
 
 #include <spdlog/spdlog.h>
 
-#include "yav/generator/VoronoiQuadtreeBuilder.h"
 #include "yav/generator/VoronoiQuadtreeNode.h"
 #include "yav/space/Space2.h"
 #include "yav/space/site/AbstractSite.h"
@@ -18,12 +19,32 @@
 namespace yav::generator
 {
 
-namespace
-{
+Generator::Generator() = default;
 
-std::vector<std::shared_ptr<space::site::AbstractSite>> uniqueSitesFromCrossings(
-    const std::vector<std::pair<std::shared_ptr<space::site::AbstractSite>, std::shared_ptr<space::site::AbstractSite>>>&
-        edge_site_pairs)
+voronoi::Diagram Generator::generate(const space::Space2& input_space) const
+{
+    voronoi::Diagram diagram;
+
+    if (input_space.sites().empty())
+    {
+        spdlog::warn("Requested Voronoi generation on an empty 2D space");
+        return diagram;
+    }
+
+    const std::vector<VoronoiQuadtreeNode::Ptr> leaves = build(input_space);
+
+    for (const VoronoiQuadtreeNode::Ptr& leaf : leaves)
+    {
+        addApproximationFromLeaf(*leaf, diagram);
+    }
+
+    spdlog::info("Generated 2D Voronoi approximation from {} sites and {} quadtree leaves", input_space.sites().size(), leaves.size());
+
+    return diagram;
+}
+
+std::vector<std::shared_ptr<space::site::AbstractSite>> Generator::uniqueSitesFromCrossings(
+    const std::vector<std::pair<std::shared_ptr<space::site::AbstractSite>, std::shared_ptr<space::site::AbstractSite>>>& edge_site_pairs)
 {
     std::unordered_set<const space::site::AbstractSite*> unique_sites;
     std::vector<std::shared_ptr<space::site::AbstractSite>> result;
@@ -44,7 +65,7 @@ std::vector<std::shared_ptr<space::site::AbstractSite>> uniqueSitesFromCrossings
     return result;
 }
 
-void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, voronoi::Diagram& diagram)
+void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, voronoi::Diagram& diagram)
 {
     static constexpr std::array<std::pair<size_t, size_t>, 4> edge_corners{ {
         { 0, 1 },
@@ -59,8 +80,8 @@ void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, voronoi::Dia
     for (size_t edge_index = 0; edge_index < edge_corners.size(); ++edge_index)
     {
         const auto [first_corner_index, second_corner_index] = edge_corners[edge_index];
-        const auto first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index).site;
-        const auto second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index).site;
+        const space::site::AbstractSite::Ptr first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index).site;
+        const space::site::AbstractSite::Ptr second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index).site;
 
         if (! first_corner_site || ! second_corner_site || first_corner_site == second_corner_site)
         {
@@ -90,40 +111,193 @@ void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, voronoi::Dia
     }
 }
 
-} // namespace
-
-Generator::Generator() = default;
-
-voronoi::Diagram Generator::generate(const space::Space2& input_space) const
+std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const space::Space2& input_space) const
 {
-    voronoi::Diagram diagram;
-
-    if (input_space.sites().empty())
+    auto root = initialize(input_space);
+    if (! root)
     {
-        spdlog::warn("Requested Voronoi generation on an empty 2D space");
-        return diagram;
+        return {};
     }
 
-    VoronoiQuadtreeBuilder quadtree_builder(maximum_quadtree_level_);
-    const auto leaves = quadtree_builder.build(input_space);
+    std::vector<VoronoiQuadtreeNode::Ptr> leaves;
+    std::queue<VoronoiQuadtreeNode::Ptr> node_queue;
+    node_queue.push(root);
 
-    for (const auto& leaf : leaves)
+    while (! node_queue.empty())
     {
-        if (! leaf)
+        const auto node = node_queue.front();
+        node_queue.pop();
+
+        update(*node);
+
+        if (isLeaf(*node))
         {
-            spdlog::error("Encountered null quadtree leaf during diagram extraction");
+            propagate(*node, leaves);
+            compact(node->parent());
+            leaves.push_back(node);
             continue;
         }
 
-        addApproximationFromLeaf(*leaf, diagram);
+        subdivide(*node);
+        for (const auto& child : node->children())
+        {
+            propagate(*child, leaves);
+            node_queue.push(child);
+        }
     }
 
-    spdlog::info(
-        "Generated 2D Voronoi approximation from {} sites and {} quadtree leaves",
-        input_space.sites().size(),
-        leaves.size());
+    return leaves;
+}
 
-    return diagram;
+VoronoiQuadtreeNode::Ptr Generator::initialize(const space::Space2& input_space) const
+{
+    const auto& sites = input_space.sites();
+    if (sites.empty())
+    {
+        spdlog::warn("Cannot initialize quadtree on an empty site set");
+        return nullptr;
+    }
+
+    double min_x = std::numeric_limits<double>::infinity();
+    double min_y = std::numeric_limits<double>::infinity();
+    double max_x = -std::numeric_limits<double>::infinity();
+    double max_y = -std::numeric_limits<double>::infinity();
+
+    for (const auto& site : sites)
+    {
+        if (! site)
+        {
+            spdlog::error("Encountered null site while initializing the quadtree");
+            continue;
+        }
+
+        for (const auto& point : site->definingPoints())
+        {
+            min_x = std::min(min_x, point.get<0>());
+            min_y = std::min(min_y, point.get<1>());
+            max_x = std::max(max_x, point.get<0>());
+            max_y = std::max(max_y, point.get<1>());
+        }
+    }
+
+    if (! std::isfinite(min_x) || ! std::isfinite(min_y) || ! std::isfinite(max_x) || ! std::isfinite(max_y))
+    {
+        spdlog::error("Failed to estimate quadtree bounds from the input sites");
+        return nullptr;
+    }
+
+    const double span_x = max_x - min_x;
+    const double span_y = max_y - min_y;
+    const double max_span = std::max(span_x, span_y);
+    const double width = std::max(max_span * 1.2, 1.0);
+    const geometry::Point2 center((min_x + max_x) / 2.0, (min_y + max_y) / 2.0);
+
+    auto root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
+    root->setCandidateSites(sites);
+    return root;
+}
+
+void Generator::update(VoronoiQuadtreeNode& node) const
+{
+    for (size_t corner_index = 0; corner_index < node.cornerClosestSites().size(); ++corner_index)
+    {
+        const geometry::Point2 corner = node.cornerAt(corner_index);
+        ClosestSite closest_site{ nullptr, std::numeric_limits<double>::infinity() };
+
+        for (const auto& site : node.candidateSites())
+        {
+            if (! site)
+            {
+                spdlog::error("Encountered null candidate site while updating a quadtree node");
+                continue;
+            }
+
+            const double distance = site->distanceTo(corner);
+            if (distance < closest_site.distance)
+            {
+                closest_site.site = site;
+                closest_site.distance = distance;
+            }
+        }
+
+        node.setCornerClosestSite(corner_index, closest_site);
+    }
+}
+
+bool Generator::isLeaf(const VoronoiQuadtreeNode& node) const
+{
+    return node.level() >= maximum_level_ || node.isTerminal();
+}
+
+void Generator::subdivide(VoronoiQuadtreeNode& node) const
+{
+    node.split();
+}
+
+void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQuadtreeNode::Ptr>& leaves) const
+{
+    constexpr double point_tolerance = 1e-9;
+
+    for (auto& leaf : leaves)
+    {
+        if (! leaf)
+        {
+            continue;
+        }
+
+        for (size_t node_corner_index = 0; node_corner_index < node.cornerClosestSites().size(); ++node_corner_index)
+        {
+            const geometry::Point2 node_corner = node.cornerAt(node_corner_index);
+            if (! leaf->containsPoint(node_corner, point_tolerance))
+            {
+                continue;
+            }
+
+            for (size_t leaf_corner_index = 0; leaf_corner_index < leaf->cornerClosestSites().size(); ++leaf_corner_index)
+            {
+                const geometry::Point2 leaf_corner = leaf->cornerAt(leaf_corner_index);
+                if (std::abs(node_corner.get<0>() - leaf_corner.get<0>()) > point_tolerance
+                    || std::abs(node_corner.get<1>() - leaf_corner.get<1>()) > point_tolerance)
+                {
+                    continue;
+                }
+
+                const auto node_corner_site = node.cornerClosestSiteAt(node_corner_index);
+                const auto leaf_corner_site = leaf->cornerClosestSiteAt(leaf_corner_index);
+
+                if (node_corner_site.distance < leaf_corner_site.distance)
+                {
+                    leaf->setCornerClosestSite(leaf_corner_index, node_corner_site);
+                }
+                else
+                {
+                    node.setCornerClosestSite(node_corner_index, leaf_corner_site);
+                }
+            }
+        }
+    }
+}
+
+void Generator::compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) const
+{
+    if (! parent)
+    {
+        return;
+    }
+
+    const bool are_all_children_terminal = std::ranges::all_of(
+        parent->children(),
+        [](const VoronoiQuadtreeNode::Ptr& child)
+        {
+            return child && child->isTerminal();
+        });
+
+    if (! are_all_children_terminal)
+    {
+        return;
+    }
+
+    // Intentional no-op in this 2D prototype: pruning removes per-child boundary detail needed for extraction.
 }
 
 } // namespace yav::generator
