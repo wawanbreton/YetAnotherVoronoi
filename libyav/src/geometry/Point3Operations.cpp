@@ -10,7 +10,7 @@
 #include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/core/access.hpp>
 
-namespace yav::geometry
+namespace yav
 {
 
 Point3 Point3Operations::midpoint(const Point3& first_value, const Point3& second_value)
@@ -26,18 +26,18 @@ double Point3Operations::norm(const Point3& value)
     return std::sqrt(boost::geometry::dot_product(value, value));
 }
 
-double Point3Operations::meanZFromSegment(const geometry::Segment3& segment)
+double Point3Operations::meanZFromSegment(const Segment3& segment)
 {
     Point3 centroid;
     boost::geometry::centroid(segment, centroid);
     return boost::geometry::get<2>(centroid);
 }
 
-double Point3Operations::meanZFromTriangle(const geometry::Triangle3& triangle)
+double Point3Operations::meanZFromTriangle(const Triangle3& triangle)
 {
     Point3 centroid;
     boost::geometry::centroid(triangle, centroid);
     return boost::geometry::get<2>(centroid);
 }
 
-} // namespace yav::geometry
+} // namespace yav

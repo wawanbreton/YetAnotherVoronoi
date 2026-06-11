@@ -6,23 +6,23 @@
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 
 
-yav::geometry::Point2 operator-(const yav::geometry::Point2& lhs, const yav::geometry::Point2& rhs)
+yav::Point2 operator-(const yav::Point2& lhs, const yav::Point2& rhs)
 {
-    yav::geometry::Point2 result = lhs;
+    yav::Point2 result = lhs;
     boost::geometry::subtract_point(result, rhs);
     return result;
 }
 
-yav::geometry::Point2 operator+(const yav::geometry::Point2& lhs, const yav::geometry::Point2& rhs)
+yav::Point2 operator+(const yav::Point2& lhs, const yav::Point2& rhs)
 {
-    yav::geometry::Point2 result = lhs;
+    yav::Point2 result = lhs;
     boost::geometry::add_point(result, rhs);
     return result;
 }
 
-yav::geometry::Point2 operator*(const yav::geometry::Point2& point, const double scale)
+yav::Point2 operator*(const yav::Point2& point, const double scale)
 {
-    yav::geometry::Point2 result = point;
+    yav::Point2 result = point;
     boost::geometry::multiply_value(result, scale);
     return result;
 }

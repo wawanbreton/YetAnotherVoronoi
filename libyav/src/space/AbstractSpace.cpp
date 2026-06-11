@@ -4,20 +4,20 @@
 #include "yav/space/AbstractSpace.h"
 
 
-namespace yav::space
+namespace yav
 {
 
 AbstractSpace::AbstractSpace() = default;
 
-const std::vector<std::shared_ptr<site::AbstractSite>>& AbstractSpace::sites() const
+const std::vector<std::shared_ptr<AbstractSite>>& AbstractSpace::sites() const
 {
     return sites_;
 }
 
-std::shared_ptr<site::AbstractSite> AbstractSpace::addSite(const std::shared_ptr<site::AbstractSite>& site)
+std::shared_ptr<AbstractSite> AbstractSpace::addSite(const std::shared_ptr<AbstractSite>& site)
 {
     sites_.push_back(site);
     return site;
 }
 
-} // namespace yav::space
+} // namespace yav

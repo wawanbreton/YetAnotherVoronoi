@@ -5,9 +5,9 @@
 
 #include <spdlog/spdlog.h>
 
-namespace yav::space::site
+namespace yav
 {
 
 AbstractSite::AbstractSite() = default;
 
-} // namespace yav::space::site
+} // namespace yav

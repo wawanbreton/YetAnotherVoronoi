@@ -8,18 +8,18 @@
 #include <limits>
 
 
-namespace yav::generator
+namespace yav
 {
 
-const std::array<geometry::Point2, 4> VoronoiQuadtreeNode::corner_deltas_{
-    geometry::Point2(-1.0, -1.0),
-    geometry::Point2(1.0, -1.0),
-    geometry::Point2(-1.0, 1.0),
-    geometry::Point2(1.0, 1.0),
+const std::array<Point2, 4> VoronoiQuadtreeNode::corner_deltas_{
+    Point2(-1.0, -1.0),
+    Point2(1.0, -1.0),
+    Point2(-1.0, 1.0),
+    Point2(1.0, 1.0),
 };
 
 VoronoiQuadtreeNode::VoronoiQuadtreeNode(
-    const geometry::Point2& center,
+    const Point2& center,
     const double width,
     const size_t level,
     const std::shared_ptr<VoronoiQuadtreeNode>& parent)
@@ -28,7 +28,7 @@ VoronoiQuadtreeNode::VoronoiQuadtreeNode(
     , level_(level)
     , parent_(parent)
 {
-    for (auto& corner_closest_site : corner_closest_sites_)
+    for (ClosestSite& corner_closest_site : corner_closest_sites_)
     {
         corner_closest_site.site = nullptr;
         corner_closest_site.distance = std::numeric_limits<double>::infinity();
@@ -42,7 +42,7 @@ bool VoronoiQuadtreeNode::isLeaf() const
 
 bool VoronoiQuadtreeNode::isTerminal() const
 {
-    const auto& first_corner = corner_closest_sites_.front();
+    const ClosestSite& first_corner = corner_closest_sites_.front();
     if (! first_corner.site)
     {
         return true;
@@ -63,7 +63,7 @@ double VoronoiQuadtreeNode::width() const
     return width_;
 }
 
-const geometry::Point2& VoronoiQuadtreeNode::center() const
+const Point2& VoronoiQuadtreeNode::center() const
 {
     return center_;
 }
@@ -86,13 +86,13 @@ void VoronoiQuadtreeNode::split()
     const double child_width = width_ / 2.0;
     const double child_center_offset = width_ / 4.0;
 
-    for (const auto& corner_delta : corner_deltas_)
+    for (const Point2& corner_delta : corner_deltas_)
     {
-        const geometry::Point2 child_center(
+        const Point2 child_center(
             center_.get<0>() + corner_delta.get<0>() * child_center_offset,
             center_.get<1>() + corner_delta.get<1>() * child_center_offset);
 
-        auto child = std::make_shared<VoronoiQuadtreeNode>(child_center, child_width, level_ + 1, shared_from_this());
+        VoronoiQuadtreeNode::Ptr child = std::make_shared<VoronoiQuadtreeNode>(child_center, child_width, level_ + 1, shared_from_this());
         child->setCandidateSites(candidate_sites_);
         children_.push_back(child);
     }
@@ -103,30 +103,30 @@ void VoronoiQuadtreeNode::pruneChildren()
     children_.clear();
 }
 
-geometry::Point2 VoronoiQuadtreeNode::cornerAt(const size_t corner_index) const
+Point2 VoronoiQuadtreeNode::cornerAt(const size_t corner_index) const
 {
-    const auto& delta = corner_deltas_.at(corner_index);
-    return geometry::Point2(center_.get<0>() + delta.get<0>() * width_ / 2.0, center_.get<1>() + delta.get<1>() * width_ / 2.0);
+    const Point2& delta = corner_deltas_.at(corner_index);
+    return Point2(center_.get<0>() + delta.get<0>() * width_ / 2.0, center_.get<1>() + delta.get<1>() * width_ / 2.0);
 }
 
-geometry::Point2 VoronoiQuadtreeNode::edgeMidpointAt(const size_t edge_index) const
+Point2 VoronoiQuadtreeNode::edgeMidpointAt(const size_t edge_index) const
 {
     switch (edge_index)
     {
         case 0:
-            return geometry::Point2(center_.get<0>(), center_.get<1>() - width_ / 2.0);
+            return Point2(center_.get<0>(), center_.get<1>() - width_ / 2.0);
         case 1:
-            return geometry::Point2(center_.get<0>() + width_ / 2.0, center_.get<1>());
+            return Point2(center_.get<0>() + width_ / 2.0, center_.get<1>());
         case 2:
-            return geometry::Point2(center_.get<0>(), center_.get<1>() + width_ / 2.0);
+            return Point2(center_.get<0>(), center_.get<1>() + width_ / 2.0);
         case 3:
-            return geometry::Point2(center_.get<0>() - width_ / 2.0, center_.get<1>());
+            return Point2(center_.get<0>() - width_ / 2.0, center_.get<1>());
         default:
             return center_;
     }
 }
 
-bool VoronoiQuadtreeNode::containsPoint(const geometry::Point2& point, const double tolerance) const
+bool VoronoiQuadtreeNode::containsPoint(const Point2& point, const double tolerance) const
 {
     const double half_width = width_ / 2.0 + tolerance;
     const double dx = std::abs(point.get<0>() - center_.get<0>());
@@ -149,14 +149,14 @@ void VoronoiQuadtreeNode::setCornerClosestSite(const size_t corner_index, const 
     corner_closest_sites_.at(corner_index) = closest_site;
 }
 
-const std::vector<std::shared_ptr<space::site::AbstractSite>>& VoronoiQuadtreeNode::candidateSites() const
+const std::vector<std::shared_ptr<AbstractSite>>& VoronoiQuadtreeNode::candidateSites() const
 {
     return candidate_sites_;
 }
 
-void VoronoiQuadtreeNode::setCandidateSites(const std::vector<std::shared_ptr<space::site::AbstractSite>>& sites)
+void VoronoiQuadtreeNode::setCandidateSites(const std::vector<std::shared_ptr<AbstractSite>>& sites)
 {
     candidate_sites_ = sites;
 }
 
-} // namespace yav::generator
+} // namespace yav

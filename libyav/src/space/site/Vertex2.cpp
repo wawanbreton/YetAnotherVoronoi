@@ -6,27 +6,27 @@
 #include <boost/geometry/algorithms/distance.hpp>
 
 
-namespace yav::space::site
+namespace yav
 {
 
-Vertex2::Vertex2(const geometry::Point2& position)
+Vertex2::Vertex2(const Point2& position)
     : position_(position)
 {
 }
 
-double Vertex2::distanceTo(const geometry::Point2& point) const
+double Vertex2::distanceTo(const Point2& point) const
 {
     return boost::geometry::distance(position_, point);
 }
 
-geometry::Point2 Vertex2::basePoint() const
+Point2 Vertex2::basePoint() const
 {
     return position_;
 }
 
-std::vector<geometry::Point2> Vertex2::definingPoints() const
+std::vector<Point2> Vertex2::definingPoints() const
 {
     return { position_ };
 }
 
-} // namespace yav::space::site
+} // namespace yav

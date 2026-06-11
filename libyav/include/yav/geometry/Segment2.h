@@ -9,18 +9,18 @@
 
 #include "yav/geometry/Point2.h"
 
-namespace yav::geometry
+namespace yav
 {
 
 using Segment2 = boost::geometry::model::segment<Point2>;
 
-} // namespace yav::geometry
+} // namespace yav
 
 template<>
-struct fmt::formatter<yav::geometry::Segment2> : formatter<std::string_view>
+struct fmt::formatter<yav::Segment2> : formatter<std::string_view>
 {
     template<typename FormatContext>
-    auto format(const yav::geometry::Segment2& point, FormatContext& ctx) const
+    auto format(const yav::Segment2& point, FormatContext& ctx) const
     {
         return fmt::format_to(ctx.out(), "{}-{}", point.first, point.second);
     }

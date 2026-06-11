@@ -5,16 +5,16 @@
 
 #include <spdlog/spdlog.h>
 
-namespace yav::generator
+namespace yav
 {
 
-const std::array<geometry::Point2, 4> QuadtreeNode::corner_deltas_{ geometry::Point2(-1, -1),
-                                                                    geometry::Point2(-1, 1),
-                                                                    geometry::Point2(1, -1),
-                                                                    geometry::Point2(1, 1) };
+const std::array<Point2, 4> QuadtreeNode::corner_deltas_{ Point2(-1, -1),
+                                                          Point2(-1, 1),
+                                                          Point2(1, -1),
+                                                          Point2(1, 1) };
 const double QuadtreeNode::sqrt2{ std::sqrt(2.0) };
 
-QuadtreeNode::QuadtreeNode(const geometry::Point2& center, const double width)
+QuadtreeNode::QuadtreeNode(const Point2& center, const double width)
     : center_(center)
     , width_(width)
 {
@@ -38,10 +38,10 @@ void QuadtreeNode::split()
     }
 }
 
-geometry::Point2 QuadtreeNode::positionAt(const size_t position) const
+Point2 QuadtreeNode::positionAt(const size_t position) const
 {
     return center_ + corner_deltas_[position] * sqrt2 * (width_ / 2.0);
 }
 
 
-} // namespace yav::generator
+} // namespace yav

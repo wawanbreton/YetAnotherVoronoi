@@ -12,14 +12,7 @@
 namespace yav
 {
 
-namespace space::site
-{
 class AbstractSite;
-}
-
-namespace voronoi
-{
-
 class Cell;
 
 /** Full Voronoi diagram approximation composed of 2D boundary segments. */
@@ -29,20 +22,18 @@ public:
     Diagram();
 
     void addBoundarySegment(
-        const geometry::Segment2& segment,
-        const std::vector<std::shared_ptr<space::site::AbstractSite>>& adjacent_sites);
+        const Segment2& segment,
+        const std::vector<std::shared_ptr<AbstractSite>>& adjacent_sites);
 
-    const std::vector<geometry::Segment2>& boundarySegments() const;
+    const std::vector<Segment2>& boundarySegments() const;
     const std::vector<std::shared_ptr<Cell>>& cells() const;
 
 private:
-    std::shared_ptr<Cell> findOrCreateCell(const std::shared_ptr<space::site::AbstractSite>& site);
+    std::shared_ptr<Cell> findOrCreateCell(const std::shared_ptr<AbstractSite>& site);
 
-    std::vector<geometry::Segment2> boundary_segments_;
+    std::vector<Segment2> boundary_segments_;
     std::vector<std::shared_ptr<Cell>> cells_;
-    std::unordered_map<const space::site::AbstractSite*, std::shared_ptr<Cell>> cells_by_site_;
+    std::unordered_map<const AbstractSite*, std::shared_ptr<Cell>> cells_by_site_;
 };
-
-} // namespace voronoi
 
 } // namespace yav

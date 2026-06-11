@@ -16,14 +16,14 @@
 #include "yav/voronoi/Diagram.h"
 
 
-namespace yav::generator
+namespace yav
 {
 
 Generator::Generator() = default;
 
-voronoi::Diagram Generator::generate(const space::Space2& input_space) const
+Diagram Generator::generate(const Space2& input_space) const
 {
-    voronoi::Diagram diagram;
+    Diagram diagram;
 
     if (input_space.sites().empty())
     {
@@ -43,11 +43,11 @@ voronoi::Diagram Generator::generate(const space::Space2& input_space) const
     return diagram;
 }
 
-std::vector<std::shared_ptr<space::site::AbstractSite>> Generator::uniqueSitesFromCrossings(
-    const std::vector<std::pair<std::shared_ptr<space::site::AbstractSite>, std::shared_ptr<space::site::AbstractSite>>>& edge_site_pairs)
+std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
+    const std::vector<std::pair<std::shared_ptr<AbstractSite>, std::shared_ptr<AbstractSite>>>& edge_site_pairs)
 {
-    std::unordered_set<const space::site::AbstractSite*> unique_sites;
-    std::vector<std::shared_ptr<space::site::AbstractSite>> result;
+    std::unordered_set<const AbstractSite*> unique_sites;
+    std::vector<std::shared_ptr<AbstractSite>> result;
 
     for (const auto& [site_a, site_b] : edge_site_pairs)
     {
@@ -65,7 +65,7 @@ std::vector<std::shared_ptr<space::site::AbstractSite>> Generator::uniqueSitesFr
     return result;
 }
 
-void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, voronoi::Diagram& diagram)
+void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram)
 {
     static constexpr std::array<std::pair<size_t, size_t>, 4> edge_corners{ {
         { 0, 1 },
@@ -74,14 +74,14 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, v
         { 0, 2 },
     } };
 
-    std::vector<geometry::Point2> crossings;
-    std::vector<std::pair<std::shared_ptr<space::site::AbstractSite>, std::shared_ptr<space::site::AbstractSite>>> crossing_sites;
+    std::vector<Point2> crossings;
+    std::vector<std::pair<std::shared_ptr<AbstractSite>, std::shared_ptr<AbstractSite>>> crossing_sites;
 
     for (size_t edge_index = 0; edge_index < edge_corners.size(); ++edge_index)
     {
         const auto [first_corner_index, second_corner_index] = edge_corners[edge_index];
-        const space::site::AbstractSite::Ptr first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index).site;
-        const space::site::AbstractSite::Ptr second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index).site;
+        const AbstractSite::Ptr first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index).site;
+        const AbstractSite::Ptr second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index).site;
 
         if (! first_corner_site || ! second_corner_site || first_corner_site == second_corner_site)
         {
@@ -94,14 +94,14 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, v
 
     if (crossings.size() == 2)
     {
-        diagram.addBoundarySegment(geometry::Segment2(crossings[0], crossings[1]), uniqueSitesFromCrossings(crossing_sites));
+        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), uniqueSitesFromCrossings(crossing_sites));
         return;
     }
 
     if (crossings.size() == 4)
     {
-        diagram.addBoundarySegment(geometry::Segment2(crossings[0], crossings[1]), uniqueSitesFromCrossings(crossing_sites));
-        diagram.addBoundarySegment(geometry::Segment2(crossings[2], crossings[3]), uniqueSitesFromCrossings(crossing_sites));
+        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), uniqueSitesFromCrossings(crossing_sites));
+        diagram.addBoundarySegment(Segment2(crossings[2], crossings[3]), uniqueSitesFromCrossings(crossing_sites));
         return;
     }
 
@@ -111,9 +111,9 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, v
     }
 }
 
-std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const space::Space2& input_space) const
+std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space) const
 {
-    auto root = initialize(input_space);
+    VoronoiQuadtreeNode::Ptr root = initialize(input_space);
     if (! root)
     {
         return {};
@@ -125,7 +125,7 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const space::Space2& inpu
 
     while (! node_queue.empty())
     {
-        const auto node = node_queue.front();
+        const VoronoiQuadtreeNode::Ptr node = node_queue.front();
         node_queue.pop();
 
         update(*node);
@@ -139,7 +139,7 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const space::Space2& inpu
         }
 
         subdivide(*node);
-        for (const auto& child : node->children())
+        for (const VoronoiQuadtreeNode::Ptr& child : node->children())
         {
             propagate(*child, leaves);
             node_queue.push(child);
@@ -149,9 +149,9 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const space::Space2& inpu
     return leaves;
 }
 
-VoronoiQuadtreeNode::Ptr Generator::initialize(const space::Space2& input_space) const
+VoronoiQuadtreeNode::Ptr Generator::initialize(const Space2& input_space) const
 {
-    const auto& sites = input_space.sites();
+    const std::vector<std::shared_ptr<AbstractSite>>& sites = input_space.sites();
     if (sites.empty())
     {
         spdlog::warn("Cannot initialize quadtree on an empty site set");
@@ -163,7 +163,7 @@ VoronoiQuadtreeNode::Ptr Generator::initialize(const space::Space2& input_space)
     double max_x = -std::numeric_limits<double>::infinity();
     double max_y = -std::numeric_limits<double>::infinity();
 
-    for (const auto& site : sites)
+    for (const std::shared_ptr<AbstractSite>& site : sites)
     {
         if (! site)
         {
@@ -171,7 +171,7 @@ VoronoiQuadtreeNode::Ptr Generator::initialize(const space::Space2& input_space)
             continue;
         }
 
-        for (const auto& point : site->definingPoints())
+        for (const Point2& point : site->definingPoints())
         {
             min_x = std::min(min_x, point.get<0>());
             min_y = std::min(min_y, point.get<1>());
@@ -190,9 +190,9 @@ VoronoiQuadtreeNode::Ptr Generator::initialize(const space::Space2& input_space)
     const double span_y = max_y - min_y;
     const double max_span = std::max(span_x, span_y);
     const double width = std::max(max_span * 1.2, 1.0);
-    const geometry::Point2 center((min_x + max_x) / 2.0, (min_y + max_y) / 2.0);
+    const Point2 center((min_x + max_x) / 2.0, (min_y + max_y) / 2.0);
 
-    auto root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
+    VoronoiQuadtreeNode::Ptr root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
     root->setCandidateSites(sites);
     return root;
 }
@@ -201,10 +201,10 @@ void Generator::update(VoronoiQuadtreeNode& node) const
 {
     for (size_t corner_index = 0; corner_index < node.cornerClosestSites().size(); ++corner_index)
     {
-        const geometry::Point2 corner = node.cornerAt(corner_index);
+        const Point2 corner = node.cornerAt(corner_index);
         ClosestSite closest_site{ nullptr, std::numeric_limits<double>::infinity() };
 
-        for (const auto& site : node.candidateSites())
+        for (const std::shared_ptr<AbstractSite>& site : node.candidateSites())
         {
             if (! site)
             {
@@ -238,7 +238,7 @@ void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQu
 {
     constexpr double point_tolerance = 1e-9;
 
-    for (auto& leaf : leaves)
+    for (const VoronoiQuadtreeNode::Ptr& leaf : leaves)
     {
         if (! leaf)
         {
@@ -247,7 +247,7 @@ void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQu
 
         for (size_t node_corner_index = 0; node_corner_index < node.cornerClosestSites().size(); ++node_corner_index)
         {
-            const geometry::Point2 node_corner = node.cornerAt(node_corner_index);
+            const Point2 node_corner = node.cornerAt(node_corner_index);
             if (! leaf->containsPoint(node_corner, point_tolerance))
             {
                 continue;
@@ -255,15 +255,15 @@ void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQu
 
             for (size_t leaf_corner_index = 0; leaf_corner_index < leaf->cornerClosestSites().size(); ++leaf_corner_index)
             {
-                const geometry::Point2 leaf_corner = leaf->cornerAt(leaf_corner_index);
+                const Point2 leaf_corner = leaf->cornerAt(leaf_corner_index);
                 if (std::abs(node_corner.get<0>() - leaf_corner.get<0>()) > point_tolerance
                     || std::abs(node_corner.get<1>() - leaf_corner.get<1>()) > point_tolerance)
                 {
                     continue;
                 }
 
-                const auto node_corner_site = node.cornerClosestSiteAt(node_corner_index);
-                const auto leaf_corner_site = leaf->cornerClosestSiteAt(leaf_corner_index);
+                const ClosestSite node_corner_site = node.cornerClosestSiteAt(node_corner_index);
+                const ClosestSite leaf_corner_site = leaf->cornerClosestSiteAt(leaf_corner_index);
 
                 if (node_corner_site.distance < leaf_corner_site.distance)
                 {
@@ -300,4 +300,4 @@ void Generator::compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) cons
     // Intentional no-op in this 2D prototype: pruning removes per-child boundary detail needed for extraction.
 }
 
-} // namespace yav::generator
+} // namespace yav

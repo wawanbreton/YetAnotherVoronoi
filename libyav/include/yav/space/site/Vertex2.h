@@ -6,21 +6,21 @@
 #include "yav/geometry/Point2.h"
 #include "yav/space/site/AbstractSite.h"
 
-namespace yav::space::site
+namespace yav
 {
 
 /** Vertex site represented by a single position in 2D. */
 class Vertex2 final : public AbstractSite
 {
 public:
-    explicit Vertex2(const geometry::Point2& position);
+    explicit Vertex2(const Point2& position);
 
-    virtual double distanceTo(const geometry::Point2& point) const override;
-    virtual geometry::Point2 basePoint() const override;
-    virtual std::vector<geometry::Point2> definingPoints() const override;
+    virtual double distanceTo(const Point2& point) const override;
+    virtual Point2 basePoint() const override;
+    virtual std::vector<Point2> definingPoints() const override;
 
 private:
-    geometry::Point2 position_;
+    Point2 position_;
 };
 
-} // namespace yav::space::site
+} // namespace yav
