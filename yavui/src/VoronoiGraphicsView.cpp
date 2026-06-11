@@ -25,11 +25,11 @@ VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
     setScene(scene_);
 }
 
-void VoronoiGraphicsView::setSpace(const yav::space::Space2& space)
+void VoronoiGraphicsView::setSpace(const yav::Space2& space)
 {
-    for (const yav::space::site::AbstractSite::Ptr site : space.sites())
+    for (const yav::AbstractSite::Ptr site : space.sites())
     {
-        if (const auto site_vertex2 = std::dynamic_pointer_cast<yav::space::site::Vertex2>(site))
+        if (const std::shared_ptr<yav::Vertex2> site_vertex2 = std::dynamic_pointer_cast<yav::Vertex2>(site))
         {
             QRectF rect(0, 0, 0.02, 0.02);
             rect.moveCenter(QPointF(site_vertex2->basePoint().get<0>(), site_vertex2->basePoint().get<1>()));
@@ -38,11 +38,11 @@ void VoronoiGraphicsView::setSpace(const yav::space::Space2& space)
     }
 }
 
-void VoronoiGraphicsView::setDiagram(const yav::voronoi::Diagram& diagram)
+void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
 {
-    for (const yav::voronoi::Cell::Ptr& cell : diagram.cells())
+    for (const yav::Cell::Ptr& cell : diagram.cells())
     {
-        for (const yav::geometry::Segment2& segment : cell->boundarySegments())
+        for (const yav::Segment2& segment : cell->boundarySegments())
         {
             scene_->addLine(
                 segment.first.get<0>(),

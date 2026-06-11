@@ -8,13 +8,10 @@
 
 #include "yav/geometry/Segment2.h"
 
-namespace yav::space::site
+namespace yav
 {
-class AbstractSite;
-}
 
-namespace yav::voronoi
-{
+class AbstractSite;
 
 /** Voronoi cell approximation for one input site in 2D. */
 class Cell
@@ -22,16 +19,16 @@ class Cell
 public:
     using Ptr = std::shared_ptr<Cell>;
 
-    explicit Cell(const std::shared_ptr<space::site::AbstractSite>& site);
+    explicit Cell(const std::shared_ptr<AbstractSite>& site);
 
-    const std::shared_ptr<space::site::AbstractSite>& site() const;
-    const std::vector<geometry::Segment2>& boundarySegments() const;
+    const std::shared_ptr<AbstractSite>& site() const;
+    const std::vector<Segment2>& boundarySegments() const;
 
-    void addBoundarySegment(const geometry::Segment2& segment);
+    void addBoundarySegment(const Segment2& segment);
 
 private:
-    std::shared_ptr<space::site::AbstractSite> site_;
-    std::vector<geometry::Segment2> boundary_segments_;
+    std::shared_ptr<AbstractSite> site_;
+    std::vector<Segment2> boundary_segments_;
 };
 
-} // namespace yav::voronoi
+} // namespace yav

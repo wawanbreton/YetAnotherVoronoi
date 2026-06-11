@@ -6,9 +6,9 @@
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 
 
-yav::geometry::Point3 operator-(const yav::geometry::Point3& lhs, const yav::geometry::Point3& rhs)
+yav::Point3 operator-(const yav::Point3& lhs, const yav::Point3& rhs)
 {
-    yav::geometry::Point3 result = lhs;
+    yav::Point3 result = lhs;
     boost::geometry::subtract_point(result, rhs);
     return result;
 }

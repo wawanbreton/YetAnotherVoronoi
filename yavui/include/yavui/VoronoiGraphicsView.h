@@ -7,15 +7,8 @@ class QGraphicsScene;
 namespace yav
 {
 
-namespace space
-{
 class Space2;
-}
-
-namespace voronoi
-{
 class Diagram;
-}
 
 } // namespace yav
 
@@ -26,9 +19,9 @@ class VoronoiGraphicsView : public QGraphicsView
 public:
     explicit VoronoiGraphicsView(QWidget* parent = nullptr);
 
-    void setSpace(const yav::space::Space2& space);
+    void setSpace(const yav::Space2& space);
 
-    void setDiagram(const yav::voronoi::Diagram& diagram);
+    void setDiagram(const yav::Diagram& diagram);
 
     void autoFit();
 

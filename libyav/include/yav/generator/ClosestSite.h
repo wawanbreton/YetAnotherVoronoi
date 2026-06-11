@@ -9,20 +9,12 @@
 namespace yav
 {
 
-namespace space::site
-{
 class AbstractSite;
-}
-
-namespace generator
-{
 
 struct ClosestSite
 {
-    std::shared_ptr<space::site::AbstractSite> site;
+    std::shared_ptr<AbstractSite> site;
     double distance;
 };
-
-} // namespace generator
 
 } // namespace yav

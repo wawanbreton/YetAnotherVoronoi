@@ -17,7 +17,7 @@
 
 #include "yav/geometry/Point3.h"
 
-namespace yav::geometry
+namespace yav
 {
 
 struct Triangle3
@@ -27,42 +27,42 @@ struct Triangle3
     Point3 p3;
 };
 
-} // namespace yav::geometry
+} // namespace yav
 
 
 // Register the Triangle type with Boost.Geometry
 namespace boost::geometry::traits
 {
 template<>
-struct tag<yav::geometry::Triangle3>
+struct tag<yav::Triangle3>
 {
     using type = polygon_tag;
 };
 
 template<>
-struct point_type<yav::geometry::Triangle3>
+struct point_type<yav::Triangle3>
 {
-    using type = yav::geometry::Point3;
+    using type = yav::Point3;
 };
 
 template<>
-struct ring_const_type<yav::geometry::Triangle3>
+struct ring_const_type<yav::Triangle3>
 {
-    using type = boost::geometry::model::ring<yav::geometry::Point3>;
+    using type = boost::geometry::model::ring<yav::Point3>;
 };
 
 template<>
-struct ring_mutable_type<yav::geometry::Triangle3>
+struct ring_mutable_type<yav::Triangle3>
 {
-    using type = boost::geometry::model::ring<yav::geometry::Point3>;
+    using type = boost::geometry::model::ring<yav::Point3>;
 };
 
 template<>
-struct exterior_ring<yav::geometry::Triangle3>
+struct exterior_ring<yav::Triangle3>
 {
-    using ring_type = boost::geometry::model::ring<yav::geometry::Point3>;
+    using ring_type = boost::geometry::model::ring<yav::Point3>;
 
-    static inline ring_type get(yav::geometry::Triangle3& triangle)
+    static inline ring_type get(yav::Triangle3& triangle)
     {
         ring_type ring;
         boost::geometry::append(ring, triangle.p1);
@@ -72,7 +72,7 @@ struct exterior_ring<yav::geometry::Triangle3>
         return ring;
     }
 
-    static inline ring_type get(const yav::geometry::Triangle3& triangle)
+    static inline ring_type get(const yav::Triangle3& triangle)
     {
         ring_type ring;
         boost::geometry::append(ring, triangle.p1);
@@ -84,28 +84,28 @@ struct exterior_ring<yav::geometry::Triangle3>
 };
 
 template<>
-struct interior_const_type<yav::geometry::Triangle3>
+struct interior_const_type<yav::Triangle3>
 {
-    using type = std::vector<boost::geometry::model::ring<yav::geometry::Point3>>;
+    using type = std::vector<boost::geometry::model::ring<yav::Point3>>;
 };
 
 template<>
-struct interior_mutable_type<yav::geometry::Triangle3>
+struct interior_mutable_type<yav::Triangle3>
 {
-    using type = std::vector<boost::geometry::model::ring<yav::geometry::Point3>>;
+    using type = std::vector<boost::geometry::model::ring<yav::Point3>>;
 };
 
 template<>
-struct interior_rings<yav::geometry::Triangle3>
+struct interior_rings<yav::Triangle3>
 {
-    using interior_type = std::vector<boost::geometry::model::ring<yav::geometry::Point3>>;
+    using interior_type = std::vector<boost::geometry::model::ring<yav::Point3>>;
 
-    static inline interior_type get(yav::geometry::Triangle3&)
+    static inline interior_type get(yav::Triangle3&)
     {
         return {};
     }
 
-    static inline interior_type get(const yav::geometry::Triangle3&)
+    static inline interior_type get(const yav::Triangle3&)
     {
         return {};
     }
@@ -113,10 +113,10 @@ struct interior_rings<yav::geometry::Triangle3>
 } // namespace boost::geometry::traits
 
 template<>
-struct fmt::formatter<yav::geometry::Triangle3> : formatter<std::string_view>
+struct fmt::formatter<yav::Triangle3> : formatter<std::string_view>
 {
     template<typename FormatContext>
-    auto format(const yav::geometry::Triangle3& triangle, FormatContext& ctx) const
+    auto format(const yav::Triangle3& triangle, FormatContext& ctx) const
     {
         return fmt::format_to(ctx.out(), "{}={}={}", triangle.p1, triangle.p2, triangle.p3);
     }

@@ -6,18 +6,10 @@
 #include <memory>
 #include <vector>
 
-namespace yav::space
+namespace yav
 {
 
-namespace site
-{
 class AbstractSite;
-}
-
-namespace site
-{
-class AbstractSite;
-}
 
 /** Top-level user input container for Voronoi diagram generation. */
 class AbstractSpace
@@ -25,13 +17,13 @@ class AbstractSpace
 public:
     AbstractSpace();
 
-    const std::vector<std::shared_ptr<site::AbstractSite>>& sites() const;
+    const std::vector<std::shared_ptr<AbstractSite>>& sites() const;
 
 protected:
-    std::shared_ptr<site::AbstractSite> addSite(const std::shared_ptr<site::AbstractSite>& site);
+    std::shared_ptr<AbstractSite> addSite(const std::shared_ptr<AbstractSite>& site);
 
 private:
-    std::vector<std::shared_ptr<site::AbstractSite>> sites_;
+    std::vector<std::shared_ptr<AbstractSite>> sites_;
 };
 
-} // namespace yav::space
+} // namespace yav

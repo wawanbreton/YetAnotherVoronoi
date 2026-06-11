@@ -54,14 +54,14 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    yav::space::Space2 space;
+    yav::Space2 space;
     std::set<int> used_vertices;
     std::set<std::pair<int, int>> used_edges;
     const rapidobj::Array<float>& positions = result.attributes.positions;
 
-    const auto point_at_index = [&positions](const rapidobj::Index& index) -> yav::geometry::Point3
+    const auto point_at_index = [&positions](const rapidobj::Index& index) -> yav::Point3
     {
-        return yav::geometry::Point3(
+        return yav::Point3(
             positions[index.position_index * 3],
             positions[index.position_index * 3 + 1],
             positions[index.position_index * 3 + 2]);
@@ -125,12 +125,12 @@ int main(int argc, char** argv)
     {
         if (! std::ranges::contains(used_vertices, index) && position.size() == 3)
         {
-            space.addVertex(yav::geometry::Point2(position[0], position[1]));
+            space.addVertex(yav::Point2(position[0], position[1]));
         }
     }
 
-    yav::generator::Generator generator;
-    const yav::voronoi::Diagram voronoi_diagram = generator.generate(space);
+    yav::Generator generator;
+    const yav::Diagram voronoi_diagram = generator.generate(space);
 
     spdlog::info("Generated {} cells", voronoi_diagram.cells().size());
 
