@@ -26,3 +26,11 @@ yav::Point2 operator*(const yav::Point2& point, const double scale)
     boost::geometry::multiply_value(result, scale);
     return result;
 }
+
+
+yav::Point2 operator/(const yav::Point2& point, const double divider)
+{
+    yav::Point2 result = point;
+    boost::geometry::divide_value(result, divider);
+    return result;
+}

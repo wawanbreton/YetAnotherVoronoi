@@ -14,7 +14,11 @@ namespace yav
 
 using Segment2 = boost::geometry::model::segment<Point2>;
 
+[[nodiscard]] Segment2 rotate90(const Segment2& segment, const bool ccw);
+
 } // namespace yav
+
+yav::Segment2 operator-(const yav::Segment2& segment);
 
 template<>
 struct fmt::formatter<yav::Segment2> : formatter<std::string_view>

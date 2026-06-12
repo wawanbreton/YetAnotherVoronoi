@@ -8,11 +8,16 @@
 #include <queue>
 #include <unordered_set>
 
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/algorithms/detail/make/make.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/arithmetic/infinite_line_functions.hpp>
 #include <spdlog/spdlog.h>
 
 #include "yav/generator/VoronoiQuadtreeNode.h"
+#include "yav/geometry/Line2.h"
 #include "yav/space/Space2.h"
-#include "yav/space/site/AbstractSite.h"
+#include "yav/space/site/Vertex2.h"
 #include "yav/voronoi/Diagram.h"
 
 
@@ -65,6 +70,39 @@ std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
     return result;
 }
 
+Point2 calculateBisectorVertexAlongSegment(
+    const AbstractSite::Ptr& closest_site_start,
+    const AbstractSite::Ptr& closest_site_end,
+    const Segment2& segment)
+{
+    auto start_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
+    auto end_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_end);
+    Point2 result;
+
+    if (start_vertex && end_vertex)
+    {
+        const Point2 start = start_vertex->basePoint();
+        const Point2 end = end_vertex->basePoint();
+        const Segment2 sites_segment(start, end);
+        const Segment2 segment_bisector = rotate90(sites_segment, false);
+        const Line2 bisector = boost::geometry::detail::make::make_infinite_line<double>(segment_bisector);
+        const Line2 infinite_segment = boost::geometry::detail::make::make_infinite_line<double>(segment);
+        if (boost::geometry::arithmetic::intersection_point(bisector, infinite_segment, result))
+        {
+            return result;
+        }
+    }
+    else
+    {
+        spdlog::warn("Unusupported combination of sites for bisector calculation");
+    }
+
+    spdlog::warn("Unable to calculate intersection point, defaulting to centroid");
+    boost::geometry::centroid(segment, result);
+
+    return result;
+}
+
 void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram)
 {
     static constexpr std::array<std::pair<size_t, size_t>, 4> edge_corners{ {
@@ -75,7 +113,7 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     } };
 
     std::vector<Point2> crossings;
-    std::vector<std::pair<std::shared_ptr<AbstractSite>, std::shared_ptr<AbstractSite>>> crossing_sites;
+    std::vector<std::pair<AbstractSite::Ptr, AbstractSite::Ptr>> crossing_sites;
 
     for (size_t edge_index = 0; edge_index < edge_corners.size(); ++edge_index)
     {
@@ -88,7 +126,11 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
             continue;
         }
 
-        crossings.push_back(leaf_node.edgeMidpointAt(edge_index));
+        // crossings.push_back(leaf_node.edgeMidpointAt(edge_index));
+        crossings.push_back(calculateBisectorVertexAlongSegment(
+            first_corner_site,
+            second_corner_site,
+            Segment2(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index))));
         crossing_sites.push_back({ first_corner_site, second_corner_site });
     }
 
