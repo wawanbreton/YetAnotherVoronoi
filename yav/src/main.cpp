@@ -130,7 +130,7 @@ int main(int argc, char** argv)
     }
 
     yav::Generator generator;
-    const yav::Diagram voronoi_diagram = generator.generate(space);
+    auto [voronoi_diagram, _] = generator.generate(space);
 
     spdlog::info("Generated {} cells", voronoi_diagram.cells().size());
 

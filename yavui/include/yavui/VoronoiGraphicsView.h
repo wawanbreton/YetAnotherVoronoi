@@ -9,6 +9,7 @@ namespace yav
 
 class Space2;
 class Diagram;
+class VoronoiQuadtreeNode;
 
 } // namespace yav
 
@@ -22,6 +23,8 @@ public:
     void setSpace(const yav::Space2& space);
 
     void setDiagram(const yav::Diagram& diagram);
+
+    void setTree(const std::vector<std::shared_ptr<yav::VoronoiQuadtreeNode>>& tree);
 
     void autoFit();
 

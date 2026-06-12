@@ -9,6 +9,7 @@
 #include <qpoint.h>
 #include <qpointingdevice.h>
 #include <qtransform.h>
+#include <yav/generator/VoronoiQuadtreeNode.h>
 #include <yav/space/Space2.h>
 #include <yav/space/site/Edge2.h>
 #include <yav/space/site/Vertex2.h>
@@ -54,9 +55,18 @@ void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
     }
 }
 
+void VoronoiGraphicsView::setTree(const std::vector<yav::VoronoiQuadtreeNode::Ptr>& tree)
+{
+    for (const yav::VoronoiQuadtreeNode::Ptr& node : tree)
+    {
+        QRectF rect(0, 0, node->width(), node->width());
+        rect.moveCenter(QPointF(node->center().get<0>(), node->center().get<1>()));
+        scene_->addRect(rect, QPen(QColor("#008fff"), 0.001));
+    }
+}
+
 void VoronoiGraphicsView::autoFit()
 {
-    qDebug() << scene_->sceneRect();
     fitInView(scene_->sceneRect(), Qt::KeepAspectRatio);
 }
 

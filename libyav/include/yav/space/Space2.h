@@ -24,7 +24,10 @@ public:
     std::shared_ptr<AbstractSite> addEdge(const Segment2& segment);
     std::shared_ptr<AbstractSite> addVertex(const Point2& vertex);
 
-    ClosestSite findClosestSite(const Point2& position) const;
+    virtual Point2 calculateBisectorVertexAlongSegment(
+        const std::shared_ptr<AbstractSite>& closest_site_start,
+        const std::shared_ptr<AbstractSite>& closest_site_end,
+        const Segment2& segment) const override;
 };
 
 } // namespace yav

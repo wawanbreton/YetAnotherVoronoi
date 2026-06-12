@@ -8,16 +8,11 @@
 #include <queue>
 #include <unordered_set>
 
-#include <boost/geometry/algorithms/centroid.hpp>
-#include <boost/geometry/algorithms/detail/make/make.hpp>
-#include <boost/geometry/algorithms/intersection.hpp>
-#include <boost/geometry/arithmetic/infinite_line_functions.hpp>
 #include <spdlog/spdlog.h>
 
 #include "yav/generator/VoronoiQuadtreeNode.h"
-#include "yav/geometry/Line2.h"
 #include "yav/space/Space2.h"
-#include "yav/space/site/Vertex2.h"
+#include "yav/space/site/AbstractSite.h"
 #include "yav/voronoi/Diagram.h"
 
 
@@ -26,26 +21,26 @@ namespace yav
 
 Generator::Generator() = default;
 
-Diagram Generator::generate(const Space2& input_space) const
+std::tuple<Diagram, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>> Generator::generate(const Space2& input_space) const
 {
-    Diagram diagram;
-
     if (input_space.sites().empty())
     {
         spdlog::warn("Requested Voronoi generation on an empty 2D space");
-        return diagram;
+        return {};
     }
+
+    Diagram diagram;
 
     const std::vector<VoronoiQuadtreeNode::Ptr> leaves = build(input_space);
 
     for (const VoronoiQuadtreeNode::Ptr& leaf : leaves)
     {
-        addApproximationFromLeaf(*leaf, diagram);
+        addApproximationFromLeaf(*leaf, diagram, input_space);
     }
 
     spdlog::info("Generated 2D Voronoi approximation from {} sites and {} quadtree leaves", input_space.sites().size(), leaves.size());
 
-    return diagram;
+    return { diagram, leaves };
 }
 
 std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
@@ -70,40 +65,7 @@ std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
     return result;
 }
 
-Point2 calculateBisectorVertexAlongSegment(
-    const AbstractSite::Ptr& closest_site_start,
-    const AbstractSite::Ptr& closest_site_end,
-    const Segment2& segment)
-{
-    auto start_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
-    auto end_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_end);
-    Point2 result;
-
-    if (start_vertex && end_vertex)
-    {
-        const Point2 start = start_vertex->basePoint();
-        const Point2 end = end_vertex->basePoint();
-        const Segment2 sites_segment(start, end);
-        const Segment2 segment_bisector = rotate90(sites_segment, false);
-        const Line2 bisector = boost::geometry::detail::make::make_infinite_line<double>(segment_bisector);
-        const Line2 infinite_segment = boost::geometry::detail::make::make_infinite_line<double>(segment);
-        if (boost::geometry::arithmetic::intersection_point(bisector, infinite_segment, result))
-        {
-            return result;
-        }
-    }
-    else
-    {
-        spdlog::warn("Unusupported combination of sites for bisector calculation");
-    }
-
-    spdlog::warn("Unable to calculate intersection point, defaulting to centroid");
-    boost::geometry::centroid(segment, result);
-
-    return result;
-}
-
-void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram)
+void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const AbstractSpace& space)
 {
     static constexpr std::array<std::pair<size_t, size_t>, 4> edge_corners{ {
         { 0, 1 },
@@ -127,7 +89,7 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         }
 
         // crossings.push_back(leaf_node.edgeMidpointAt(edge_index));
-        crossings.push_back(calculateBisectorVertexAlongSegment(
+        crossings.push_back(space.calculateBisectorVertexAlongSegment(
             first_corner_site,
             second_corner_site,
             Segment2(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index))));

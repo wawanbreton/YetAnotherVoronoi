@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     // label.show();
 
     cxxopts::Options options("yav", "Minimal CLI for libyav");
-    options.add_options()("h,help", "Print help")("d,debug", "Display debug-level output")(
+    options.add_options()("h,help", "Print help")("d,debug", "Display debug-level output")("t,tree", "Display the generated quad/octree")(
         "file",
         "Path of the mesh file to be loaded",
         cxxopts::value<std::string>())("random", "Number of random points to be generated", cxxopts::value<size_t>());
@@ -82,12 +82,18 @@ int main(int argc, char** argv)
     }
 
     yav::Generator generator;
-    const yav::Diagram voronoi_diagram = generator.generate(space);
+    auto [voronoi_diagram, tree] = generator.generate(space);
     spdlog::info("Generated {} cells", voronoi_diagram.cells().size());
 
     VoronoiGraphicsView graphics_view;
     graphics_view.setSpace(space);
     graphics_view.setDiagram(voronoi_diagram);
+
+    if (options_result.count("tree"))
+    {
+        graphics_view.setTree(tree);
+    }
+
     graphics_view.resize(800, 600);
     graphics_view.autoFit();
     graphics_view.show();

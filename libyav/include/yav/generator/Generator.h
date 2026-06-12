@@ -11,6 +11,7 @@ namespace yav
 
 class Diagram;
 class AbstractSite;
+class AbstractSpace;
 class Space2;
 class VoronoiQuadtreeNode;
 
@@ -20,14 +21,13 @@ class Generator
 public:
     Generator();
 
-    Diagram generate(const Space2& input_space) const;
+    std::tuple<Diagram, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>> generate(const Space2& input_space) const;
 
 private:
     static std::vector<std::shared_ptr<AbstractSite>> uniqueSitesFromCrossings(
-        const std::vector<std::pair<std::shared_ptr<AbstractSite>, std::shared_ptr<AbstractSite>>>&
-            edge_site_pairs);
+        const std::vector<std::pair<std::shared_ptr<AbstractSite>, std::shared_ptr<AbstractSite>>>& edge_site_pairs);
 
-    static void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram);
+    static void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const yav::AbstractSpace& space);
 
 private:
     std::vector<std::shared_ptr<VoronoiQuadtreeNode>> build(const Space2& input_space) const;

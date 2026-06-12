@@ -3,8 +3,13 @@
 
 #include "yav/space/Space2.h"
 
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/algorithms/detail/make/make.hpp>
+#include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/arithmetic/infinite_line_functions.hpp>
 #include <spdlog/spdlog.h>
 
+#include "yav/geometry/Line2.h"
 #include "yav/space/site/Edge2.h"
 #include "yav/space/site/Vertex2.h"
 
@@ -28,21 +33,37 @@ std::shared_ptr<AbstractSite> Space2::addVertex(const Point2& vertex)
     return addSite(std::make_shared<Vertex2>(vertex));
 }
 
-ClosestSite Space2::findClosestSite(const Point2& position) const
+Point2 Space2::calculateBisectorVertexAlongSegment(
+    const AbstractSite::Ptr& closest_site_start,
+    const AbstractSite::Ptr& closest_site_end,
+    const Segment2& segment) const
 {
-    double closest_distance;
-    AbstractSite::Ptr closest_primitive;
-    for (const AbstractSite::Ptr& primitive : sites())
+    auto start_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
+    auto end_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_end);
+    Point2 result;
+
+    if (start_vertex && end_vertex)
     {
-        const double distance = primitive->distanceTo(position);
-        if (! closest_primitive || distance < closest_distance)
+        const Point2 start = start_vertex->basePoint();
+        const Point2 end = end_vertex->basePoint();
+        const Segment2 sites_segment(start, end);
+        const Segment2 segment_bisector = rotate90(sites_segment, false);
+        const Line2 bisector = boost::geometry::detail::make::make_infinite_line<double>(segment_bisector);
+        const Line2 infinite_segment = boost::geometry::detail::make::make_infinite_line<double>(segment);
+        if (boost::geometry::arithmetic::intersection_point(bisector, infinite_segment, result))
         {
-            closest_distance = distance;
-            closest_primitive = primitive;
+            return result;
         }
     }
+    else
+    {
+        spdlog::warn("Unusupported combination of sites for bisector calculation");
+    }
 
-    return ClosestSite{ closest_primitive, closest_distance };
+    spdlog::warn("Unable to calculate intersection point, defaulting to centroid");
+    boost::geometry::centroid(segment, result);
+
+    return result;
 }
 
 } // namespace yav
