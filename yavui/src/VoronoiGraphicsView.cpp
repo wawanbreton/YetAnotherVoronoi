@@ -49,7 +49,7 @@ void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
                 segment.first.get<1>(),
                 segment.second.get<0>(),
                 segment.second.get<1>(),
-                QPen(QColor("#2ecc71"), 0.01));
+                QPen(QColor("#2ecc71"), 0.002));
         }
     }
 }
