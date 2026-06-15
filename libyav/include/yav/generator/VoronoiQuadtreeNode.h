@@ -6,6 +6,7 @@
 #include <array>
 #include <memory>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include "yav/generator/ClosestSite.h"
@@ -54,6 +55,8 @@ public:
 
     void addEdgeSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
 
+    std::set<std::shared_ptr<AbstractSite>> allRelatedSites() const;
+
 private:
     static const std::array<Point2, corners_count> corner_deltas_;
 
@@ -62,9 +65,9 @@ private:
     size_t level_;
     std::shared_ptr<VoronoiQuadtreeNode> parent_;
     std::array<Ptr, corners_count> children_;
-    std::array<std::optional<ClosestSite>, corners_count> corner_closest_sites_;
-    std::vector<std::shared_ptr<AbstractSite>> interior_sites_;
-    std::array<std::vector<std::shared_ptr<AbstractSite>>, corners_count> edge_sites_;
+    std::array<std::optional<ClosestSite>, corners_count> corner_closest_sites_; // V-Sites as per the documentation
+    std::vector<std::shared_ptr<AbstractSite>> interior_sites_; // I-Sites as per the documentation
+    std::vector<std::shared_ptr<AbstractSite>> edge_sites_; // F-Sites as per the documentation
 };
 
 } // namespace yav

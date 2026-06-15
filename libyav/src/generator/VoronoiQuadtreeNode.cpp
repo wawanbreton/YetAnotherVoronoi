@@ -40,18 +40,8 @@ bool VoronoiQuadtreeNode::isLeaf() const
 
 bool VoronoiQuadtreeNode::isTerminal() const
 {
-    const std::optional<ClosestSite>& first_corner = corner_closest_sites_.front();
-    if (! first_corner.has_value())
-    {
-        return true;
-    }
-
-    return std::ranges::all_of(
-        corner_closest_sites_ | std::views::drop(1),
-        [&first_corner](const std::optional<ClosestSite>& corner_site)
-        {
-            return corner_site.has_value() && corner_site->site == first_corner->site;
-        });
+    // TODO: optimize this, we don't need to build the set
+    return allRelatedSites().size() <= 1;
 }
 
 size_t VoronoiQuadtreeNode::level() const
@@ -83,31 +73,59 @@ void VoronoiQuadtreeNode::split()
 {
     const double child_width = width_ / 2.0;
     const double child_center_offset = width_ / 4.0;
+    const std::set<AbstractSite::Ptr> all_related_sited = allRelatedSites();
 
     for (size_t i = 0; i < corners_count; ++i)
     {
         const Point2 child_center = center_ + corner_deltas_[i] * child_center_offset;
 
         auto child = std::make_shared<VoronoiQuadtreeNode>(child_center, child_width, level_ + 1, shared_from_this());
-        // child->setInteriorSites(interior_sites_);
-        child->setCornerClosestSite(i, corner_closest_sites_[i]);
 
-        for (AbstractSite::Ptr interior_site : interior_sites_)
+        // STEP 1: assign child I-sites, which is a subset of the parent I-sites
+        for (const AbstractSite::Ptr& interior_site : interior_sites_)
         {
+            // Optimize this by distributing the interior sites to the proper child instead (based on position relative to center)
             if (child->containsPoint(interior_site->basePoint()))
             {
                 child->addInteriorSite(interior_site);
             }
         }
 
+        // STEP 2: assign child V-sites, which is a subset of the parent I/V/F-sites
+        std::set<AbstractSite::Ptr> child_closest_corners;
+        for (size_t j = 0; j < corners_count; ++j)
+        {
+            if (j == i)
+            {
+                // Child and parent share a corner, so this one doesn't need recalculating
+                child->setCornerClosestSite(j, corner_closest_sites_[j]);
+                child_closest_corners.insert(corner_closest_sites_[j]->site);
+            }
+            else
+            {
+                // Check distance agains corner
+            }
+        }
+
+        // STEP 3: assign child F-sites, which is a subset of the parent I/V/F-sites (and requires the child V-sites)
+        for (const AbstractSite::Ptr& related_site : all_related_sited)
+        {
+            if (child_closest_corners.contains(related_site))
+            {
+                continue;
+            }
+
+            // Get the closest distance of sites to each edge, and check whether it is shorter than distance to corner
+        }
+
         children_[i] = child;
     }
 
-    for (size_t i = 0; i < corners_count; ++i)
-    {
-        children_[i]->addEdgeSites(edge_sites_[i]);
-        children_[(i + 1) % corners_count]->addEdgeSites(edge_sites_[i]);
-    }
+    // for (size_t i = 0; i < corners_count; ++i)
+    // {
+    //     children_[i]->addEdgeSites(edge_sites_[i]);
+    //     children_[(i + 1) % corners_count]->addEdgeSites(edge_sites_[i]);
+    // }
 }
 
 void VoronoiQuadtreeNode::pruneChildren()
@@ -183,9 +201,26 @@ void VoronoiQuadtreeNode::addInteriorSite(const std::shared_ptr<AbstractSite>& s
     interior_sites_.push_back(site);
 }
 
-void VoronoiQuadtreeNode::addEdgeSites(const std::vector<std::shared_ptr<AbstractSite>>& sites)
+void VoronoiQuadtreeNode::addEdgeSites(const std::vector<AbstractSite::Ptr>& sites)
 {
-    edge_sites_.insert(edge_sites_.end(), sites.begin().sites.end());
+    edge_sites_.insert(edge_sites_.end(), sites.begin(), sites.end());
+}
+
+std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::allRelatedSites() const
+{
+    std::set<AbstractSite::Ptr> result;
+
+    for (const std::optional<ClosestSite>& corner_closest_site : corner_closest_sites_)
+    {
+        if (corner_closest_site.has_value())
+        {
+            result.insert(corner_closest_site->site);
+        }
+    }
+    result.insert(interior_sites_.begin(), interior_sites_.end());
+    result.insert(edge_sites_.begin(), edge_sites_.end());
+
+    return result;
 }
 
 } // namespace yav
