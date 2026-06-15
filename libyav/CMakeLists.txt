@@ -33,6 +33,14 @@ FetchContent_Declare(
 
 FetchContent_MakeAvailable(boost_geometry)
 
+FetchContent_Declare(
+  armadillo
+  GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code
+  GIT_TAG 15.2.6
+)
+
+FetchContent_MakeAvailable(armadillo)
+
 file(GLOB_RECURSE libyav_SRCS CONFIGURE_DEPENDS src/*.cpp)
 
 if (BUILD_LIBYAV_SHARED)
@@ -49,4 +57,4 @@ add_library(yav::libyav ALIAS libyav)
 
 target_include_directories(libyav PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_features(libyav PUBLIC cxx_std_23)
-target_link_libraries(libyav PUBLIC spdlog::spdlog fmt::fmt)
+target_link_libraries(libyav PUBLIC spdlog::spdlog fmt::fmt armadillo)

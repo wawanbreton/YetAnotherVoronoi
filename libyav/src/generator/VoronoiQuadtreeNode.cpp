@@ -6,16 +6,19 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <ranges>
+
+#include "yav/space/site/AbstractSite.h"
 
 
 namespace yav
 {
 
-const std::array<Point2, 4> VoronoiQuadtreeNode::corner_deltas_{
+const std::array<Point2, VoronoiQuadtreeNode::corners_count> VoronoiQuadtreeNode::corner_deltas_{
     Point2(-1.0, -1.0),
     Point2(1.0, -1.0),
-    Point2(-1.0, 1.0),
     Point2(1.0, 1.0),
+    Point2(-1.0, 1.0),
 };
 
 VoronoiQuadtreeNode::VoronoiQuadtreeNode(
@@ -28,11 +31,6 @@ VoronoiQuadtreeNode::VoronoiQuadtreeNode(
     , level_(level)
     , parent_(parent)
 {
-    for (ClosestSite& corner_closest_site : corner_closest_sites_)
-    {
-        corner_closest_site.site = nullptr;
-        corner_closest_site.distance = std::numeric_limits<double>::infinity();
-    }
 }
 
 bool VoronoiQuadtreeNode::isLeaf() const
@@ -42,15 +40,18 @@ bool VoronoiQuadtreeNode::isLeaf() const
 
 bool VoronoiQuadtreeNode::isTerminal() const
 {
-    const ClosestSite& first_corner = corner_closest_sites_.front();
-    if (! first_corner.site)
+    const std::optional<ClosestSite>& first_corner = corner_closest_sites_.front();
+    if (! first_corner.has_value())
     {
         return true;
     }
 
     return std::ranges::all_of(
-        corner_closest_sites_,
-        [&first_corner](const ClosestSite& corner_site) { return corner_site.site == first_corner.site; });
+        corner_closest_sites_ | std::views::drop(1),
+        [&first_corner](const std::optional<ClosestSite>& corner_site)
+        {
+            return corner_site.has_value() && corner_site->site == first_corner->site;
+        });
 }
 
 size_t VoronoiQuadtreeNode::level() const
@@ -73,56 +74,69 @@ const std::shared_ptr<VoronoiQuadtreeNode>& VoronoiQuadtreeNode::parent() const
     return parent_;
 }
 
-const std::vector<VoronoiQuadtreeNode::Ptr>& VoronoiQuadtreeNode::children() const
+const std::array<VoronoiQuadtreeNode::Ptr, VoronoiQuadtreeNode::corners_count>& VoronoiQuadtreeNode::children() const
 {
     return children_;
 }
 
 void VoronoiQuadtreeNode::split()
 {
-    children_.clear();
-    children_.reserve(4);
-
     const double child_width = width_ / 2.0;
     const double child_center_offset = width_ / 4.0;
 
-    for (const Point2& corner_delta : corner_deltas_)
+    for (size_t i = 0; i < corners_count; ++i)
     {
-        const Point2 child_center(
-            center_.get<0>() + corner_delta.get<0>() * child_center_offset,
-            center_.get<1>() + corner_delta.get<1>() * child_center_offset);
+        const Point2 child_center = center_ + corner_deltas_[i] * child_center_offset;
 
-        VoronoiQuadtreeNode::Ptr child = std::make_shared<VoronoiQuadtreeNode>(child_center, child_width, level_ + 1, shared_from_this());
-        child->setCandidateSites(candidate_sites_);
-        children_.push_back(child);
+        auto child = std::make_shared<VoronoiQuadtreeNode>(child_center, child_width, level_ + 1, shared_from_this());
+        // child->setInteriorSites(interior_sites_);
+        child->setCornerClosestSite(i, corner_closest_sites_[i]);
+
+        for (AbstractSite::Ptr interior_site : interior_sites_)
+        {
+            if (child->containsPoint(interior_site->basePoint()))
+            {
+                child->addInteriorSite(interior_site);
+            }
+        }
+
+        children_[i] = child;
+    }
+
+    for (size_t i = 0; i < corners_count; ++i)
+    {
+        children_[i]->addEdgeSites(edge_sites_[i]);
+        children_[(i + 1) % corners_count]->addEdgeSites(edge_sites_[i]);
     }
 }
 
 void VoronoiQuadtreeNode::pruneChildren()
 {
-    children_.clear();
+    for (Ptr& child : children_)
+    {
+        child.reset();
+    }
 }
 
 Point2 VoronoiQuadtreeNode::cornerAt(const size_t corner_index) const
 {
-    const Point2& delta = corner_deltas_.at(corner_index);
-    return Point2(center_.get<0>() + delta.get<0>() * width_ / 2.0, center_.get<1>() + delta.get<1>() * width_ / 2.0);
+    return center_ + corner_deltas_[corner_index] * width_ / 2.0;
 }
 
 Point2 VoronoiQuadtreeNode::edgeMidpointAt(const size_t edge_index) const
 {
     switch (edge_index)
     {
-        case 0:
-            return Point2(center_.get<0>(), center_.get<1>() - width_ / 2.0);
-        case 1:
-            return Point2(center_.get<0>() + width_ / 2.0, center_.get<1>());
-        case 2:
-            return Point2(center_.get<0>(), center_.get<1>() + width_ / 2.0);
-        case 3:
-            return Point2(center_.get<0>() - width_ / 2.0, center_.get<1>());
-        default:
-            return center_;
+    case 0:
+        return Point2(center_.get<0>(), center_.get<1>() - width_ / 2.0);
+    case 1:
+        return Point2(center_.get<0>() + width_ / 2.0, center_.get<1>());
+    case 2:
+        return Point2(center_.get<0>(), center_.get<1>() + width_ / 2.0);
+    case 3:
+        return Point2(center_.get<0>() - width_ / 2.0, center_.get<1>());
+    default:
+        return center_;
     }
 }
 
@@ -134,29 +148,44 @@ bool VoronoiQuadtreeNode::containsPoint(const Point2& point, const double tolera
     return dx <= half_width && dy <= half_width;
 }
 
-const std::array<ClosestSite, 4>& VoronoiQuadtreeNode::cornerClosestSites() const
+const std::array<std::optional<ClosestSite>, VoronoiQuadtreeNode::corners_count>& VoronoiQuadtreeNode::cornerClosestSites() const
 {
     return corner_closest_sites_;
 }
 
-ClosestSite VoronoiQuadtreeNode::cornerClosestSiteAt(const size_t corner_index) const
+const std::optional<ClosestSite>& VoronoiQuadtreeNode::cornerClosestSiteAt(const size_t corner_index) const
 {
     return corner_closest_sites_.at(corner_index);
 }
 
-void VoronoiQuadtreeNode::setCornerClosestSite(const size_t corner_index, const ClosestSite& closest_site)
+std::optional<ClosestSite>& VoronoiQuadtreeNode::cornerClosestSiteAt(size_t corner_index)
+{
+    return corner_closest_sites_.at(corner_index);
+}
+
+void VoronoiQuadtreeNode::setCornerClosestSite(const size_t corner_index, const std::optional<ClosestSite>& closest_site)
 {
     corner_closest_sites_.at(corner_index) = closest_site;
 }
 
-const std::vector<std::shared_ptr<AbstractSite>>& VoronoiQuadtreeNode::candidateSites() const
+const std::vector<std::shared_ptr<AbstractSite>>& VoronoiQuadtreeNode::interiorSites() const
 {
-    return candidate_sites_;
+    return interior_sites_;
 }
 
-void VoronoiQuadtreeNode::setCandidateSites(const std::vector<std::shared_ptr<AbstractSite>>& sites)
+void VoronoiQuadtreeNode::setInteriorSites(const std::vector<std::shared_ptr<AbstractSite>>& sites)
 {
-    candidate_sites_ = sites;
+    interior_sites_ = sites;
+}
+
+void VoronoiQuadtreeNode::addInteriorSite(const std::shared_ptr<AbstractSite>& site)
+{
+    interior_sites_.push_back(site);
+}
+
+void VoronoiQuadtreeNode::addEdgeSites(const std::vector<std::shared_ptr<AbstractSite>>& sites)
+{
+    edge_sites_.insert(edge_sites_.end(), sites.begin().sites.end());
 }
 
 } // namespace yav

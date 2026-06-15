@@ -80,10 +80,18 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     for (size_t edge_index = 0; edge_index < edge_corners.size(); ++edge_index)
     {
         const auto [first_corner_index, second_corner_index] = edge_corners[edge_index];
-        const AbstractSite::Ptr first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index).site;
-        const AbstractSite::Ptr second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index).site;
+        const std::optional<ClosestSite>& first_corner = leaf_node.cornerClosestSiteAt(first_corner_index);
+        const std::optional<ClosestSite>& second_corner = leaf_node.cornerClosestSiteAt(second_corner_index);
 
-        if (! first_corner_site || ! second_corner_site || first_corner_site == second_corner_site)
+        if (! first_corner.has_value() || ! second_corner.has_value())
+        {
+            continue;
+        }
+
+        const AbstractSite::Ptr& first_corner_site = first_corner->site;
+        const AbstractSite::Ptr& second_corner_site = second_corner->site;
+
+        if (first_corner_site == second_corner_site)
         {
             continue;
         }
@@ -139,14 +147,15 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space
             propagate(*node, leaves);
             compact(node->parent());
             leaves.push_back(node);
-            continue;
         }
-
-        subdivide(*node);
-        for (const VoronoiQuadtreeNode::Ptr& child : node->children())
+        else
         {
-            propagate(*child, leaves);
-            node_queue.push(child);
+            subdivide(*node);
+            for (const VoronoiQuadtreeNode::Ptr& child : node->children())
+            {
+                propagate(*child, leaves);
+                node_queue.push(child);
+            }
         }
     }
 
@@ -197,34 +206,32 @@ VoronoiQuadtreeNode::Ptr Generator::initialize(const Space2& input_space) const
     const Point2 center((min_x + max_x) / 2.0, (min_y + max_y) / 2.0);
 
     VoronoiQuadtreeNode::Ptr root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
-    root->setCandidateSites(sites);
+    root->setInteriorSites(sites);
     return root;
 }
 
 void Generator::update(VoronoiQuadtreeNode& node) const
 {
-    for (size_t corner_index = 0; corner_index < node.cornerClosestSites().size(); ++corner_index)
+    for (size_t corner_index = 0; corner_index < VoronoiQuadtreeNode::corners_count; ++corner_index)
     {
-        const Point2 corner = node.cornerAt(corner_index);
-        ClosestSite closest_site{ nullptr, std::numeric_limits<double>::infinity() };
-
-        for (const std::shared_ptr<AbstractSite>& site : node.candidateSites())
+        std::optional<ClosestSite>& corner_closest_site = node.cornerClosestSiteAt(corner_index);
+        if (corner_closest_site.has_value())
         {
-            if (! site)
-            {
-                spdlog::error("Encountered null candidate site while updating a quadtree node");
-                continue;
-            }
-
-            const double distance = site->distanceTo(corner);
-            if (distance < closest_site.distance)
-            {
-                closest_site.site = site;
-                closest_site.distance = distance;
-            }
+            continue;
         }
 
-        node.setCornerClosestSite(corner_index, closest_site);
+        const Point2 corner = node.cornerAt(corner_index);
+        corner_closest_site = ClosestSite{ nullptr, std::numeric_limits<double>::infinity() };
+
+        for (const AbstractSite::Ptr& site : node.interiorSites())
+        {
+            const double distance = site->distanceTo(corner);
+            if (distance < corner_closest_site->distance)
+            {
+                corner_closest_site->site = site;
+                corner_closest_site->distance = distance;
+            }
+        }
     }
 }
 
@@ -266,16 +273,17 @@ void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQu
                     continue;
                 }
 
-                const ClosestSite node_corner_site = node.cornerClosestSiteAt(node_corner_index);
-                const ClosestSite leaf_corner_site = leaf->cornerClosestSiteAt(leaf_corner_index);
+                const std::optional<ClosestSite>& node_corner_site = node.cornerClosestSiteAt(node_corner_index);
+                const std::optional<ClosestSite>& leaf_corner_site = leaf->cornerClosestSiteAt(leaf_corner_index);
 
-                if (node_corner_site.distance < leaf_corner_site.distance)
+                if (node_corner_site.value_or(ClosestSite{ nullptr, std::numeric_limits<double>::infinity() }).distance
+                    < leaf_corner_site.value_or(ClosestSite{ nullptr, std::numeric_limits<double>::infinity() }).distance)
                 {
-                    leaf->setCornerClosestSite(leaf_corner_index, node_corner_site);
+                    leaf->setCornerClosestSite(leaf_corner_index, *node_corner_site);
                 }
                 else
                 {
-                    node.setCornerClosestSite(node_corner_index, leaf_corner_site);
+                    node.setCornerClosestSite(node_corner_index, *leaf_corner_site);
                 }
             }
         }

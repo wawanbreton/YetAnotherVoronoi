@@ -5,6 +5,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <vector>
 
 #include "yav/generator/ClosestSite.h"
@@ -16,17 +17,14 @@ namespace yav
 class AbstractSite;
 
 /** One node of the 2D Voronoi quadtree approximation structure. */
-class VoronoiQuadtreeNode
-    : public std::enable_shared_from_this<VoronoiQuadtreeNode>
+class VoronoiQuadtreeNode : public std::enable_shared_from_this<VoronoiQuadtreeNode>
 {
 public:
     using Ptr = std::shared_ptr<VoronoiQuadtreeNode>;
 
-    VoronoiQuadtreeNode(
-        const Point2& center,
-        double width,
-        size_t level,
-        const std::shared_ptr<VoronoiQuadtreeNode>& parent);
+    static constexpr size_t corners_count{ 4 };
+
+    VoronoiQuadtreeNode(const Point2& center, double width, size_t level, const std::shared_ptr<VoronoiQuadtreeNode>& parent);
 
     bool isLeaf() const;
     bool isTerminal() const;
@@ -36,32 +34,37 @@ public:
     const Point2& center() const;
     const std::shared_ptr<VoronoiQuadtreeNode>& parent() const;
 
-    const std::vector<Ptr>& children() const;
+    const std::array<Ptr, corners_count>& children() const;
     void split();
     void pruneChildren();
 
     Point2 cornerAt(size_t corner_index) const;
     Point2 edgeMidpointAt(size_t edge_index) const;
 
-    bool containsPoint(const Point2& point, double tolerance) const;
+    bool containsPoint(const Point2& point, double tolerance = std::numeric_limits<double>::epsilon()) const;
 
-    const std::array<ClosestSite, 4>& cornerClosestSites() const;
-    ClosestSite cornerClosestSiteAt(size_t corner_index) const;
-    void setCornerClosestSite(size_t corner_index, const ClosestSite& closest_site);
+    const std::array<std::optional<ClosestSite>, corners_count>& cornerClosestSites() const;
+    const std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index) const;
+    std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index);
+    void setCornerClosestSite(size_t corner_index, const std::optional<ClosestSite>& closest_site);
 
-    const std::vector<std::shared_ptr<AbstractSite>>& candidateSites() const;
-    void setCandidateSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
+    const std::vector<std::shared_ptr<AbstractSite>>& interiorSites() const;
+    void setInteriorSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
+    void addInteriorSite(const std::shared_ptr<AbstractSite>& site);
+
+    void addEdgeSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
 
 private:
-    static const std::array<Point2, 4> corner_deltas_;
+    static const std::array<Point2, corners_count> corner_deltas_;
 
     Point2 center_;
     double width_;
     size_t level_;
     std::shared_ptr<VoronoiQuadtreeNode> parent_;
-    std::vector<Ptr> children_;
-    std::array<ClosestSite, 4> corner_closest_sites_;
-    std::vector<std::shared_ptr<AbstractSite>> candidate_sites_;
+    std::array<Ptr, corners_count> children_;
+    std::array<std::optional<ClosestSite>, corners_count> corner_closest_sites_;
+    std::vector<std::shared_ptr<AbstractSite>> interior_sites_;
+    std::array<std::vector<std::shared_ptr<AbstractSite>>, corners_count> edge_sites_;
 };
 
 } // namespace yav

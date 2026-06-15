@@ -50,7 +50,7 @@ void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
                 segment.first.get<1>(),
                 segment.second.get<0>(),
                 segment.second.get<1>(),
-                QPen(QColor("#2ecc71"), 0.002));
+                QPen(QColor("#2ecc71"), 0.001));
         }
     }
 }
@@ -61,7 +61,7 @@ void VoronoiGraphicsView::setTree(const std::vector<yav::VoronoiQuadtreeNode::Pt
     {
         QRectF rect(0, 0, node->width(), node->width());
         rect.moveCenter(QPointF(node->center().get<0>(), node->center().get<1>()));
-        scene_->addRect(rect, QPen(QColor("#008fff"), 0.001));
+        scene_->addRect(rect, QPen(QColor("#008fff"), 0.0005));
     }
 }
 

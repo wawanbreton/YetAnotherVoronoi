@@ -13,7 +13,9 @@
 #include <yav/space/Space2.h>
 #include <yav/voronoi/Diagram.h>
 
+#include <fmt/chrono.h>
 #include <spdlog/spdlog.h>
+#include <spdlog/stopwatch.h>
 
 #include "yavui/VoronoiGraphicsView.h"
 
@@ -21,10 +23,6 @@
 int main(int argc, char** argv)
 {
     QApplication app(argc, argv);
-
-    // QLabel label(QString::fromStdString("yavui using " + yav::version()));
-    // label.resize(320, 80);
-    // label.show();
 
     cxxopts::Options options("yav", "Minimal CLI for libyav");
     options.add_options()("h,help", "Print help")("d,debug", "Display debug-level output")("t,tree", "Display the generated quad/octree")(
@@ -82,8 +80,11 @@ int main(int argc, char** argv)
     }
 
     yav::Generator generator;
+
+    spdlog::info("Generate diagram with {} sites", space.sites().size());
+    spdlog::stopwatch timer;
     auto [voronoi_diagram, tree] = generator.generate(space);
-    spdlog::info("Generated {} cells", voronoi_diagram.cells().size());
+    spdlog::info("Generated {} cells in {}", voronoi_diagram.cells().size(), timer.elapsed());
 
     VoronoiGraphicsView graphics_view;
     graphics_view.setSpace(space);
