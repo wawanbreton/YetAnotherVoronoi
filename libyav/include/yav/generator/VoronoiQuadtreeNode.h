@@ -53,7 +53,7 @@ public:
     void setInteriorSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
     void addInteriorSite(const std::shared_ptr<AbstractSite>& site);
 
-    void addEdgeSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
+    void addEdgeSite(const std::shared_ptr<AbstractSite>& site);
 
     std::set<std::shared_ptr<AbstractSite>> allRelatedSites() const;
 

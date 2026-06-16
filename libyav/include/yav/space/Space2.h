@@ -31,6 +31,8 @@ public:
 
     virtual ClosestSite
         findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const override;
+
+    virtual double closestDistanceToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const override;
 };
 
 } // namespace yav

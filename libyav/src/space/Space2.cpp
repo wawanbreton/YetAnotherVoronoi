@@ -5,6 +5,7 @@
 
 #include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/algorithms/detail/make/make.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/arithmetic/infinite_line_functions.hpp>
 #include <spdlog/spdlog.h>
@@ -31,6 +32,17 @@ std::shared_ptr<AbstractSite> Space2::addVertex(const Point2& vertex)
     spdlog::debug("Add vertex2 {}", vertex);
 
     return addSite(std::make_shared<Vertex2>(vertex));
+}
+
+double Space2::closestDistanceToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const
+{
+    if (auto vertex = std::dynamic_pointer_cast<Vertex2>(site))
+    {
+        return boost::geometry::distance(vertex->basePoint(), side);
+    }
+
+    spdlog::warn("Unusupported site type for closest distance to side calculation");
+    return std::numeric_limits<double>::infinity();
 }
 
 Point2 Space2::calculateBisectorVertexAlongSegment(

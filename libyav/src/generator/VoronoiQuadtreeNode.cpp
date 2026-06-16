@@ -154,9 +154,9 @@ void VoronoiQuadtreeNode::addInteriorSite(const std::shared_ptr<AbstractSite>& s
     interior_sites_.push_back(site);
 }
 
-void VoronoiQuadtreeNode::addEdgeSites(const std::vector<AbstractSite::Ptr>& sites)
+void VoronoiQuadtreeNode::addEdgeSite(const AbstractSite::Ptr& site)
 {
-    edge_sites_.insert(edge_sites_.end(), sites.begin(), sites.end());
+    edge_sites_.push_back(site);
 }
 
 std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::allRelatedSites() const

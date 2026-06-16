@@ -42,7 +42,10 @@ private:
         VoronoiQuadtreeNode& node,
         const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
         const AbstractSpace& input_space);
-    static void updateFacesClosestSites(VoronoiQuadtreeNode& node, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites);
+    static void updateFacesClosestSites(
+        VoronoiQuadtreeNode& node,
+        std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
+        const AbstractSpace& input_space);
 
     static constexpr size_t maximum_level_ = 6;
 };

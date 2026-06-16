@@ -157,17 +157,17 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space
             {
                 // propagate(*child, leaves);
 
-                // STEP 1: assign obvious child V-sites, which is the one of the parent at the shared corner
+                // Assign obvious child V-site, which is the one of the parent at the shared corner
                 child->setCornerClosestSite(child_index, node->cornerClosestSiteAt(child_index).value());
 
-                // STEP 2: assign child I-sites, which is a subset of the parent I-sites
+                // Assign child I-sites, which is a subset of the parent I-sites
                 dispatchInteriorSites(*child, node->interiorSites());
 
-                // STEP 3: assign remaining children V-sites, which is a subset of the parent I/V/F-sites
+                // Assign remaining children V-sites, which is a subset of the parent I/V/F-sites
                 updateCornerClosestSites(*child, all_related_sites, input_space);
 
-                // STEP 3: assign child F-sites, which is a subset of the parent I/V/F-sites (and requires the child V-sites)
-                updateFacesClosestSites(*child, all_related_sites);
+                // Assign child F-sites, which is a subset of the parent I/V/F-sites (and requires the child V-sites)
+                updateFacesClosestSites(*child, all_related_sites, input_space);
 
                 node_queue.push(child);
             }
@@ -329,8 +329,52 @@ void Generator::updateCornerClosestSites(
     }
 }
 
-void Generator::updateFacesClosestSites(VoronoiQuadtreeNode& node, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites)
+void Generator::updateFacesClosestSites(
+    VoronoiQuadtreeNode& node,
+    std::set<AbstractSite::Ptr>& candidate_sites,
+    const AbstractSpace& input_space)
 {
+    // F-sites can't be the same as existing I/V-sites
+    std::set<AbstractSite::Ptr> node_related_sites(node.interiorSites().begin(), node.interiorSites().end());
+    for (size_t corner_index = 0; corner_index < VoronoiQuadtreeNode::corners_count; ++corner_index)
+    {
+        node_related_sites.insert(node.cornerClosestSiteAt(corner_index)->site);
+    }
+
+    struct NodeSide
+    {
+        Segment2 segment;
+        std::optional<ClosestSite>* closest_site_start;
+        std::optional<ClosestSite>* closest_site_end;
+    };
+
+    std::array<NodeSide, VoronoiQuadtreeNode::corners_count> sides;
+    for (size_t side_index = 0; side_index < VoronoiQuadtreeNode::corners_count; ++side_index)
+    {
+        sides[side_index].segment
+            = Segment2(node.cornerAt(side_index), node.cornerAt((side_index + 1) % VoronoiQuadtreeNode::corners_count));
+        sides[side_index].closest_site_start = &node.cornerClosestSiteAt(side_index);
+        sides[side_index].closest_site_end = &node.cornerClosestSiteAt((side_index + 1) % VoronoiQuadtreeNode::corners_count);
+    }
+
+    for (const AbstractSite::Ptr& site : candidate_sites)
+    {
+        if (node_related_sites.contains(site))
+        {
+            continue;
+        }
+
+        for (size_t side_index = 0; side_index < VoronoiQuadtreeNode::corners_count; ++side_index)
+        {
+            double distance_to_side = input_space.closestDistanceToSide(site, sides[side_index].segment);
+            if (distance_to_side < sides[side_index].closest_site_end->value().distance
+                || distance_to_side < sides[side_index].closest_site_start->value().distance)
+            {
+                node.addEdgeSite(site);
+                break;
+            }
+        }
+    }
 }
 
 } // namespace yav

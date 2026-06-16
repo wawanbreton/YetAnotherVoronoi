@@ -32,6 +32,8 @@ public:
 
     virtual ClosestSite findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const = 0;
 
+    virtual double closestDistanceToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const = 0;
+
 protected:
     std::shared_ptr<AbstractSite> addSite(const std::shared_ptr<AbstractSite>& site);
 
