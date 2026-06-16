@@ -66,4 +66,21 @@ Point2 Space2::calculateBisectorVertexAlongSegment(
     return result;
 }
 
+ClosestSite Space2::findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const
+{
+    ClosestSite closest_site = ClosestSite{ nullptr, std::numeric_limits<double>::infinity() };
+
+    for (const AbstractSite::Ptr& site : candidate_sites)
+    {
+        const double distance = site->distanceTo(position);
+        if (distance < closest_site.distance)
+        {
+            closest_site.site = site;
+            closest_site.distance = distance;
+        }
+    }
+
+    return closest_site;
+}
+
 } // namespace yav

@@ -28,6 +28,9 @@ public:
         const std::shared_ptr<AbstractSite>& closest_site_start,
         const std::shared_ptr<AbstractSite>& closest_site_end,
         const Segment2& segment) const override;
+
+    virtual ClosestSite
+        findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const override;
 };
 
 } // namespace yav

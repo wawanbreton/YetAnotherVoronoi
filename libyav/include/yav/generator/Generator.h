@@ -4,6 +4,7 @@
 #pragma once
 
 #include <memory>
+#include <set>
 #include <vector>
 
 namespace yav
@@ -32,11 +33,16 @@ private:
 private:
     std::vector<std::shared_ptr<VoronoiQuadtreeNode>> build(const Space2& input_space) const;
     std::shared_ptr<VoronoiQuadtreeNode> initialize(const Space2& input_space) const;
-    void update(VoronoiQuadtreeNode& node) const;
     bool isLeaf(const VoronoiQuadtreeNode& node) const;
-    void subdivide(VoronoiQuadtreeNode& node) const;
     void propagate(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<VoronoiQuadtreeNode>>& leaves) const;
     void compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) const;
+
+    static void dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites);
+    static void updateCornerClosestSites(
+        VoronoiQuadtreeNode& node,
+        const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
+        const AbstractSpace& input_space);
+    static void updateFacesClosestSites(VoronoiQuadtreeNode& node, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites);
 
     static constexpr size_t maximum_level_ = 6;
 };

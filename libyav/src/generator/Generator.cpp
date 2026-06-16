@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <queue>
+#include <ranges>
 #include <unordered_set>
 
 #include <spdlog/spdlog.h>
@@ -140,20 +141,34 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space
         const VoronoiQuadtreeNode::Ptr node = node_queue.front();
         node_queue.pop();
 
-        update(*node);
-
         if (isLeaf(*node))
         {
-            propagate(*node, leaves);
-            compact(node->parent());
+            // propagate(*node, leaves);
+            // compact(node->parent());
             leaves.push_back(node);
         }
         else
         {
-            subdivide(*node);
-            for (const VoronoiQuadtreeNode::Ptr& child : node->children())
+            node->split();
+
+            std::set<AbstractSite::Ptr> all_related_sites = node->allRelatedSites();
+
+            for (auto [child_index, child] : node->children() | std::views::enumerate)
             {
-                propagate(*child, leaves);
+                // propagate(*child, leaves);
+
+                // STEP 1: assign obvious child V-sites, which is the one of the parent at the shared corner
+                child->setCornerClosestSite(child_index, node->cornerClosestSiteAt(child_index).value());
+
+                // STEP 2: assign child I-sites, which is a subset of the parent I-sites
+                dispatchInteriorSites(*child, node->interiorSites());
+
+                // STEP 3: assign remaining children V-sites, which is a subset of the parent I/V/F-sites
+                updateCornerClosestSites(*child, all_related_sites, input_space);
+
+                // STEP 3: assign child F-sites, which is a subset of the parent I/V/F-sites (and requires the child V-sites)
+                updateFacesClosestSites(*child, all_related_sites);
+
                 node_queue.push(child);
             }
         }
@@ -207,42 +222,14 @@ VoronoiQuadtreeNode::Ptr Generator::initialize(const Space2& input_space) const
 
     VoronoiQuadtreeNode::Ptr root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
     root->setInteriorSites(sites);
+    // TODO: optimize by not copying the vector to a set
+    updateCornerClosestSites(*root, std::set<AbstractSite::Ptr>(sites.begin(), sites.end()), input_space);
     return root;
-}
-
-void Generator::update(VoronoiQuadtreeNode& node) const
-{
-    for (size_t corner_index = 0; corner_index < VoronoiQuadtreeNode::corners_count; ++corner_index)
-    {
-        std::optional<ClosestSite>& corner_closest_site = node.cornerClosestSiteAt(corner_index);
-        if (corner_closest_site.has_value())
-        {
-            continue;
-        }
-
-        const Point2 corner = node.cornerAt(corner_index);
-        corner_closest_site = ClosestSite{ nullptr, std::numeric_limits<double>::infinity() };
-
-        for (const AbstractSite::Ptr& site : node.interiorSites())
-        {
-            const double distance = site->distanceTo(corner);
-            if (distance < corner_closest_site->distance)
-            {
-                corner_closest_site->site = site;
-                corner_closest_site->distance = distance;
-            }
-        }
-    }
 }
 
 bool Generator::isLeaf(const VoronoiQuadtreeNode& node) const
 {
     return node.level() >= maximum_level_ || node.isTerminal();
-}
-
-void Generator::subdivide(VoronoiQuadtreeNode& node) const
-{
-    node.split();
 }
 
 void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQuadtreeNode::Ptr>& leaves) const
@@ -310,6 +297,40 @@ void Generator::compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) cons
     }
 
     // Intentional no-op in this 2D prototype: pruning removes per-child boundary detail needed for extraction.
+}
+
+void Generator::dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites)
+{
+    for (const AbstractSite::Ptr& interior_site : candidate_sites)
+    {
+        // Optimize this by distributing the interior sites to the proper child instead (based on position relative to center)
+        if (node.containsPoint(interior_site->basePoint()))
+        {
+            node.addInteriorSite(interior_site);
+        }
+    }
+}
+
+void Generator::updateCornerClosestSites(
+    VoronoiQuadtreeNode& node,
+    const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
+    const AbstractSpace& input_space)
+{
+    for (size_t corner_index = 0; corner_index < VoronoiQuadtreeNode::corners_count; ++corner_index)
+    {
+        std::optional<ClosestSite>& closest_site = node.cornerClosestSiteAt(corner_index);
+        if (closest_site.has_value())
+        {
+            continue;
+        }
+
+        // Check distance agains corner
+        closest_site = input_space.findClosestSite(node.cornerAt(corner_index), candidate_sites);
+    }
+}
+
+void Generator::updateFacesClosestSites(VoronoiQuadtreeNode& node, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites)
+{
 }
 
 } // namespace yav

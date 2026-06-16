@@ -4,6 +4,7 @@
 #pragma once
 
 #include <memory>
+#include <set>
 #include <vector>
 
 #include "yav/geometry/Point2.h"
@@ -13,6 +14,7 @@ namespace yav
 {
 
 class AbstractSite;
+struct ClosestSite;
 
 /** Top-level user input container for Voronoi diagram generation. */
 class AbstractSpace
@@ -27,6 +29,8 @@ public:
         const std::shared_ptr<AbstractSite>& closest_site_end,
         const Segment2& segment) const
         = 0;
+
+    virtual ClosestSite findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const = 0;
 
 protected:
     std::shared_ptr<AbstractSite> addSite(const std::shared_ptr<AbstractSite>& site);

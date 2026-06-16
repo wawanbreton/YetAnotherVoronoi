@@ -25,7 +25,7 @@ public:
 
     static constexpr size_t corners_count{ 4 };
 
-    VoronoiQuadtreeNode(const Point2& center, double width, size_t level, const std::shared_ptr<VoronoiQuadtreeNode>& parent);
+    VoronoiQuadtreeNode(const Point2& center, double width, size_t level, const VoronoiQuadtreeNode::Ptr& parent);
 
     bool isLeaf() const;
     bool isTerminal() const;
