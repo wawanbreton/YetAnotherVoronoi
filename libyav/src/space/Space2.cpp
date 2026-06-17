@@ -45,6 +45,26 @@ Point2 Space2::calculateEquidistantPosition(
 
     if (vertex1 && vertex2 && vertex3)
     {
+        const Point2 point1 = vertex1->basePoint();
+        const Point2 point2 = vertex2->basePoint();
+        const Point2 point3 = vertex3->basePoint();
+
+        Point2 midpoint12;
+        Point2 midpoint13;
+        boost::geometry::centroid(Segment2(point1, point2), midpoint12);
+        boost::geometry::centroid(Segment2(point1, point3), midpoint13);
+
+        const Line2 bisector12 = boost::geometry::detail::make::make_perpendicular_line<double>(point1, point2, midpoint12);
+        const Line2 bisector13 = boost::geometry::detail::make::make_perpendicular_line<double>(point1, point3, midpoint13);
+
+        Point2 equidistant_position;
+        if (boost::geometry::arithmetic::intersection_point(bisector12, bisector13, equidistant_position))
+        {
+            return equidistant_position;
+        }
+
+        spdlog::warn("Unable to calculate equidistant point from perpendicular bisectors, defaulting to centroid");
+        return (point1 + point2 + point3) / 3.0;
     }
     else
     {
