@@ -22,7 +22,8 @@ class Generator
 public:
     Generator();
 
-    std::tuple<Diagram, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>> generate(const Space2& input_space) const;
+    std::tuple<Diagram, std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
+        generate(const Space2& input_space) const;
 
 private:
     static std::vector<std::shared_ptr<AbstractSite>> uniqueSitesFromCrossings(
@@ -31,7 +32,8 @@ private:
     static void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const yav::AbstractSpace& space);
 
 private:
-    std::vector<std::shared_ptr<VoronoiQuadtreeNode>> build(const Space2& input_space) const;
+    std::tuple<std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
+        build(const Space2& input_space) const;
     std::shared_ptr<VoronoiQuadtreeNode> initialize(const Space2& input_space) const;
     bool isLeaf(const VoronoiQuadtreeNode& node) const;
     void propagate(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<VoronoiQuadtreeNode>>& leaves) const;

@@ -25,10 +25,12 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     cxxopts::Options options("yav", "Minimal CLI for libyav");
-    options.add_options()("h,help", "Print help")("d,debug", "Display debug-level output")("t,tree", "Display the generated quad/octree")(
-        "file",
-        "Path of the mesh file to be loaded",
-        cxxopts::value<std::string>())("random", "Number of random points to be generated", cxxopts::value<size_t>());
+    options.add_options()("h,help", "Print help")("d,debug", "Display debug-level output")("l,leaves", "Display the generated quad/octree")(
+        "t,tree",
+        "Display the leaves of the tree")("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>())(
+        "random",
+        "Number of random points to be generated",
+        cxxopts::value<size_t>());
     options.parse_positional({ "file" });
     options.positional_help("<file>");
 
@@ -83,7 +85,7 @@ int main(int argc, char** argv)
 
     spdlog::info("Generate diagram with {} sites", space.sites().size());
     spdlog::stopwatch timer;
-    auto [voronoi_diagram, tree] = generator.generate(space);
+    auto [voronoi_diagram, tree, leaves] = generator.generate(space);
     spdlog::info("Generated {} cells in {}", voronoi_diagram.cells().size(), timer.elapsed());
 
     VoronoiGraphicsView graphics_view;
@@ -93,6 +95,11 @@ int main(int argc, char** argv)
     if (options_result.count("tree"))
     {
         graphics_view.setTree(tree);
+    }
+
+    if (options_result.count("leaves"))
+    {
+        graphics_view.setTreeLeaves(leaves);
     }
 
     graphics_view.resize(800, 600);

@@ -55,13 +55,35 @@ void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
     }
 }
 
-void VoronoiGraphicsView::setTree(const std::vector<yav::VoronoiQuadtreeNode::Ptr>& tree)
+void VoronoiGraphicsView::setTree(const yav::VoronoiQuadtreeNode::Ptr& root)
 {
-    for (const yav::VoronoiQuadtreeNode::Ptr& node : tree)
+    constexpr bool add_children = true;
+    addTreeNode(root, QColor("#ff8f00"), add_children);
+}
+
+void VoronoiGraphicsView::setTreeLeaves(const std::vector<yav::VoronoiQuadtreeNode::Ptr>& leaves)
+{
+    for (const yav::VoronoiQuadtreeNode::Ptr& leaf : leaves)
     {
-        QRectF rect(0, 0, node->width(), node->width());
-        rect.moveCenter(QPointF(node->center().get<0>(), node->center().get<1>()));
-        scene_->addRect(rect, QPen(QColor("#008fff"), 0.0005));
+        addTreeNode(leaf, QColor("#008fff"));
+    }
+}
+
+void VoronoiGraphicsView::addTreeNode(const yav::VoronoiQuadtreeNode::Ptr& node, const QColor& color, bool add_children)
+{
+    QRectF rect(0, 0, node->width(), node->width());
+    rect.moveCenter(QPointF(node->center().get<0>(), node->center().get<1>()));
+    scene_->addRect(rect, QPen(color, 0.0005));
+
+    if (add_children)
+    {
+        for (const yav::VoronoiQuadtreeNode::Ptr& child : node->children())
+        {
+            if (child)
+            {
+                addTreeNode(child, color, add_children);
+            }
+        }
     }
 }
 
@@ -104,8 +126,8 @@ void VoronoiGraphicsView::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::MiddleButton)
     {
-        // We want to drag the scene with the middle button, and Qt implements it with the left button, so make it believe the left button
-        // has been pressed;
+        // We want to drag the scene with the middle button, and Qt implements it with the left button, so make it believe the left
+        // button has been pressed;
         setDragMode(QGraphicsView::ScrollHandDrag);
         QMouseEvent pseudo_event(
             QMouseEvent::MouseButtonPress,

@@ -22,7 +22,7 @@ namespace yav
 
 Generator::Generator() = default;
 
-std::tuple<Diagram, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>> Generator::generate(const Space2& input_space) const
+std::tuple<Diagram, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::generate(const Space2& input_space) const
 {
     if (input_space.sites().empty())
     {
@@ -32,7 +32,7 @@ std::tuple<Diagram, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>> Generator
 
     Diagram diagram;
 
-    const std::vector<VoronoiQuadtreeNode::Ptr> leaves = build(input_space);
+    const auto [root, leaves] = build(input_space);
 
     for (const VoronoiQuadtreeNode::Ptr& leaf : leaves)
     {
@@ -41,7 +41,7 @@ std::tuple<Diagram, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>> Generator
 
     spdlog::info("Generated 2D Voronoi approximation from {} sites and {} quadtree leaves", input_space.sites().size(), leaves.size());
 
-    return { diagram, leaves };
+    return { diagram, root, leaves };
 }
 
 std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
@@ -124,7 +124,7 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     }
 }
 
-std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space) const
+std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::build(const Space2& input_space) const
 {
     VoronoiQuadtreeNode::Ptr root = initialize(input_space);
     if (! root)
@@ -141,7 +141,10 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space
         const VoronoiQuadtreeNode::Ptr node = node_queue.front();
         node_queue.pop();
 
-        if (isLeaf(*node))
+        if (node->isTerminal())
+        {
+        }
+        else if (node->level() >= maximum_level_)
         {
             // propagate(*node, leaves);
             // compact(node->parent());
@@ -174,7 +177,7 @@ std::vector<VoronoiQuadtreeNode::Ptr> Generator::build(const Space2& input_space
         }
     }
 
-    return leaves;
+    return std::make_tuple(root, leaves);
 }
 
 VoronoiQuadtreeNode::Ptr Generator::initialize(const Space2& input_space) const
@@ -279,16 +282,11 @@ void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQu
 
 void Generator::compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) const
 {
-    if (! parent)
-    {
-        return;
-    }
-
     const bool are_all_children_terminal = std::ranges::all_of(
         parent->children(),
         [](const VoronoiQuadtreeNode::Ptr& child)
         {
-            return child && child->isTerminal();
+            return child->isTerminal();
         });
 
     if (! are_all_children_terminal)

@@ -24,7 +24,9 @@ public:
 
     void setDiagram(const yav::Diagram& diagram);
 
-    void setTree(const std::vector<std::shared_ptr<yav::VoronoiQuadtreeNode>>& tree);
+    void setTree(const std::shared_ptr<yav::VoronoiQuadtreeNode>& root);
+
+    void setTreeLeaves(const std::vector<std::shared_ptr<yav::VoronoiQuadtreeNode>>& leaves);
 
     void autoFit();
 
@@ -36,6 +38,8 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
 
 private:
+    void addTreeNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node, const QColor& color, bool add_children = false);
+
     void zoomIn();
 
     void zoomOut();
