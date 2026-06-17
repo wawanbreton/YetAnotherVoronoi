@@ -39,6 +39,18 @@ Point2 Space2::calculateEquidistantPosition(
     const std::shared_ptr<AbstractSite>& site2,
     const std::shared_ptr<AbstractSite>& site3) const
 {
+    auto vertex1 = std::dynamic_pointer_cast<Vertex2>(site1);
+    auto vertex2 = std::dynamic_pointer_cast<Vertex2>(site2);
+    auto vertex3 = std::dynamic_pointer_cast<Vertex2>(site3);
+
+    if (vertex1 && vertex2 && vertex3)
+    {
+    }
+    else
+    {
+        spdlog::warn("Unusupported combination of sites for equidistant point calculation");
+    }
+
     return Point2();
 }
 
