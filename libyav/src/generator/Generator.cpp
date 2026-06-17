@@ -68,19 +68,12 @@ std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
 
 void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const AbstractSpace& space)
 {
-    static constexpr std::array<std::pair<size_t, size_t>, 4> edge_corners{ {
-        { 0, 1 },
-        { 1, 3 },
-        { 2, 3 },
-        { 0, 2 },
-    } };
-
     std::vector<Point2> crossings;
     std::vector<std::pair<AbstractSite::Ptr, AbstractSite::Ptr>> crossing_sites;
 
-    for (size_t edge_index = 0; edge_index < edge_corners.size(); ++edge_index)
+    for (size_t first_corner_index = 0; first_corner_index < VoronoiQuadtreeNode::corners_count; ++first_corner_index)
     {
-        const auto [first_corner_index, second_corner_index] = edge_corners[edge_index];
+        const size_t second_corner_index = (first_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
         const std::optional<ClosestSite>& first_corner = leaf_node.cornerClosestSiteAt(first_corner_index);
         const std::optional<ClosestSite>& second_corner = leaf_node.cornerClosestSiteAt(second_corner_index);
 
@@ -97,7 +90,6 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
             continue;
         }
 
-        // crossings.push_back(leaf_node.edgeMidpointAt(edge_index));
         crossings.push_back(space.calculateBisectorVertexAlongSegment(
             first_corner_site,
             second_corner_site,
