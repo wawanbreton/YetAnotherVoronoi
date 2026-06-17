@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "yav/generator/ClosestSite.h"
+#include "yav/generator/FaceSite.h"
 #include "yav/geometry/Point2.h"
 
 namespace yav
@@ -53,7 +54,8 @@ public:
     void setInteriorSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
     void addInteriorSite(const std::shared_ptr<AbstractSite>& site);
 
-    void addEdgeSite(const std::shared_ptr<AbstractSite>& site);
+    const std::vector<FaceSite>& edgeSites() const;
+    void addEdgeSite(const FaceSite& site);
 
     std::set<std::shared_ptr<AbstractSite>> allRelatedSites() const;
 
@@ -69,7 +71,7 @@ private:
     std::array<Ptr, corners_count> children_;
     std::array<std::optional<ClosestSite>, corners_count> corner_closest_sites_; // V-Sites as per the documentation
     std::vector<std::shared_ptr<AbstractSite>> interior_sites_; // I-Sites as per the documentation
-    std::vector<std::shared_ptr<AbstractSite>> edge_sites_; // F-Sites as per the documentation
+    std::vector<FaceSite> edge_sites_; // F-Sites as per the documentation
 };
 
 } // namespace yav

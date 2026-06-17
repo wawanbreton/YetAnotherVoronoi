@@ -17,6 +17,9 @@
 #include <yav/voronoi/Cell.h>
 #include <yav/voronoi/Diagram.h>
 
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <spdlog/spdlog.h>
+
 
 VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
     : min_zoom_(35)
@@ -113,6 +116,7 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
 
     current_overlay_node_ = node;
 
+    spdlog::info("=================================");
     constexpr bool add_children = false;
     constexpr double pen_scale = 2.0;
     addTreeNode(current_overlay_node_, QColor("#ffd600"), add_children, pen_scale)->setParentItem(overlay_);
@@ -125,7 +129,26 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
             const yav::Point2 site_pos = closest_site->site->basePoint();
             scene_->addLine(corner.get<0>(), corner.get<1>(), site_pos.get<0>(), site_pos.get<1>(), QPen(QColor("#ffd600"), 0.001))
                 ->setParentItem(overlay_);
+            spdlog::info("V-site to corner {}@{}: {} at distance {}", corner_index, corner, site_pos, closest_site->distance);
         }
+    }
+
+    for (const yav::FaceSite& edge_site : node->edgeSites())
+    {
+        const yav::Point2 site_pos = edge_site.site->basePoint();
+        yav::Point2 center;
+        boost::geometry::centroid(edge_site.face, center);
+        scene_->addLine(center.get<0>(), center.get<1>(), site_pos.get<0>(), site_pos.get<1>(), QPen(QColor("#ff00d6"), 0.001))
+            ->setParentItem(overlay_);
+        spdlog::info("F-site to edge {}: {} at distance {}", center, site_pos, edge_site.distance);
+    }
+
+    for (const yav::AbstractSite::Ptr& interior_site : node->interiorSites())
+    {
+        const yav::Point2 site_pos = interior_site->basePoint();
+        const yav::Point2& center = node->center();
+        scene_->addLine(center.get<0>(), center.get<1>(), site_pos.get<0>(), site_pos.get<1>(), QPen(QColor("#8fff00"), 0.001))
+            ->setParentItem(overlay_);
     }
 }
 

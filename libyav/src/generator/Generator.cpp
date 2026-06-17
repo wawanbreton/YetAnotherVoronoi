@@ -322,7 +322,6 @@ void Generator::updateCornerClosestSites(
             continue;
         }
 
-        // Check distance agains corner
         closest_site = input_space.findClosestSite(node.cornerAt(corner_index), candidate_sites);
     }
 }
@@ -347,12 +346,12 @@ void Generator::updateFacesClosestSites(
     };
 
     std::array<NodeSide, VoronoiQuadtreeNode::corners_count> sides;
-    for (size_t side_index = 0; side_index < VoronoiQuadtreeNode::corners_count; ++side_index)
+    for (size_t start_corner_index = 0; start_corner_index < VoronoiQuadtreeNode::corners_count; ++start_corner_index)
     {
-        sides[side_index].segment
-            = Segment2(node.cornerAt(side_index), node.cornerAt((side_index + 1) % VoronoiQuadtreeNode::corners_count));
-        sides[side_index].closest_site_start = &node.cornerClosestSiteAt(side_index);
-        sides[side_index].closest_site_end = &node.cornerClosestSiteAt((side_index + 1) % VoronoiQuadtreeNode::corners_count);
+        const size_t end_corner_index = (start_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
+        sides[start_corner_index].segment = Segment2(node.cornerAt(start_corner_index), node.cornerAt(end_corner_index));
+        sides[start_corner_index].closest_site_start = &node.cornerClosestSiteAt(start_corner_index);
+        sides[start_corner_index].closest_site_end = &node.cornerClosestSiteAt(end_corner_index);
     }
 
     for (const AbstractSite::Ptr& site : candidate_sites)
@@ -364,11 +363,11 @@ void Generator::updateFacesClosestSites(
 
         for (size_t side_index = 0; side_index < VoronoiQuadtreeNode::corners_count; ++side_index)
         {
-            double distance_to_side = input_space.closestDistanceToSide(site, sides[side_index].segment);
-            if (distance_to_side < sides[side_index].closest_site_end->value().distance
-                || distance_to_side < sides[(side_index + 1) % VoronoiQuadtreeNode::corners_count].closest_site_start->value().distance)
+            const NodeSide& side = sides[side_index];
+            double distance_to_side = input_space.closestDistanceToSide(site, side.segment);
+            if (distance_to_side < side.closest_site_start->value().distance || distance_to_side < side.closest_site_end->value().distance)
             {
-                node.addEdgeSite(site);
+                node.addEdgeSite(FaceSite{ site, side.segment, distance_to_side });
                 break;
             }
         }

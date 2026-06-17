@@ -154,7 +154,12 @@ void VoronoiQuadtreeNode::addInteriorSite(const std::shared_ptr<AbstractSite>& s
     interior_sites_.push_back(site);
 }
 
-void VoronoiQuadtreeNode::addEdgeSite(const AbstractSite::Ptr& site)
+const std::vector<FaceSite>& VoronoiQuadtreeNode::edgeSites() const
+{
+    return edge_sites_;
+}
+
+void VoronoiQuadtreeNode::addEdgeSite(const FaceSite& site)
 {
     edge_sites_.push_back(site);
 }
@@ -170,8 +175,13 @@ std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::allRelatedSites() const
             result.insert(corner_closest_site->site);
         }
     }
+
     result.insert(interior_sites_.begin(), interior_sites_.end());
-    result.insert(edge_sites_.begin(), edge_sites_.end());
+
+    for (const FaceSite& face_site : edge_sites_)
+    {
+        result.insert(face_site.site);
+    }
 
     return result;
 }
