@@ -182,6 +182,34 @@ void VoronoiGraphicsView::mousePressEvent(QMouseEvent* event)
         QGraphicsView::mousePressEvent(&pseudo_event);
         viewport()->setCursor(Qt::ClosedHandCursor);
     }
+    else if (event->button() == Qt::RightButton)
+    {
+        if (current_overlay_node_ && current_overlay_node_->parent())
+        {
+            setOverlayNode(current_overlay_node_->parent());
+        }
+    }
+    else if (event->button() == Qt::LeftButton)
+    {
+        if (current_overlay_node_)
+        {
+            const QPointF scene_pos = mapToScene(event->pos());
+            const yav::Point2 scene_pos_point(scene_pos.x(), scene_pos.y());
+            yav::VoronoiQuadtreeNode::Ptr new_overlay;
+            for (yav::VoronoiQuadtreeNode::Ptr child : current_overlay_node_->children())
+            {
+                if (child && child->containsPoint(scene_pos_point))
+                {
+                    new_overlay = child;
+                }
+            }
+
+            if (new_overlay)
+            {
+                setOverlayNode(new_overlay);
+            }
+        }
+    }
     else
     {
         QGraphicsView::mousePressEvent(event);
