@@ -94,23 +94,6 @@ Point2 VoronoiQuadtreeNode::cornerAt(const size_t corner_index) const
     return center_ + corner_deltas_[corner_index] * width_ / 2.0;
 }
 
-Point2 VoronoiQuadtreeNode::edgeMidpointAt(const size_t edge_index) const
-{
-    switch (edge_index)
-    {
-    case 0:
-        return Point2(center_.get<0>(), center_.get<1>() - width_ / 2.0);
-    case 1:
-        return Point2(center_.get<0>() + width_ / 2.0, center_.get<1>());
-    case 2:
-        return Point2(center_.get<0>(), center_.get<1>() + width_ / 2.0);
-    case 3:
-        return Point2(center_.get<0>() - width_ / 2.0, center_.get<1>());
-    default:
-        return center_;
-    }
-}
-
 bool VoronoiQuadtreeNode::containsPoint(const Point2& point, const double tolerance) const
 {
     const double half_width = width_ / 2.0 + tolerance;

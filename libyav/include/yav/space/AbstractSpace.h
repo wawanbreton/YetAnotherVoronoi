@@ -30,6 +30,12 @@ public:
         const Segment2& segment) const
         = 0;
 
+    virtual Point2 calculateEquidistantPosition(
+        const std::shared_ptr<AbstractSite>& site1,
+        const std::shared_ptr<AbstractSite>& site2,
+        const std::shared_ptr<AbstractSite>& site3) const
+        = 0;
+
     virtual ClosestSite findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const = 0;
 
     virtual double closestDistanceToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const = 0;

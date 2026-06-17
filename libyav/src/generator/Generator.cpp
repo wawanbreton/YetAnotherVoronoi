@@ -97,16 +97,26 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         crossing_sites.push_back({ first_corner_site, second_corner_site });
     }
 
+    const std::vector<AbstractSite::Ptr> unique_sites = uniqueSitesFromCrossings(crossing_sites);
+
     if (crossings.size() == 2)
     {
-        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), uniqueSitesFromCrossings(crossing_sites));
+        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
         return;
+    }
+
+    if (crossings.size() == 3)
+    {
+        const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
+        diagram.addBoundarySegment(Segment2(equidistant_point, crossings[0]), unique_sites);
+        diagram.addBoundarySegment(Segment2(equidistant_point, crossings[1]), unique_sites);
+        diagram.addBoundarySegment(Segment2(equidistant_point, crossings[2]), unique_sites);
     }
 
     if (crossings.size() == 4)
     {
-        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), uniqueSitesFromCrossings(crossing_sites));
-        diagram.addBoundarySegment(Segment2(crossings[2], crossings[3]), uniqueSitesFromCrossings(crossing_sites));
+        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
+        diagram.addBoundarySegment(Segment2(crossings[2], crossings[3]), unique_sites);
         return;
     }
 

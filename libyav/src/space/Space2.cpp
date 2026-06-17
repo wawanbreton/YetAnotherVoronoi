@@ -34,6 +34,14 @@ std::shared_ptr<AbstractSite> Space2::addVertex(const Point2& vertex)
     return addSite(std::make_shared<Vertex2>(vertex));
 }
 
+Point2 Space2::calculateEquidistantPosition(
+    const std::shared_ptr<AbstractSite>& site1,
+    const std::shared_ptr<AbstractSite>& site2,
+    const std::shared_ptr<AbstractSite>& site3) const
+{
+    return Point2();
+}
+
 double Space2::closestDistanceToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const
 {
     if (auto vertex = std::dynamic_pointer_cast<Vertex2>(site))

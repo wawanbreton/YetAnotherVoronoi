@@ -41,7 +41,6 @@ public:
     void pruneChildren();
 
     Point2 cornerAt(size_t corner_index) const;
-    Point2 edgeMidpointAt(size_t edge_index) const;
 
     bool containsPoint(const Point2& point, double tolerance = std::numeric_limits<double>::epsilon()) const;
 
