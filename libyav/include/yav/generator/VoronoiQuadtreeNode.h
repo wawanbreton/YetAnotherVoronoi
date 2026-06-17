@@ -57,6 +57,8 @@ public:
 
     std::set<std::shared_ptr<AbstractSite>> allRelatedSites() const;
 
+    VoronoiQuadtreeNode::Ptr findDeepestChildAt(const Point2& position);
+
 private:
     static const std::array<Point2, corners_count> corner_deltas_;
 

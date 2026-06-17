@@ -9,6 +9,7 @@
 #include <qpoint.h>
 #include <qpointingdevice.h>
 #include <qtransform.h>
+#include <ranges>
 #include <yav/generator/VoronoiQuadtreeNode.h>
 #include <yav/space/Space2.h>
 #include <yav/space/site/Edge2.h>
@@ -21,9 +22,12 @@ VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
     : min_zoom_(35)
     , max_zoom_(50)
     , scene_(new QGraphicsScene(this))
+    , overlay_(scene_->createItemGroup({}))
 {
     resetZoom();
     setScene(scene_);
+    setMouseTracking(true);
+    overlay_->setZValue(1.0);
 }
 
 void VoronoiGraphicsView::setSpace(const yav::Space2& space)
@@ -57,6 +61,8 @@ void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
 
 void VoronoiGraphicsView::setTree(const yav::VoronoiQuadtreeNode::Ptr& root)
 {
+    tree_root_ = root;
+
     constexpr bool add_children = true;
     addTreeNode(root, QColor("#ff8f00"), add_children);
 }
@@ -69,11 +75,15 @@ void VoronoiGraphicsView::setTreeLeaves(const std::vector<yav::VoronoiQuadtreeNo
     }
 }
 
-void VoronoiGraphicsView::addTreeNode(const yav::VoronoiQuadtreeNode::Ptr& node, const QColor& color, bool add_children)
+QGraphicsItem* VoronoiGraphicsView::addTreeNode(
+    const yav::VoronoiQuadtreeNode::Ptr& node,
+    const QColor& color,
+    bool add_children,
+    const double pen_scale)
 {
     QRectF rect(0, 0, node->width(), node->width());
     rect.moveCenter(QPointF(node->center().get<0>(), node->center().get<1>()));
-    scene_->addRect(rect, QPen(color, 0.0005));
+    QGraphicsItem* item = scene_->addRect(rect, QPen(color, 0.0005 * pen_scale));
 
     if (add_children)
     {
@@ -83,6 +93,38 @@ void VoronoiGraphicsView::addTreeNode(const yav::VoronoiQuadtreeNode::Ptr& node,
             {
                 addTreeNode(child, color, add_children);
             }
+        }
+    }
+
+    return item;
+}
+
+void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node)
+{
+    if (node == current_overlay_node_)
+    {
+        return;
+    }
+
+    while (! overlay_->childItems().empty())
+    {
+        delete overlay_->childItems().front();
+    }
+
+    current_overlay_node_ = node;
+
+    constexpr bool add_children = false;
+    constexpr double pen_scale = 2.0;
+    addTreeNode(current_overlay_node_, QColor("#ffd600"), add_children, pen_scale)->setParentItem(overlay_);
+
+    for (const auto& [corner_index, closest_site] : node->cornerClosestSites() | std::views::enumerate)
+    {
+        if (closest_site.has_value())
+        {
+            const yav::Point2 corner = node->cornerAt(corner_index);
+            const yav::Point2 site_pos = closest_site->site->basePoint();
+            scene_->addLine(corner.get<0>(), corner.get<1>(), site_pos.get<0>(), site_pos.get<1>(), QPen(QColor("#ffd600"), 0.001))
+                ->setParentItem(overlay_);
         }
     }
 }
@@ -166,6 +208,17 @@ void VoronoiGraphicsView::mouseReleaseEvent(QMouseEvent* event)
     {
         QGraphicsView::mouseReleaseEvent(event);
     }
+}
+
+void VoronoiGraphicsView::mouseMoveEvent(QMouseEvent* event)
+{
+    if (tree_root_)
+    {
+        const QPointF scene_pos = mapToScene(event->pos());
+        setOverlayNode(tree_root_->findDeepestChildAt(yav::Point2(scene_pos.x(), scene_pos.y())));
+    }
+
+    QGraphicsView::mouseMoveEvent(event);
 }
 
 void VoronoiGraphicsView::zoom(qreal zoom)

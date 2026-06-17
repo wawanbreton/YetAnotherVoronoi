@@ -37,8 +37,16 @@ protected:
 
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
 
+    virtual void mouseMoveEvent(QMouseEvent* event) override;
+
 private:
-    void addTreeNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node, const QColor& color, bool add_children = false);
+    QGraphicsItem* addTreeNode(
+        const std::shared_ptr<yav::VoronoiQuadtreeNode>& node,
+        const QColor& color,
+        bool add_children = false,
+        const double pen_scale = 1.0);
+
+    void setOverlayNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node);
 
     void zoomIn();
 
@@ -56,4 +64,7 @@ private:
     QGraphicsScene* const scene_;
     int min_zoom_;
     int max_zoom_;
+    QGraphicsItem* const overlay_;
+    std::shared_ptr<yav::VoronoiQuadtreeNode> tree_root_;
+    std::shared_ptr<yav::VoronoiQuadtreeNode> current_overlay_node_;
 };

@@ -176,4 +176,17 @@ std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::allRelatedSites() const
     return result;
 }
 
+VoronoiQuadtreeNode::Ptr VoronoiQuadtreeNode::findDeepestChildAt(const Point2& position)
+{
+    for (const VoronoiQuadtreeNode::Ptr& child : children_)
+    {
+        if (child && child->containsPoint(position))
+        {
+            return child->findDeepestChildAt(position);
+        }
+    }
+
+    return shared_from_this();
+}
+
 } // namespace yav

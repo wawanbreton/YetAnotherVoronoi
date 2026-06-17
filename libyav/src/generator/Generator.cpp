@@ -366,7 +366,7 @@ void Generator::updateFacesClosestSites(
         {
             double distance_to_side = input_space.closestDistanceToSide(site, sides[side_index].segment);
             if (distance_to_side < sides[side_index].closest_site_end->value().distance
-                || distance_to_side < sides[side_index].closest_site_start->value().distance)
+                || distance_to_side < sides[(side_index + 1) % VoronoiQuadtreeNode::corners_count].closest_site_start->value().distance)
             {
                 node.addEdgeSite(site);
                 break;
