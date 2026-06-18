@@ -7,6 +7,7 @@
 #include <set>
 #include <vector>
 
+#include "yav/geometry/Box2.h"
 #include "yav/geometry/Point2.h"
 #include "yav/geometry/Segment2.h"
 
@@ -42,11 +43,16 @@ public:
 
     virtual Segment2 closestSegmentToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const = 0;
 
+    void calculateAutoBoundingBox(const double scale = 1.2);
+    const Box2& boundingBox() const;
+    void setBoundingBox(const Box2& box);
+
 protected:
     std::shared_ptr<AbstractSite> addSite(const std::shared_ptr<AbstractSite>& site);
 
 private:
     std::vector<std::shared_ptr<AbstractSite>> sites_;
+    Box2 bounding_box_;
 };
 
 } // namespace yav

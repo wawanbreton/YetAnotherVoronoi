@@ -3,6 +3,7 @@
 
 #include "yav/geometry/Point2.h"
 
+#include <boost/geometry/algorithms/equals.hpp>
 #include <boost/geometry/arithmetic/arithmetic.hpp>
 
 
@@ -18,6 +19,11 @@ yav::Point2 operator+(const yav::Point2& lhs, const yav::Point2& rhs)
     yav::Point2 result = lhs;
     boost::geometry::add_point(result, rhs);
     return result;
+}
+
+bool operator==(const yav::Point2& lhs, const yav::Point2& rhs)
+{
+    return boost::geometry::equals(lhs, rhs);
 }
 
 yav::Point2 operator*(const yav::Point2& point, const double scale)

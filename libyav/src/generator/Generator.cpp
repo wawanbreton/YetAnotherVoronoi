@@ -31,6 +31,13 @@ std::tuple<Diagram, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::P
         return {};
     }
 
+    if (input_space.boundingBox().min_corner() == input_space.boundingBox().max_corner())
+    {
+        spdlog::warn(
+            "The bounding box of the space has not been set, please use calculateAutoBoundingBox or set the bounding box manually");
+        return {};
+    }
+
     Diagram diagram;
 
     const auto [root, leaves] = build(input_space);
@@ -149,8 +156,6 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
         }
         else if (node->level() >= maximum_level_)
         {
-            // propagate(*node, leaves);
-            // compact(node->parent());
             leaves.push_back(node);
         }
         else
@@ -161,8 +166,6 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
 
             for (auto [child_index, child] : node->children() | std::views::enumerate)
             {
-                // propagate(*child, leaves);
-
                 // Assign obvious child V-site, which is the one of the parent at the shared corner
                 child->setCornerClosestSite(child_index, node->cornerClosestSiteAt(child_index).value());
 
@@ -186,118 +189,17 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
 VoronoiQuadtreeNode::Ptr Generator::initialize(const Space2& input_space) const
 {
     const std::vector<std::shared_ptr<AbstractSite>>& sites = input_space.sites();
-    if (sites.empty())
-    {
-        spdlog::warn("Cannot initialize quadtree on an empty site set");
-        return nullptr;
-    }
 
-    double min_x = std::numeric_limits<double>::infinity();
-    double min_y = std::numeric_limits<double>::infinity();
-    double max_x = -std::numeric_limits<double>::infinity();
-    double max_y = -std::numeric_limits<double>::infinity();
-
-    for (const std::shared_ptr<AbstractSite>& site : sites)
-    {
-        if (! site)
-        {
-            spdlog::error("Encountered null site while initializing the quadtree");
-            continue;
-        }
-
-        for (const Point2& point : site->definingPoints())
-        {
-            min_x = std::min(min_x, point.get<0>());
-            min_y = std::min(min_y, point.get<1>());
-            max_x = std::max(max_x, point.get<0>());
-            max_y = std::max(max_y, point.get<1>());
-        }
-    }
-
-    if (! std::isfinite(min_x) || ! std::isfinite(min_y) || ! std::isfinite(max_x) || ! std::isfinite(max_y))
-    {
-        spdlog::error("Failed to estimate quadtree bounds from the input sites");
-        return nullptr;
-    }
-
-    const double span_x = max_x - min_x;
-    const double span_y = max_y - min_y;
-    const double max_span = std::max(span_x, span_y);
-    const double width = std::max(max_span * 1.2, 1.0);
-    const Point2 center((min_x + max_x) / 2.0, (min_y + max_y) / 2.0);
+    const Box2& bounding_box = input_space.boundingBox();
+    const Point2 center = boost::geometry::return_centroid<Point2>(bounding_box);
+    const double width = bounding_box.max_corner().get<0>() - bounding_box.min_corner().get<0>();
 
     VoronoiQuadtreeNode::Ptr root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
+
     root->setInteriorSites(sites);
     // TODO: optimize by not copying the vector to a set
     updateCornerClosestSites(*root, std::set<AbstractSite::Ptr>(sites.begin(), sites.end()), input_space);
     return root;
-}
-
-bool Generator::isLeaf(const VoronoiQuadtreeNode& node) const
-{
-    return node.level() >= maximum_level_ || node.isTerminal();
-}
-
-void Generator::propagate(VoronoiQuadtreeNode& node, const std::vector<VoronoiQuadtreeNode::Ptr>& leaves) const
-{
-    constexpr double point_tolerance = 1e-9;
-
-    for (const VoronoiQuadtreeNode::Ptr& leaf : leaves)
-    {
-        if (! leaf)
-        {
-            continue;
-        }
-
-        for (size_t node_corner_index = 0; node_corner_index < node.cornerClosestSites().size(); ++node_corner_index)
-        {
-            const Point2 node_corner = node.cornerAt(node_corner_index);
-            if (! leaf->containsPoint(node_corner, point_tolerance))
-            {
-                continue;
-            }
-
-            for (size_t leaf_corner_index = 0; leaf_corner_index < leaf->cornerClosestSites().size(); ++leaf_corner_index)
-            {
-                const Point2 leaf_corner = leaf->cornerAt(leaf_corner_index);
-                if (std::abs(node_corner.get<0>() - leaf_corner.get<0>()) > point_tolerance
-                    || std::abs(node_corner.get<1>() - leaf_corner.get<1>()) > point_tolerance)
-                {
-                    continue;
-                }
-
-                const std::optional<ClosestSite>& node_corner_site = node.cornerClosestSiteAt(node_corner_index);
-                const std::optional<ClosestSite>& leaf_corner_site = leaf->cornerClosestSiteAt(leaf_corner_index);
-
-                if (node_corner_site.value_or(ClosestSite{ nullptr, std::numeric_limits<double>::infinity() }).distance
-                    < leaf_corner_site.value_or(ClosestSite{ nullptr, std::numeric_limits<double>::infinity() }).distance)
-                {
-                    leaf->setCornerClosestSite(leaf_corner_index, *node_corner_site);
-                }
-                else
-                {
-                    node.setCornerClosestSite(node_corner_index, *leaf_corner_site);
-                }
-            }
-        }
-    }
-}
-
-void Generator::compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) const
-{
-    const bool are_all_children_terminal = std::ranges::all_of(
-        parent->children(),
-        [](const VoronoiQuadtreeNode::Ptr& child)
-        {
-            return child->isTerminal();
-        });
-
-    if (! are_all_children_terminal)
-    {
-        return;
-    }
-
-    // Intentional no-op in this 2D prototype: pruning removes per-child boundary detail needed for extraction.
 }
 
 void Generator::dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites)

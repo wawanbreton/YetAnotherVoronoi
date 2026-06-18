@@ -19,6 +19,8 @@ yav::Point2 operator-(const yav::Point2& lhs, const yav::Point2& rhs);
 
 yav::Point2 operator+(const yav::Point2& lhs, const yav::Point2& rhs);
 
+bool operator==(const yav::Point2& lhs, const yav::Point2& rhs);
+
 yav::Point2 operator*(const yav::Point2& point, const double scale);
 
 yav::Point2 operator/(const yav::Point2& point, const double divider);

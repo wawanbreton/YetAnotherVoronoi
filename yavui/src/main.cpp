@@ -81,6 +81,8 @@ int main(int argc, char** argv)
         }
     }
 
+    space.calculateAutoBoundingBox(1.2);
+
     yav::Generator generator;
 
     spdlog::info("Generate diagram with {} sites", space.sites().size());

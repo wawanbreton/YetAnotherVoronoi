@@ -35,9 +35,6 @@ private:
     std::tuple<std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         build(const Space2& input_space) const;
     std::shared_ptr<VoronoiQuadtreeNode> initialize(const Space2& input_space) const;
-    bool isLeaf(const VoronoiQuadtreeNode& node) const;
-    void propagate(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<VoronoiQuadtreeNode>>& leaves) const;
-    void compact(const std::shared_ptr<VoronoiQuadtreeNode>& parent) const;
 
     static void dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites);
     static void updateCornerClosestSites(
