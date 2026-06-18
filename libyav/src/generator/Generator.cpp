@@ -9,6 +9,7 @@
 #include <ranges>
 #include <unordered_set>
 
+#include <boost/geometry/algorithms/distance.hpp>
 #include <spdlog/spdlog.h>
 
 #include "yav/generator/VoronoiQuadtreeNode.h"
@@ -113,12 +114,12 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         diagram.addBoundarySegment(Segment2(equidistant_point, crossings[2]), unique_sites);
     }
 
-    if (crossings.size() == 4)
-    {
-        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
-        diagram.addBoundarySegment(Segment2(crossings[2], crossings[3]), unique_sites);
-        return;
-    }
+    // if (crossings.size() == 4)
+    // {
+    //     diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
+    //     diagram.addBoundarySegment(Segment2(crossings[2], crossings[3]), unique_sites);
+    //     return;
+    // }
 
     if (! crossings.empty())
     {
@@ -156,7 +157,7 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
         {
             node->split();
 
-            std::set<AbstractSite::Ptr> all_related_sites = node->allRelatedSites();
+            const std::set<AbstractSite::Ptr> all_related_sites = node->allRelatedSites();
 
             for (auto [child_index, child] : node->children() | std::views::enumerate)
             {
@@ -330,7 +331,7 @@ void Generator::updateCornerClosestSites(
 
 void Generator::updateFacesClosestSites(
     VoronoiQuadtreeNode& node,
-    std::set<AbstractSite::Ptr>& candidate_sites,
+    const std::set<AbstractSite::Ptr>& candidate_sites,
     const AbstractSpace& input_space)
 {
     // F-sites can't be the same as existing I/V-sites
@@ -366,10 +367,15 @@ void Generator::updateFacesClosestSites(
         for (size_t side_index = 0; side_index < VoronoiQuadtreeNode::corners_count; ++side_index)
         {
             const NodeSide& side = sides[side_index];
-            double distance_to_side = input_space.closestDistanceToSide(site, side.segment);
-            if (distance_to_side < side.closest_site_start->value().distance || distance_to_side < side.closest_site_end->value().distance)
+            const Segment2 closest_segment_to_side = input_space.closestSegmentToSide(site, side.segment);
+            const double distance_site_to_side = boost::geometry::distance(closest_segment_to_side.first, closest_segment_to_side.second);
+            const double distance_corner_start_to_side
+                = input_space.distance(side.closest_site_start->value().site, closest_segment_to_side.first);
+            const double distance_corner_end_to_side
+                = input_space.distance(side.closest_site_end->value().site, closest_segment_to_side.first);
+            if (distance_site_to_side < distance_corner_start_to_side || distance_site_to_side < distance_corner_end_to_side)
             {
-                node.addEdgeSite(FaceSite{ site, side.segment, distance_to_side });
+                node.addEdgeSite(FaceSite{ site, side.segment, distance_site_to_side });
                 break;
             }
         }
