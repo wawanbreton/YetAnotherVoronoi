@@ -82,6 +82,7 @@ int main(int argc, char** argv)
     }
 
     space.calculateAutoBoundingBox(1.2);
+    spdlog::info("Using bounding box {}", space.boundingBox());
 
     yav::Generator generator;
 

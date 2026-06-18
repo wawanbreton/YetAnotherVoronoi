@@ -63,8 +63,8 @@ void AbstractSpace::calculateAutoBoundingBox(const double scale)
         const double span = std::max(diagonal.get<0>(), diagonal.get<1>()) * scale;
         const Point2 center = bg::return_centroid<Point2>(bounding_box_);
         const Point2 new_half_diagonal = Point2(span / 2.0, span / 2.0);
-        bounding_box_.min_corner() = center + new_half_diagonal;
-        bounding_box_.max_corner() = center - new_half_diagonal;
+        bg::expand(bounding_box_, center - new_half_diagonal);
+        bg::expand(bounding_box_, center + new_half_diagonal);
     }
 }
 
