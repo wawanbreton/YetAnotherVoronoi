@@ -29,7 +29,6 @@ public:
 
     VoronoiQuadtreeNode(const Box2& region, size_t level, const VoronoiQuadtreeNode::Ptr& parent);
 
-    bool isLeaf() const;
     bool isTerminal() const;
 
     size_t level() const;
@@ -40,7 +39,6 @@ public:
 
     const std::array<Ptr, corners_count>& children() const;
     void split();
-    void pruneChildren();
 
     Point2 cornerAt(size_t corner_index) const;
 

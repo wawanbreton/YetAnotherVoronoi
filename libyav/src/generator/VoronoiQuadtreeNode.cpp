@@ -33,11 +33,6 @@ VoronoiQuadtreeNode::VoronoiQuadtreeNode(const Box2& region, const size_t level,
 {
 }
 
-bool VoronoiQuadtreeNode::isLeaf() const
-{
-    return children_.empty();
-}
-
 bool VoronoiQuadtreeNode::isTerminal() const
 {
     // TODO: optimize this, we don't need to build the set
@@ -82,14 +77,6 @@ void VoronoiQuadtreeNode::split()
     {
         const Box2 child_region = bg::return_envelope<Box2>(Segment2(node_center, cornerAt(corner_index)));
         children_[corner_index] = std::make_shared<VoronoiQuadtreeNode>(child_region, level_ + 1, shared_from_this());
-    }
-}
-
-void VoronoiQuadtreeNode::pruneChildren()
-{
-    for (Ptr& child : children_)
-    {
-        child.reset();
     }
 }
 
