@@ -289,13 +289,13 @@ void Generator::updateFacesClosestSites(
 
 bool Generator::containsFlatBisector(const std::shared_ptr<VoronoiQuadtreeNode>& node, const AbstractSpace& input_space)
 {
-    if (! node->edgeSites().empty() || ! node->interiorSites().empty())
+    if (! node->edgeSites().empty())
     {
         return false;
     }
 
     constexpr size_t flat_bisector_corners_sites = 2;
-    std::set<AbstractSite::Ptr> unique_corner_sites;
+    std::set<AbstractSite::Ptr> unique_corner_sites(node->interiorSites().begin(), node->interiorSites().end());
     for (size_t corner_index = 0;
          corner_index < VoronoiQuadtreeNode::corners_count && unique_corner_sites.size() <= flat_bisector_corners_sites;
          ++corner_index)
