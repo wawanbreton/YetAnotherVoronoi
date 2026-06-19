@@ -3,14 +3,13 @@
 
 #pragma once
 
-#include <boost/geometry/core/cs.hpp>
-#include <boost/geometry/geometries/point.hpp>
+#include <boost/geometry/geometries/point_xyz.hpp>
 #include <fmt/format.h>
 
 namespace yav
 {
 
-using Point3 = boost::geometry::model::point<double, 3, boost::geometry::cs::cartesian>;
+using Point3 = boost::geometry::model::d3::point_xyz<double>;
 
 } // namespace yav
 
@@ -23,6 +22,6 @@ struct fmt::formatter<yav::Point3> : formatter<std::string_view>
     template<typename FormatContext>
     auto format(const yav::Point3& point, FormatContext& ctx) const
     {
-        return fmt::format_to(ctx.out(), "({},{},{})", point.get<0>(), point.get<1>(), point.get<2>());
+        return fmt::format_to(ctx.out(), "({},{},{})", point.x(), point.y(), point.z());
     }
 };

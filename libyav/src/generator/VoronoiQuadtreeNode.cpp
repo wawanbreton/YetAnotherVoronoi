@@ -46,7 +46,7 @@ size_t VoronoiQuadtreeNode::level() const
 
 double VoronoiQuadtreeNode::width() const
 {
-    return region_.max_corner().get<0>() - region_.min_corner().get<0>();
+    return region_.max_corner().x() - region_.min_corner().x();
 }
 
 Point2 VoronoiQuadtreeNode::center() const

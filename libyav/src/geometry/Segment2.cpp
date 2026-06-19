@@ -17,7 +17,7 @@ Segment2 rotate90(const Segment2& segment, const bool ccw)
     const Point2& start = segment.first;
     const Point2& end = segment.second;
     const Point2 half_segment = (end - start) / 2.0;
-    const Point2 half_segment_rotated(-half_segment.get<1>(), half_segment.get<0>());
+    const Point2 half_segment_rotated(-half_segment.y(), half_segment.x());
 
     Segment2 result(midpoint - half_segment_rotated, midpoint + half_segment_rotated);
     if (! ccw)
