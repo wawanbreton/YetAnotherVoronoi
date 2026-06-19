@@ -22,11 +22,16 @@
 int main(int argc, char** argv)
 {
     cxxopts::Options options("yav", "Minimal CLI for libyav");
-    options.add_options()("v,version", "Print libyav version")("h,help", "Print help")(
-        "d,debug",
-        "Display debug-level output")("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>());
+    // clang-format off
+    options.add_options()
+        ("v,version", "Print libyav version")
+        ("h,help", "Print help")
+        ("d,debug", "Display debug-level output")
+        ("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>());
+    // clang-format on
     options.parse_positional({ "file" });
     options.positional_help("<file>");
+    options.show_positional_help();
 
     const cxxopts::ParseResult options_result = options.parse(argc, argv);
 

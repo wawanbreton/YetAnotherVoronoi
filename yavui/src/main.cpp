@@ -25,14 +25,18 @@ int main(int argc, char** argv)
     QApplication app(argc, argv);
 
     cxxopts::Options options("yav", "Minimal CLI for libyav");
-    options.add_options()("h,help", "Print help")("d,debug", "Display debug-level output")("l,leaves", "Display the generated quad/octree")(
-        "t,tree",
-        "Display the leaves of the tree")("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>())(
-        "random",
-        "Number of random points to be generated",
-        cxxopts::value<size_t>());
+    // clang-format off
+    options.add_options()
+        ("h,help", "Print help")
+        ("d,debug", "Display debug-level output")
+        ("l,leaves", "Display the generated quad/octree")
+        ("t,tree", "Display the leaves of the tree")
+        ("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>())
+        ("random", "Number of random points to be generated", cxxopts::value<size_t>());
+    // clang-format on
     options.parse_positional({ "file" });
     options.positional_help("<file>");
+    options.show_positional_help();
 
     const cxxopts::ParseResult options_result = options.parse(argc, argv);
 
