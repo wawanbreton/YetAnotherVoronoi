@@ -8,8 +8,13 @@
 #include <limits>
 #include <ranges>
 
+#include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/algorithms/intersects.hpp>
+
 #include "yav/space/site/AbstractSite.h"
 
+
+namespace bg = boost::geometry;
 
 namespace yav
 {
@@ -21,13 +26,8 @@ const std::array<Point2, VoronoiQuadtreeNode::corners_count> VoronoiQuadtreeNode
     Point2(-1.0, 1.0),
 };
 
-VoronoiQuadtreeNode::VoronoiQuadtreeNode(
-    const Point2& center,
-    const double width,
-    const size_t level,
-    const std::shared_ptr<VoronoiQuadtreeNode>& parent)
-    : center_(center)
-    , width_(width)
+VoronoiQuadtreeNode::VoronoiQuadtreeNode(const Box2& region, const size_t level, const std::shared_ptr<VoronoiQuadtreeNode>& parent)
+    : region_(region)
     , level_(level)
     , parent_(parent)
 {
@@ -51,12 +51,17 @@ size_t VoronoiQuadtreeNode::level() const
 
 double VoronoiQuadtreeNode::width() const
 {
-    return width_;
+    return region_.max_corner().get<0>() - region_.min_corner().get<0>();
 }
 
-const Point2& VoronoiQuadtreeNode::center() const
+Point2 VoronoiQuadtreeNode::center() const
 {
-    return center_;
+    return bg::return_centroid<Point2>(region_);
+}
+
+const Box2& VoronoiQuadtreeNode::region() const
+{
+    return region_;
 }
 
 const std::shared_ptr<VoronoiQuadtreeNode>& VoronoiQuadtreeNode::parent() const
@@ -71,13 +76,12 @@ const std::array<VoronoiQuadtreeNode::Ptr, VoronoiQuadtreeNode::corners_count>& 
 
 void VoronoiQuadtreeNode::split()
 {
-    const double child_width = width_ / 2.0;
-    const double child_center_offset = width_ / 4.0;
+    const Point2 node_center = center();
 
-    for (size_t i = 0; i < corners_count; ++i)
+    for (size_t corner_index = 0; corner_index < corners_count; ++corner_index)
     {
-        const Point2 child_center = center_ + corner_deltas_[i] * child_center_offset;
-        children_[i] = std::make_shared<VoronoiQuadtreeNode>(child_center, child_width, level_ + 1, shared_from_this());
+        const Box2 child_region = bg::return_envelope<Box2>(Segment2(node_center, cornerAt(corner_index)));
+        children_[corner_index] = std::make_shared<VoronoiQuadtreeNode>(child_region, level_ + 1, shared_from_this());
     }
 }
 
@@ -91,15 +95,12 @@ void VoronoiQuadtreeNode::pruneChildren()
 
 Point2 VoronoiQuadtreeNode::cornerAt(const size_t corner_index) const
 {
-    return center_ + corner_deltas_[corner_index] * width_ / 2.0;
+    return center() + corner_deltas_[corner_index] * width() / 2.0;
 }
 
-bool VoronoiQuadtreeNode::containsPoint(const Point2& point, const double tolerance) const
+bool VoronoiQuadtreeNode::containsPoint(const Point2& point) const
 {
-    const double half_width = width_ / 2.0 + tolerance;
-    const double dx = std::abs(point.get<0>() - center_.get<0>());
-    const double dy = std::abs(point.get<1>() - center_.get<1>());
-    return dx <= half_width && dy <= half_width;
+    return bg::intersects(region_, point);
 }
 
 const std::array<std::optional<ClosestSite>, VoronoiQuadtreeNode::corners_count>& VoronoiQuadtreeNode::cornerClosestSites() const

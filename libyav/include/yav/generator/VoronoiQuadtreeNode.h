@@ -11,6 +11,7 @@
 
 #include "yav/generator/ClosestSite.h"
 #include "yav/generator/FaceSite.h"
+#include "yav/geometry/Box2.h"
 #include "yav/geometry/Point2.h"
 
 namespace yav
@@ -26,14 +27,15 @@ public:
 
     static constexpr size_t corners_count{ 4 };
 
-    VoronoiQuadtreeNode(const Point2& center, double width, size_t level, const VoronoiQuadtreeNode::Ptr& parent);
+    VoronoiQuadtreeNode(const Box2& region, size_t level, const VoronoiQuadtreeNode::Ptr& parent);
 
     bool isLeaf() const;
     bool isTerminal() const;
 
     size_t level() const;
     double width() const;
-    const Point2& center() const;
+    Point2 center() const;
+    const Box2& region() const;
     const std::shared_ptr<VoronoiQuadtreeNode>& parent() const;
 
     const std::array<Ptr, corners_count>& children() const;
@@ -42,7 +44,7 @@ public:
 
     Point2 cornerAt(size_t corner_index) const;
 
-    bool containsPoint(const Point2& point, double tolerance = std::numeric_limits<double>::epsilon()) const;
+    bool containsPoint(const Point2& point) const;
 
     const std::array<std::optional<ClosestSite>, corners_count>& cornerClosestSites() const;
     const std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index) const;
@@ -63,8 +65,7 @@ public:
 private:
     static const std::array<Point2, corners_count> corner_deltas_;
 
-    Point2 center_;
-    double width_;
+    Box2 region_;
     size_t level_;
     std::shared_ptr<VoronoiQuadtreeNode> parent_;
     std::array<Ptr, corners_count> children_;

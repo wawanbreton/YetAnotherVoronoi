@@ -33,6 +33,15 @@ public:
         const Segment2& segment) const
         = 0;
 
+    /*!
+     * Since this function is present only to optimize the calculations, the default implementation that returns always false is good enough
+     * to work. Properly implementing it may save a lot of calculations though.
+     */
+    virtual bool isBisectorFlatWithinRegion(
+        const std::shared_ptr<AbstractSite>& site1,
+        const std::shared_ptr<AbstractSite>& site2,
+        const Box2& region) const;
+
     virtual Point2 calculateEquidistantPosition(
         const std::shared_ptr<AbstractSite>& site1,
         const std::shared_ptr<AbstractSite>& site2,

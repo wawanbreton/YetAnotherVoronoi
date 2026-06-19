@@ -24,6 +24,14 @@ const std::vector<std::shared_ptr<AbstractSite>>& AbstractSpace::sites() const
     return sites_;
 }
 
+bool AbstractSpace::isBisectorFlatWithinRegion(
+    const std::shared_ptr<AbstractSite>& site1,
+    const std::shared_ptr<AbstractSite>& site2,
+    const Box2& region) const
+{
+    return false;
+}
+
 std::shared_ptr<AbstractSite> AbstractSpace::addSite(const std::shared_ptr<AbstractSite>& site)
 {
     sites_.push_back(site);

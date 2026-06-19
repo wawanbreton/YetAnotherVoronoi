@@ -42,12 +42,14 @@ std::tuple<Diagram, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::P
 
     const auto [root, leaves] = build(input_space);
 
+    spdlog::info("Built tree from {} sites and {} quadtree leaves", input_space.sites().size(), leaves.size());
+
     for (const VoronoiQuadtreeNode::Ptr& leaf : leaves)
     {
         addApproximationFromLeaf(*leaf, diagram, input_space);
     }
 
-    spdlog::info("Generated 2D Voronoi approximation from {} sites and {} quadtree leaves", input_space.sites().size(), leaves.size());
+    spdlog::info("Generated Voronoi approximation");
 
     return { diagram, root, leaves };
 }
@@ -153,8 +155,11 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
 
         if (node->isTerminal())
         {
+            // The node for sure does not contain a bisector, so we are done with it
+            continue;
         }
-        else if (node->level() >= maximum_level_)
+
+        if (node->level() >= maximum_level_ || containsFlatBisector(node, input_space))
         {
             leaves.push_back(node);
         }
@@ -190,15 +195,13 @@ VoronoiQuadtreeNode::Ptr Generator::initialize(const Space2& input_space) const
 {
     const std::vector<std::shared_ptr<AbstractSite>>& sites = input_space.sites();
 
-    const Box2& bounding_box = input_space.boundingBox();
-    const Point2 center = boost::geometry::return_centroid<Point2>(bounding_box);
-    const double width = bounding_box.max_corner().get<0>() - bounding_box.min_corner().get<0>();
-
-    VoronoiQuadtreeNode::Ptr root = std::make_shared<VoronoiQuadtreeNode>(center, width, 0, nullptr);
+    auto root = std::make_shared<VoronoiQuadtreeNode>(input_space.boundingBox(), 0, nullptr);
 
     root->setInteriorSites(sites);
+
     // TODO: optimize by not copying the vector to a set
     updateCornerClosestSites(*root, std::set<AbstractSite::Ptr>(sites.begin(), sites.end()), input_space);
+
     return root;
 }
 
@@ -282,6 +285,31 @@ void Generator::updateFacesClosestSites(
             }
         }
     }
+}
+
+bool Generator::containsFlatBisector(const std::shared_ptr<VoronoiQuadtreeNode>& node, const AbstractSpace& input_space)
+{
+    if (! node->edgeSites().empty() || ! node->interiorSites().empty())
+    {
+        return false;
+    }
+
+    constexpr size_t flat_bisector_corners_sites = 2;
+    std::set<AbstractSite::Ptr> unique_corner_sites;
+    for (size_t corner_index = 0;
+         corner_index < VoronoiQuadtreeNode::corners_count && unique_corner_sites.size() <= flat_bisector_corners_sites;
+         ++corner_index)
+    {
+        unique_corner_sites.insert(node->cornerClosestSiteAt(corner_index)->site);
+    }
+
+    if (unique_corner_sites.size() != flat_bisector_corners_sites)
+    {
+        return false;
+    }
+
+    auto adressable_sites = unique_corner_sites | std::ranges::views::all;
+    return input_space.isBisectorFlatWithinRegion(adressable_sites.front(), adressable_sites.back(), node->region());
 }
 
 } // namespace yav

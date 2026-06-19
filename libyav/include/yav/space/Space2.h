@@ -31,6 +31,11 @@ public:
         const std::shared_ptr<AbstractSite>& closest_site_end,
         const Segment2& segment) const override;
 
+    bool isBisectorFlatWithinRegion(
+        const std::shared_ptr<AbstractSite>& site1,
+        const std::shared_ptr<AbstractSite>& site2,
+        const Box2& region) const override;
+
     Point2 calculateEquidistantPosition(
         const std::shared_ptr<AbstractSite>& site1,
         const std::shared_ptr<AbstractSite>& site2,

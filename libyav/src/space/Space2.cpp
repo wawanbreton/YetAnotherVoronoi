@@ -132,6 +132,22 @@ Point2 Space2::calculateBisectorVertexAlongSegment(
     return result;
 }
 
+bool Space2::isBisectorFlatWithinRegion(
+    const std::shared_ptr<AbstractSite>& site1,
+    const std::shared_ptr<AbstractSite>& site2,
+    const Box2& region) const
+{
+    auto vertex1 = std::dynamic_pointer_cast<Vertex2>(site1);
+    auto vertex2 = std::dynamic_pointer_cast<Vertex2>(site2);
+    if (vertex1 && vertex2)
+    {
+        // Vertices bisector is always an infinite line, so definitely flat :)
+        return true;
+    }
+
+    return AbstractSpace::isBisectorFlatWithinRegion(site1, site2, region);
+}
+
 ClosestSite Space2::findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const
 {
     ClosestSite closest_site = ClosestSite{ nullptr, std::numeric_limits<double>::infinity() };

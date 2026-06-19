@@ -34,17 +34,22 @@ private:
 private:
     std::tuple<std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         build(const Space2& input_space) const;
+
     std::shared_ptr<VoronoiQuadtreeNode> initialize(const Space2& input_space) const;
 
     static void dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites);
+
     static void updateCornerClosestSites(
         VoronoiQuadtreeNode& node,
         const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
         const AbstractSpace& input_space);
+
     static void updateFacesClosestSites(
         VoronoiQuadtreeNode& node,
         const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
         const AbstractSpace& input_space);
+
+    static bool containsFlatBisector(const std::shared_ptr<VoronoiQuadtreeNode>& node, const AbstractSpace& input_space);
 
     static constexpr size_t maximum_level_ = 6;
 };
