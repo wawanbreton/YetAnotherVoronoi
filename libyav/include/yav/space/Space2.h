@@ -26,7 +26,7 @@ public:
 
     double distance(const std::shared_ptr<AbstractSite>& site, const Point2& position) const override;
 
-    Point2 calculateBisectorVertexAlongSegment(
+    std::optional<Point2> calculateBisectorVertexAlongSegment(
         const std::shared_ptr<AbstractSite>& closest_site_start,
         const std::shared_ptr<AbstractSite>& closest_site_end,
         const Segment2& segment) const override;

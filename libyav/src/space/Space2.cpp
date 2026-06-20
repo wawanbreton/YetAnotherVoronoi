@@ -16,6 +16,8 @@
 #include "yav/space/site/Vertex2.h"
 
 
+namespace bg = boost::geometry;
+
 namespace yav
 {
 
@@ -39,7 +41,7 @@ double Space2::distance(const std::shared_ptr<AbstractSite>& site, const Point2&
 {
     if (auto site_vertex = std::dynamic_pointer_cast<Vertex2>(site))
     {
-        return boost::geometry::distance(site_vertex->basePoint(), position);
+        return bg::distance(site_vertex->basePoint(), position);
     }
 
     spdlog::warn("Unusupported site type for distance calculation");
@@ -63,14 +65,14 @@ Point2 Space2::calculateEquidistantPosition(
 
         Point2 midpoint12;
         Point2 midpoint13;
-        boost::geometry::centroid(Segment2(point1, point2), midpoint12);
-        boost::geometry::centroid(Segment2(point1, point3), midpoint13);
+        bg::centroid(Segment2(point1, point2), midpoint12);
+        bg::centroid(Segment2(point1, point3), midpoint13);
 
-        const Line2 bisector12 = boost::geometry::detail::make::make_perpendicular_line<double>(point1, point2, midpoint12);
-        const Line2 bisector13 = boost::geometry::detail::make::make_perpendicular_line<double>(point1, point3, midpoint13);
+        const Line2 bisector12 = bg::detail::make::make_perpendicular_line<double>(point1, point2, midpoint12);
+        const Line2 bisector13 = bg::detail::make::make_perpendicular_line<double>(point1, point3, midpoint13);
 
         Point2 equidistant_position;
-        if (boost::geometry::arithmetic::intersection_point(bisector12, bisector13, equidistant_position))
+        if (bg::arithmetic::intersection_point(bisector12, bisector13, equidistant_position))
         {
             return equidistant_position;
         }
@@ -91,7 +93,7 @@ Segment2 Space2::closestSegmentToSide(const std::shared_ptr<AbstractSite>& site,
     if (auto vertex = std::dynamic_pointer_cast<Vertex2>(site))
     {
         Segment2 shortest_segment;
-        boost::geometry::closest_points(side, vertex->basePoint(), shortest_segment);
+        bg::closest_points(side, vertex->basePoint(), shortest_segment);
         return shortest_segment;
     }
 
@@ -99,7 +101,7 @@ Segment2 Space2::closestSegmentToSide(const std::shared_ptr<AbstractSite>& site,
     return Segment2();
 }
 
-Point2 Space2::calculateBisectorVertexAlongSegment(
+std::optional<Point2> Space2::calculateBisectorVertexAlongSegment(
     const AbstractSite::Ptr& closest_site_start,
     const AbstractSite::Ptr& closest_site_end,
     const Segment2& segment) const
@@ -114,9 +116,9 @@ Point2 Space2::calculateBisectorVertexAlongSegment(
         const Point2 end = end_vertex->basePoint();
         const Segment2 sites_segment(start, end);
         const Segment2 segment_bisector = rotate90(sites_segment, false);
-        const Line2 bisector = boost::geometry::detail::make::make_infinite_line<double>(segment_bisector);
-        const Line2 infinite_segment = boost::geometry::detail::make::make_infinite_line<double>(segment);
-        if (boost::geometry::arithmetic::intersection_point(bisector, infinite_segment, result))
+        const Line2 bisector = bg::detail::make::make_infinite_line<double>(segment_bisector);
+        const Line2 infinite_segment = bg::detail::make::make_infinite_line<double>(segment);
+        if (bg::arithmetic::intersection_point(bisector, infinite_segment, result) && bg::intersects(result, segment))
         {
             return result;
         }
@@ -126,10 +128,7 @@ Point2 Space2::calculateBisectorVertexAlongSegment(
         spdlog::warn("Unusupported combination of sites for bisector calculation");
     }
 
-    spdlog::warn("Unable to calculate intersection point, defaulting to centroid");
-    boost::geometry::centroid(segment, result);
-
-    return result;
+    return std::nullopt;
 }
 
 bool Space2::isBisectorFlatWithinRegion(

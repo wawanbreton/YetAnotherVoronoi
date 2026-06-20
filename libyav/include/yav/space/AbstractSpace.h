@@ -4,6 +4,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -27,7 +28,7 @@ public:
 
     virtual double distance(const std::shared_ptr<AbstractSite>& site, const Point2& position) const = 0;
 
-    virtual Point2 calculateBisectorVertexAlongSegment(
+    virtual std::optional<Point2> calculateBisectorVertexAlongSegment(
         const std::shared_ptr<AbstractSite>& closest_site_start,
         const std::shared_ptr<AbstractSite>& closest_site_end,
         const Segment2& segment) const

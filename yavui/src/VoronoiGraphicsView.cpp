@@ -127,13 +127,27 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
         }
     }
 
+    const QPen edge_site_pen(QColor("#ff00d6"), 0.001);
     for (const yav::FaceSite& edge_site : node->edgeSites())
     {
         const yav::Point2 site_pos = edge_site.site->basePoint();
-        yav::Point2 center;
-        boost::geometry::centroid(edge_site.face, center);
-        scene_->addLine(center.x(), center.y(), site_pos.x(), site_pos.y(), QPen(QColor("#ff00d6"), 0.001))->setParentItem(overlay_);
-        spdlog::info("F-site to edge {}: {} at distance {}", center, site_pos, edge_site.distance);
+        scene_
+            ->addLine(
+                edge_site.closest_segment_part.first.x(),
+                edge_site.closest_segment_part.first.y(),
+                site_pos.x(),
+                site_pos.y(),
+                edge_site_pen)
+            ->setParentItem(overlay_);
+        scene_
+            ->addLine(
+                edge_site.closest_segment_part.second.x(),
+                edge_site.closest_segment_part.second.y(),
+                site_pos.x(),
+                site_pos.y(),
+                edge_site_pen)
+            ->setParentItem(overlay_);
+        spdlog::info("F-site to edge {}: {}-{}", site_pos, edge_site.closest_segment_part.first, edge_site.closest_segment_part.second);
     }
 
     for (const yav::AbstractSite::Ptr& interior_site : node->interiorSites())

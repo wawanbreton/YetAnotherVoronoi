@@ -18,6 +18,8 @@
 #include "yav/voronoi/Diagram.h"
 
 
+namespace bg = boost::geometry;
+
 namespace yav
 {
 
@@ -100,11 +102,16 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
             continue;
         }
 
-        crossings.push_back(space.calculateBisectorVertexAlongSegment(
+        std::optional<Point2> bisector_intersection = space.calculateBisectorVertexAlongSegment(
             first_corner_site,
             second_corner_site,
-            Segment2(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index))));
-        crossing_sites.push_back({ first_corner_site, second_corner_site });
+            Segment2(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index)));
+
+        if (bisector_intersection.has_value())
+        {
+            crossings.push_back(*bisector_intersection);
+            crossing_sites.push_back({ first_corner_site, second_corner_site });
+        }
     }
 
     const std::vector<AbstractSite::Ptr> unique_sites = uniqueSitesFromCrossings(crossing_sites);
@@ -249,17 +256,32 @@ void Generator::updateFacesClosestSites(
     struct NodeSide
     {
         Segment2 segment;
+        double segment_length;
         std::optional<ClosestSite>* closest_site_start;
         std::optional<ClosestSite>* closest_site_end;
     };
 
-    std::array<NodeSide, VoronoiQuadtreeNode::corners_count> sides;
+    std::vector<NodeSide> sides;
+    sides.reserve(VoronoiQuadtreeNode::corners_count);
     for (size_t start_corner_index = 0; start_corner_index < VoronoiQuadtreeNode::corners_count; ++start_corner_index)
     {
         const size_t end_corner_index = (start_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
-        sides[start_corner_index].segment = Segment2(node.cornerAt(start_corner_index), node.cornerAt(end_corner_index));
-        sides[start_corner_index].closest_site_start = &node.cornerClosestSiteAt(start_corner_index);
-        sides[start_corner_index].closest_site_end = &node.cornerClosestSiteAt(end_corner_index);
+        std::optional<ClosestSite>* closest_site_start = &node.cornerClosestSiteAt(start_corner_index);
+        std::optional<ClosestSite>* closest_site_end = &node.cornerClosestSiteAt(end_corner_index);
+        if (closest_site_start->value().site != closest_site_end->value().site)
+        {
+            NodeSide side;
+            side.segment = Segment2(node.cornerAt(start_corner_index), node.cornerAt(end_corner_index));
+            side.segment_length = bg::distance(side.segment.first, side.segment.second);
+            side.closest_site_start = closest_site_start;
+            side.closest_site_end = closest_site_end;
+            sides.push_back(std::move(side));
+        }
+    }
+
+    if (sides.empty())
+    {
+        return;
     }
 
     for (const AbstractSite::Ptr& site : candidate_sites)
@@ -269,19 +291,28 @@ void Generator::updateFacesClosestSites(
             continue;
         }
 
-        for (size_t side_index = 0; side_index < VoronoiQuadtreeNode::corners_count; ++side_index)
+        for (const NodeSide& side : sides)
         {
-            const NodeSide& side = sides[side_index];
-            const Segment2 closest_segment_to_side = input_space.closestSegmentToSide(site, side.segment);
-            const double distance_site_to_side = boost::geometry::distance(closest_segment_to_side.first, closest_segment_to_side.second);
-            const double distance_corner_start_to_side
-                = input_space.distance(side.closest_site_start->value().site, closest_segment_to_side.first);
-            const double distance_corner_end_to_side
-                = input_space.distance(side.closest_site_end->value().site, closest_segment_to_side.first);
-            if (distance_site_to_side < distance_corner_start_to_side || distance_site_to_side < distance_corner_end_to_side)
+            std::optional<Point2> equidistant_corner_start
+                = input_space.calculateBisectorVertexAlongSegment(side.closest_site_start->value().site, site, side.segment);
+            if (! equidistant_corner_start.has_value())
             {
-                node.addEdgeSite(FaceSite{ site, side.segment, distance_site_to_side });
-                break;
+                continue;
+            }
+
+            std::optional<Point2> equidistant_corner_end
+                = input_space.calculateBisectorVertexAlongSegment(side.closest_site_end->value().site, site, side.segment);
+            if (! equidistant_corner_end.has_value())
+            {
+                continue;
+            }
+
+            double covered_distance_start = bg::distance(side.segment.first, *equidistant_corner_start);
+            double covered_distance_end = bg::distance(side.segment.second, *equidistant_corner_end);
+            if ((covered_distance_start + covered_distance_end) < side.segment_length)
+            {
+                node.addEdgeSite(FaceSite{ site, side.segment, Segment2(*equidistant_corner_start, *equidistant_corner_end) });
+                // break;
             }
         }
     }

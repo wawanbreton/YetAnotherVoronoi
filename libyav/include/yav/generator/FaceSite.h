@@ -17,7 +17,7 @@ struct FaceSite
 {
     std::shared_ptr<AbstractSite> site;
     Segment2 face;
-    double distance;
+    Segment2 closest_segment_part;
 };
 
 } // namespace yav

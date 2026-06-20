@@ -22,8 +22,6 @@
 
 int main(int argc, char** argv)
 {
-    QApplication app(argc, argv);
-
     cxxopts::Options options("yav", "Minimal CLI for libyav");
     // clang-format off
     options.add_options()
@@ -31,6 +29,7 @@ int main(int argc, char** argv)
         ("d,debug", "Display debug-level output")
         ("l,leaves", "Display the generated quad/octree")
         ("t,tree", "Display the leaves of the tree")
+        ("n,no-ui", "Do not display the UI, stop after execution")
         ("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>())
         ("random", "Number of random points to be generated", cxxopts::value<size_t>());
     // clang-format on
@@ -94,6 +93,13 @@ int main(int argc, char** argv)
     spdlog::stopwatch timer;
     auto [voronoi_diagram, tree, leaves] = generator.generate(space);
     spdlog::info("Generated {} cells in {}", voronoi_diagram.cells().size(), timer.elapsed());
+
+    if (options_result.count("no-ui") != 0)
+    {
+        return EXIT_SUCCESS;
+    }
+
+    QApplication app(argc, argv);
 
     VoronoiGraphicsView graphics_view;
     graphics_view.setSpace(space);
