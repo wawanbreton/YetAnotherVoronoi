@@ -33,12 +33,6 @@ VoronoiQuadtreeNode::VoronoiQuadtreeNode(const Box2& region, const size_t level,
 {
 }
 
-bool VoronoiQuadtreeNode::isTerminal() const
-{
-    // TODO: optimize this, we don't need to build the set
-    return allRelatedSites().size() <= 1;
-}
-
 size_t VoronoiQuadtreeNode::level() const
 {
     return level_;
@@ -108,6 +102,37 @@ std::optional<ClosestSite>& VoronoiQuadtreeNode::cornerClosestSiteAt(size_t corn
 void VoronoiQuadtreeNode::setCornerClosestSite(const size_t corner_index, const std::optional<ClosestSite>& closest_site)
 {
     corner_closest_sites_.at(corner_index) = closest_site;
+}
+
+std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::uniqueCornerClosestSites() const
+{
+    auto corner_closest_sites = corner_closest_sites_
+                              | std::ranges::views::transform(
+                                    [](const std::optional<ClosestSite>& closest_site)
+                                    {
+                                        return closest_site->site;
+                                    });
+    return std::set<AbstractSite::Ptr>(corner_closest_sites.begin(), corner_closest_sites.end());
+}
+
+size_t VoronoiQuadtreeNode::uniqueCornerClosestSitesCount() const
+{
+    size_t count = 0;
+
+    for (const auto& [corner_index, corner_closest_site] : corner_closest_sites_ | std::ranges::views::enumerate)
+    {
+        if (std::ranges::all_of(
+                corner_closest_sites_ | std::ranges::views::drop(corner_index + 1),
+                [&corner_closest_site](const std::optional<ClosestSite>& other_closest_site) -> bool
+                {
+                    return other_closest_site->site != corner_closest_site->site;
+                }))
+        {
+            ++count;
+        }
+    }
+
+    return count;
 }
 
 const std::vector<std::shared_ptr<AbstractSite>>& VoronoiQuadtreeNode::interiorSites() const

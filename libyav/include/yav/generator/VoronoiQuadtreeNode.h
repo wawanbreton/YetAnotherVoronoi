@@ -29,8 +29,6 @@ public:
 
     VoronoiQuadtreeNode(const Box2& region, size_t level, const VoronoiQuadtreeNode::Ptr& parent);
 
-    bool isTerminal() const;
-
     size_t level() const;
     double width() const;
     Point2 center() const;
@@ -48,6 +46,8 @@ public:
     const std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index) const;
     std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index);
     void setCornerClosestSite(size_t corner_index, const std::optional<ClosestSite>& closest_site);
+    std::set<std::shared_ptr<AbstractSite>> uniqueCornerClosestSites() const;
+    size_t uniqueCornerClosestSitesCount() const;
 
     const std::vector<std::shared_ptr<AbstractSite>>& interiorSites() const;
     void setInteriorSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);

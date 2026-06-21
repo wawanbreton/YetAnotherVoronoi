@@ -87,7 +87,7 @@ int main(int argc, char** argv)
     space.calculateAutoBoundingBox(1.2);
     spdlog::info("Using bounding box {}", space.boundingBox());
 
-    yav::Generator generator;
+    yav::Generator generator(8);
 
     spdlog::info("Generate diagram with {} sites", space.sites().size());
     spdlog::stopwatch timer;

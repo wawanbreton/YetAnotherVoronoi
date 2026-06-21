@@ -13,20 +13,12 @@ namespace yav
 
 Diagram::Diagram() = default;
 
-void Diagram::addBoundarySegment(
-    const Segment2& segment,
-    const std::vector<std::shared_ptr<AbstractSite>>& adjacent_sites)
+void Diagram::addBoundarySegment(const Segment2& segment, const std::vector<std::shared_ptr<AbstractSite>>& adjacent_sites)
 {
     boundary_segments_.push_back(segment);
 
     for (const std::shared_ptr<AbstractSite>& adjacent_site : adjacent_sites)
     {
-        if (! adjacent_site)
-        {
-            spdlog::error("Ignoring boundary segment attachment to a null site");
-            continue;
-        }
-
         findOrCreateCell(adjacent_site)->addBoundarySegment(segment);
     }
 }

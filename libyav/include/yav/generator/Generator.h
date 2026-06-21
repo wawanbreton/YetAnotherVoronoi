@@ -20,7 +20,7 @@ class VoronoiQuadtreeNode;
 class Generator
 {
 public:
-    Generator();
+    Generator(const size_t maximum_level = 6);
 
     std::tuple<Diagram, std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         generate(const Space2& input_space) const;
@@ -37,6 +37,10 @@ private:
 
     std::shared_ptr<VoronoiQuadtreeNode> initialize(const Space2& input_space) const;
 
+    static bool isEmpty(const VoronoiQuadtreeNode& node);
+
+    bool isReadyForApproximation(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const;
+
     static void dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites);
 
     static void updateCornerClosestSites(
@@ -49,9 +53,9 @@ private:
         const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
         const AbstractSpace& input_space);
 
-    static bool containsFlatBisector(const std::shared_ptr<VoronoiQuadtreeNode>& node, const AbstractSpace& input_space);
+    static bool containsFlatBisector(const VoronoiQuadtreeNode &node, const AbstractSpace& input_space);
 
-    static constexpr size_t maximum_level_ = 6;
+    const size_t maximum_level_ = 6;
 };
 
 } // namespace yav

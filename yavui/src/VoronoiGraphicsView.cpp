@@ -23,7 +23,7 @@
 
 VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
     : min_zoom_(35)
-    , max_zoom_(50)
+    , max_zoom_(100)
     , scene_(new QGraphicsScene(this))
     , overlay_(scene_->createItemGroup({}))
 {
@@ -39,7 +39,7 @@ void VoronoiGraphicsView::setSpace(const yav::Space2& space)
     {
         if (const std::shared_ptr<yav::Vertex2> site_vertex2 = std::dynamic_pointer_cast<yav::Vertex2>(site))
         {
-            QRectF rect(0, 0, 0.02, 0.02);
+            QRectF rect(0, 0, 0.01, 0.01);
             rect.moveCenter(QPointF(site_vertex2->basePoint().x(), site_vertex2->basePoint().y()));
             scene_->addEllipse(rect, Qt::NoPen, QBrush("#e74c3c"));
         }
@@ -48,12 +48,9 @@ void VoronoiGraphicsView::setSpace(const yav::Space2& space)
 
 void VoronoiGraphicsView::setDiagram(const yav::Diagram& diagram)
 {
-    for (const yav::Cell::Ptr& cell : diagram.cells())
+    for (const yav::Segment2& segment : diagram.boundarySegments())
     {
-        for (const yav::Segment2& segment : cell->boundarySegments())
-        {
-            scene_->addLine(segment.first.x(), segment.first.y(), segment.second.x(), segment.second.y(), QPen(QColor("#2ecc71"), 0.001));
-        }
+        scene_->addLine(segment.first.x(), segment.first.y(), segment.second.x(), segment.second.y(), QPen(QColor("#2ecc71"), 0.0004));
     }
 }
 
@@ -81,7 +78,7 @@ QGraphicsItem* VoronoiGraphicsView::addTreeNode(
 {
     QRectF rect(0, 0, node->width(), node->width());
     rect.moveCenter(QPointF(node->center().x(), node->center().y()));
-    QGraphicsItem* item = scene_->addRect(rect, QPen(color, 0.0005 * pen_scale));
+    QGraphicsItem* item = scene_->addRect(rect, QPen(color, 0.0001 * pen_scale));
 
     if (add_children)
     {
@@ -122,12 +119,12 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
         {
             const yav::Point2 corner = node->cornerAt(corner_index);
             const yav::Point2 site_pos = closest_site->site->basePoint();
-            scene_->addLine(corner.x(), corner.y(), site_pos.x(), site_pos.y(), QPen(QColor("#ffd600"), 0.001))->setParentItem(overlay_);
+            scene_->addLine(corner.x(), corner.y(), site_pos.x(), site_pos.y(), QPen(QColor("#ffd600"), 0.0002))->setParentItem(overlay_);
             spdlog::info("V-site to corner {}@{}: {} at distance {}", corner_index, corner, site_pos, closest_site->distance);
         }
     }
 
-    const QPen edge_site_pen(QColor("#ff00d6"), 0.001);
+    const QPen edge_site_pen(QColor("#ff00d6"), 0.0002);
     for (const yav::FaceSite& edge_site : node->edgeSites())
     {
         const yav::Point2 site_pos = edge_site.site->basePoint();
@@ -154,7 +151,7 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
     {
         const yav::Point2 site_pos = interior_site->basePoint();
         const yav::Point2& center = node->center();
-        scene_->addLine(center.x(), center.y(), site_pos.x(), site_pos.y(), QPen(QColor("#8fff00"), 0.001))->setParentItem(overlay_);
+        scene_->addLine(center.x(), center.y(), site_pos.x(), site_pos.y(), QPen(QColor("#8fff00"), 0.0002))->setParentItem(overlay_);
     }
 }
 

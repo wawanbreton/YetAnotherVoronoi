@@ -23,7 +23,10 @@ namespace bg = boost::geometry;
 namespace yav
 {
 
-Generator::Generator() = default;
+Generator::Generator(const size_t maximum_level)
+    : maximum_level_(maximum_level)
+{
+}
 
 std::tuple<Diagram, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::generate(const Space2& input_space) const
 {
@@ -86,16 +89,8 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     for (size_t first_corner_index = 0; first_corner_index < VoronoiQuadtreeNode::corners_count; ++first_corner_index)
     {
         const size_t second_corner_index = (first_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
-        const std::optional<ClosestSite>& first_corner = leaf_node.cornerClosestSiteAt(first_corner_index);
-        const std::optional<ClosestSite>& second_corner = leaf_node.cornerClosestSiteAt(second_corner_index);
-
-        if (! first_corner.has_value() || ! second_corner.has_value())
-        {
-            continue;
-        }
-
-        const AbstractSite::Ptr& first_corner_site = first_corner->site;
-        const AbstractSite::Ptr& second_corner_site = second_corner->site;
+        const AbstractSite::Ptr& first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index)->site;
+        const AbstractSite::Ptr& second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index)->site;
 
         if (first_corner_site == second_corner_site)
         {
@@ -119,10 +114,8 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     if (crossings.size() == 2)
     {
         diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
-        return;
     }
-
-    if (crossings.size() == 3)
+    else if (crossings.size() == 3)
     {
         const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
         diagram.addBoundarySegment(Segment2(equidistant_point, crossings[0]), unique_sites);
@@ -130,17 +123,40 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         diagram.addBoundarySegment(Segment2(equidistant_point, crossings[2]), unique_sites);
     }
 
-    // if (crossings.size() == 4)
-    // {
-    //     diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
-    //     diagram.addBoundarySegment(Segment2(crossings[2], crossings[3]), unique_sites);
-    //     return;
-    // }
-
-    if (! crossings.empty())
+    else if (! crossings.empty())
     {
         spdlog::debug("Leaf generated an unsupported number of crossings ({})", crossings.size());
     }
+}
+
+bool Generator::isEmpty(const VoronoiQuadtreeNode& node)
+{
+    return node.allRelatedSites().size() == 1;
+}
+
+bool Generator::isReadyForApproximation(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const
+{
+    if (node.edgeSites().empty() && node.interiorSites().empty())
+    {
+        const std::set<AbstractSite::Ptr> unique_corner_closest_sites = node.uniqueCornerClosestSites();
+        if (unique_corner_closest_sites.size() == 3)
+        {
+            std::array<AbstractSite::Ptr, 3> unique_sites;
+            for (const auto& [site_index, site] : unique_corner_closest_sites | std::ranges::views::enumerate)
+            {
+                unique_sites[site_index] = site;
+            }
+
+            const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
+            if (node.containsPoint(equidistant_point))
+            {
+                // TODO: we also have to make sure that either the bisector are flat, or we have reached the required precision
+                return true;
+            }
+        }
+    }
+
+    return containsFlatBisector(node, space);
 }
 
 std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::build(const Space2& input_space) const
@@ -160,14 +176,15 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
         const VoronoiQuadtreeNode::Ptr node = node_queue.front();
         node_queue.pop();
 
-        if (node->isTerminal())
+        if (isEmpty(*node))
         {
             // The node for sure does not contain a bisector, so we are done with it
             continue;
         }
 
-        if (node->level() >= maximum_level_ || containsFlatBisector(node, input_space))
+        if (isReadyForApproximation(*node, input_space))
         {
+            // Node is defined enough for approximation, mark it as leaf to be approximated
             leaves.push_back(node);
         }
         else
@@ -318,20 +335,20 @@ void Generator::updateFacesClosestSites(
     }
 }
 
-bool Generator::containsFlatBisector(const std::shared_ptr<VoronoiQuadtreeNode>& node, const AbstractSpace& input_space)
+bool Generator::containsFlatBisector(const VoronoiQuadtreeNode& node, const AbstractSpace& input_space)
 {
-    if (! node->edgeSites().empty())
+    if (! node.edgeSites().empty())
     {
         return false;
     }
 
     constexpr size_t flat_bisector_corners_sites = 2;
-    std::set<AbstractSite::Ptr> unique_corner_sites(node->interiorSites().begin(), node->interiorSites().end());
+    std::set<AbstractSite::Ptr> unique_corner_sites(node.interiorSites().begin(), node.interiorSites().end());
     for (size_t corner_index = 0;
          corner_index < VoronoiQuadtreeNode::corners_count && unique_corner_sites.size() <= flat_bisector_corners_sites;
          ++corner_index)
     {
-        unique_corner_sites.insert(node->cornerClosestSiteAt(corner_index)->site);
+        unique_corner_sites.insert(node.cornerClosestSiteAt(corner_index)->site);
     }
 
     if (unique_corner_sites.size() != flat_bisector_corners_sites)
@@ -340,7 +357,7 @@ bool Generator::containsFlatBisector(const std::shared_ptr<VoronoiQuadtreeNode>&
     }
 
     auto adressable_sites = unique_corner_sites | std::ranges::views::all;
-    return input_space.isBisectorFlatWithinRegion(adressable_sites.front(), adressable_sites.back(), node->region());
+    return input_space.isBisectorFlatWithinRegion(adressable_sites.front(), adressable_sites.back(), node.region());
 }
 
 } // namespace yav
