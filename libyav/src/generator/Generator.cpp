@@ -86,26 +86,45 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     std::vector<Point2> crossings;
     std::vector<std::pair<AbstractSite::Ptr, AbstractSite::Ptr>> crossing_sites;
 
+    std::array<std::vector<AbstractSite::Ptr>, VoronoiQuadtreeNode::corners_count> face_sites_by_face;
+    for (const FaceSite& face_site : leaf_node.edgeSites())
+    {
+        face_sites_by_face[face_site.face_index].push_back(face_site.site);
+    }
+
+    // for (const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites :
+    //          std::views::cartesian_product(all_related_sites, all_related_sites))
+    // {
+    //     if (sites.first == sites.second)
+    //     {
+    //         continue;
+    //     }
+    // }
+
     for (size_t first_corner_index = 0; first_corner_index < VoronoiQuadtreeNode::corners_count; ++first_corner_index)
     {
         const size_t second_corner_index = (first_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
         const AbstractSite::Ptr& first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index)->site;
         const AbstractSite::Ptr& second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index)->site;
+        const Segment2 edge(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index));
 
-        if (first_corner_site == second_corner_site)
+        std::vector<AbstractSite::Ptr>& next_sites = face_sites_by_face[first_corner_index];
+        next_sites.push_back(second_corner_site);
+
+        for (const AbstractSite::Ptr& other_site : next_sites)
         {
-            continue;
-        }
+            if (first_corner_site == other_site)
+            {
+                continue;
+            }
 
-        std::optional<Point2> bisector_intersection = space.calculateBisectorVertexAlongSegment(
-            first_corner_site,
-            second_corner_site,
-            Segment2(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index)));
+            std::optional<Point2> bisector_intersection = space.calculateBisectorVertexAlongSegment(first_corner_site, other_site, edge);
 
-        if (bisector_intersection.has_value())
-        {
-            crossings.push_back(*bisector_intersection);
-            crossing_sites.push_back({ first_corner_site, second_corner_site });
+            if (bisector_intersection.has_value())
+            {
+                crossings.push_back(*bisector_intersection);
+                crossing_sites.push_back({ first_corner_site, other_site });
+            }
         }
     }
 
@@ -136,26 +155,37 @@ bool Generator::isEmpty(const VoronoiQuadtreeNode& node)
 
 bool Generator::isReadyForApproximation(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const
 {
-    if (node.edgeSites().empty() && node.interiorSites().empty())
+    // if (node.edgeSites().empty() && node.interiorSites().empty())
     {
-        const std::set<AbstractSite::Ptr> unique_corner_closest_sites = node.uniqueCornerClosestSites();
-        if (unique_corner_closest_sites.size() == 3)
+        const std::set<AbstractSite::Ptr> unique_corner_closest_sites = node.allRelatedSites();
+        if (unique_corner_closest_sites.size() <= 3)
         {
-            std::array<AbstractSite::Ptr, 3> unique_sites;
-            for (const auto& [site_index, site] : unique_corner_closest_sites | std::ranges::views::enumerate)
+            std::vector<AbstractSite::Ptr> unique_sites;
+            unique_sites.reserve(unique_corner_closest_sites.size());
+            for (const AbstractSite::Ptr site : unique_corner_closest_sites)
             {
-                unique_sites[site_index] = site;
+                unique_sites.push_back(site);
             }
 
-            const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
-            if (node.containsPoint(equidistant_point))
+            bool is_equidistant_inside;
+            if (unique_corner_closest_sites.size() < 3)
             {
-                // TODO: we also have to make sure that either the bisector are flat, or we have reached the required precision
+                is_equidistant_inside = true;
+            }
+            else
+            {
+                const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
+                is_equidistant_inside = node.containsPoint(equidistant_point);
+            }
+
+            if (is_equidistant_inside)
+            {
                 if (std::ranges::all_of(
                         std::views::cartesian_product(unique_corner_closest_sites, unique_corner_closest_sites),
                         [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
                         {
-                            return space.isBisectorFlatWithinRegion(sites.first, sites.first, node.region());
+                            return sites.first == sites.second
+                                || space.isBisectorFlatWithinRegion(sites.first, sites.second, node.region());
                         }))
                 {
                     return true;
@@ -316,7 +346,7 @@ void Generator::updateFacesClosestSites(
             continue;
         }
 
-        for (const NodeSide& side : sides)
+        for (const auto& [side_index, side] : sides | std::ranges::views::enumerate)
         {
             std::optional<Point2> equidistant_corner_start
                 = input_space.calculateBisectorVertexAlongSegment(side.closest_site_start->value().site, site, side.segment);
@@ -336,7 +366,7 @@ void Generator::updateFacesClosestSites(
             double covered_distance_end = bg::distance(side.segment.second, *equidistant_corner_end);
             if ((covered_distance_start + covered_distance_end) < side.segment_length)
             {
-                node.addEdgeSite(FaceSite{ site, side.segment, Segment2(*equidistant_corner_start, *equidistant_corner_end) });
+                node.addEdgeSite(FaceSite{ site, side_index, side.segment, Segment2(*equidistant_corner_start, *equidistant_corner_end) });
                 // break;
             }
         }
