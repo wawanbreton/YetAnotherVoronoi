@@ -151,12 +151,20 @@ bool Generator::isReadyForApproximation(const VoronoiQuadtreeNode& node, const A
             if (node.containsPoint(equidistant_point))
             {
                 // TODO: we also have to make sure that either the bisector are flat, or we have reached the required precision
-                return true;
+                if (std::ranges::all_of(
+                        std::views::cartesian_product(unique_corner_closest_sites, unique_corner_closest_sites),
+                        [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
+                        {
+                            return space.isBisectorFlatWithinRegion(sites.first, sites.first, node.region());
+                        }))
+                {
+                    return true;
+                }
             }
         }
     }
 
-    return containsFlatBisector(node, space);
+    return false;
 }
 
 std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::build(const Space2& input_space) const
