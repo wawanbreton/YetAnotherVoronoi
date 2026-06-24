@@ -84,55 +84,24 @@ bool VoronoiQuadtreeNode::containsPoint(const Point2& point) const
     return bg::intersects(region_, point);
 }
 
-const std::array<std::optional<ClosestSite>, VoronoiQuadtreeNode::corners_count>& VoronoiQuadtreeNode::cornerClosestSites() const
+const std::array<AbstractSite::Ptr, VoronoiQuadtreeNode::corners_count>& VoronoiQuadtreeNode::cornerClosestSites() const
 {
     return corner_closest_sites_;
 }
 
-const std::optional<ClosestSite>& VoronoiQuadtreeNode::cornerClosestSiteAt(const size_t corner_index) const
+const AbstractSite::Ptr& VoronoiQuadtreeNode::cornerClosestSiteAt(const size_t corner_index) const
 {
     return corner_closest_sites_.at(corner_index);
 }
 
-std::optional<ClosestSite>& VoronoiQuadtreeNode::cornerClosestSiteAt(size_t corner_index)
-{
-    return corner_closest_sites_.at(corner_index);
-}
-
-void VoronoiQuadtreeNode::setCornerClosestSite(const size_t corner_index, const std::optional<ClosestSite>& closest_site)
+void VoronoiQuadtreeNode::setCornerClosestSite(const size_t corner_index, const AbstractSite::Ptr& closest_site)
 {
     corner_closest_sites_.at(corner_index) = closest_site;
 }
 
 std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::uniqueCornerClosestSites() const
 {
-    auto corner_closest_sites = corner_closest_sites_
-                              | std::ranges::views::transform(
-                                    [](const std::optional<ClosestSite>& closest_site)
-                                    {
-                                        return closest_site->site;
-                                    });
-    return std::set<AbstractSite::Ptr>(corner_closest_sites.begin(), corner_closest_sites.end());
-}
-
-size_t VoronoiQuadtreeNode::uniqueCornerClosestSitesCount() const
-{
-    size_t count = 0;
-
-    for (const auto& [corner_index, corner_closest_site] : corner_closest_sites_ | std::ranges::views::enumerate)
-    {
-        if (std::ranges::all_of(
-                corner_closest_sites_ | std::ranges::views::drop(corner_index + 1),
-                [&corner_closest_site](const std::optional<ClosestSite>& other_closest_site) -> bool
-                {
-                    return other_closest_site->site != corner_closest_site->site;
-                }))
-        {
-            ++count;
-        }
-    }
-
-    return count;
+    return std::set<AbstractSite::Ptr>(corner_closest_sites_.begin(), corner_closest_sites_.end());
 }
 
 const std::vector<std::shared_ptr<AbstractSite>>& VoronoiQuadtreeNode::interiorSites() const
@@ -164,14 +133,7 @@ std::set<AbstractSite::Ptr> VoronoiQuadtreeNode::allRelatedSites() const
 {
     std::set<AbstractSite::Ptr> result;
 
-    for (const std::optional<ClosestSite>& corner_closest_site : corner_closest_sites_)
-    {
-        if (corner_closest_site.has_value())
-        {
-            result.insert(corner_closest_site->site);
-        }
-    }
-
+    result.insert(corner_closest_sites_.begin(), corner_closest_sites_.end());
     result.insert(interior_sites_.begin(), interior_sites_.end());
 
     for (const FaceSite& face_site : edge_sites_)

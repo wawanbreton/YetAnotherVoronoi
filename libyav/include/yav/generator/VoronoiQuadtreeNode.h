@@ -9,7 +9,6 @@
 #include <set>
 #include <vector>
 
-#include "yav/generator/ClosestSite.h"
 #include "yav/generator/FaceSite.h"
 #include "yav/geometry/Box2.h"
 #include "yav/geometry/Point2.h"
@@ -42,12 +41,10 @@ public:
 
     bool containsPoint(const Point2& point) const;
 
-    const std::array<std::optional<ClosestSite>, corners_count>& cornerClosestSites() const;
-    const std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index) const;
-    std::optional<ClosestSite>& cornerClosestSiteAt(size_t corner_index);
-    void setCornerClosestSite(size_t corner_index, const std::optional<ClosestSite>& closest_site);
+    const std::array<std::shared_ptr<AbstractSite>, corners_count>& cornerClosestSites() const;
+    const std::shared_ptr<AbstractSite>& cornerClosestSiteAt(size_t corner_index) const;
+    void setCornerClosestSite(size_t corner_index, const std::shared_ptr<AbstractSite>& closest_site);
     std::set<std::shared_ptr<AbstractSite>> uniqueCornerClosestSites() const;
-    size_t uniqueCornerClosestSitesCount() const;
 
     const std::vector<std::shared_ptr<AbstractSite>>& interiorSites() const;
     void setInteriorSites(const std::vector<std::shared_ptr<AbstractSite>>& sites);
@@ -67,7 +64,7 @@ private:
     size_t level_;
     std::shared_ptr<VoronoiQuadtreeNode> parent_;
     std::array<Ptr, corners_count> children_;
-    std::array<std::optional<ClosestSite>, corners_count> corner_closest_sites_; // V-Sites as per the documentation
+    std::array<std::shared_ptr<AbstractSite>, corners_count> corner_closest_sites_; // V-Sites as per the documentation
     std::vector<std::shared_ptr<AbstractSite>> interior_sites_; // I-Sites as per the documentation
     std::vector<FaceSite> edge_sites_; // F-Sites as per the documentation
 };

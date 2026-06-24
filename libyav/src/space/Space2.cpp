@@ -3,6 +3,8 @@
 
 #include "yav/space/Space2.h"
 
+#include <ranges>
+
 #include <boost/geometry/algorithms/centroid.hpp>
 #include <boost/geometry/algorithms/closest_points.hpp>
 #include <boost/geometry/algorithms/detail/make/make.hpp>
@@ -147,17 +149,18 @@ bool Space2::isBisectorFlatWithinRegion(
     return AbstractSpace::isBisectorFlatWithinRegion(site1, site2, region);
 }
 
-ClosestSite Space2::findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const
+AbstractSite::Ptr Space2::findClosestSite(const Point2& position, const std::set<AbstractSite::Ptr>& candidate_sites) const
 {
-    ClosestSite closest_site = ClosestSite{ nullptr, std::numeric_limits<double>::infinity() };
+    AbstractSite::Ptr closest_site;
+    double closest_site_distance;
 
     for (const AbstractSite::Ptr& site : candidate_sites)
     {
         const double distance = site->distanceTo(position);
-        if (distance < closest_site.distance)
+        if (! closest_site || distance < closest_site_distance)
         {
-            closest_site.site = site;
-            closest_site.distance = distance;
+            closest_site = site;
+            closest_site_distance = distance;
         }
     }
 

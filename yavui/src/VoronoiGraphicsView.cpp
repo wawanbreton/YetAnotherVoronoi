@@ -115,13 +115,10 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
 
     for (const auto& [corner_index, closest_site] : node->cornerClosestSites() | std::views::enumerate)
     {
-        if (closest_site.has_value())
-        {
-            const yav::Point2 corner = node->cornerAt(corner_index);
-            const yav::Point2 site_pos = closest_site->site->basePoint();
-            scene_->addLine(corner.x(), corner.y(), site_pos.x(), site_pos.y(), QPen(QColor("#ffd600"), 0.0002))->setParentItem(overlay_);
-            spdlog::info("V-site to corner {}@{}: {} at distance {}", corner_index, corner, site_pos, closest_site->distance);
-        }
+        const yav::Point2 corner = node->cornerAt(corner_index);
+        const yav::Point2 site_pos = closest_site->basePoint();
+        scene_->addLine(corner.x(), corner.y(), site_pos.x(), site_pos.y(), QPen(QColor("#ffd600"), 0.0002))->setParentItem(overlay_);
+        spdlog::info("V-site to corner {}@{}: {}", corner_index, corner, site_pos);
     }
 
     const QPen edge_site_pen(QColor("#ff00d6"), 0.0002);

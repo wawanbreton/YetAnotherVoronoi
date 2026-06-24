@@ -7,7 +7,6 @@
 #include <memory>
 #include <vector>
 
-#include "yav/generator/ClosestSite.h"
 #include "yav/geometry/Point2.h"
 #include "yav/geometry/Segment2.h"
 #include "yav/space/AbstractSpace.h"
@@ -41,7 +40,8 @@ public:
         const std::shared_ptr<AbstractSite>& site2,
         const std::shared_ptr<AbstractSite>& site3) const override;
 
-    ClosestSite findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const override;
+    std::shared_ptr<AbstractSite>
+        findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const override;
 
     Segment2 closestSegmentToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const override;
 };

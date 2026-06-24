@@ -4,6 +4,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <set>
 #include <vector>
 
@@ -56,7 +57,8 @@ private:
     static void updateCornerClosestSites(
         VoronoiQuadtreeNode& node,
         const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
-        const AbstractSpace& input_space);
+        const AbstractSpace& input_space,
+        const std::optional<size_t>& ignore_corner_index = std::nullopt);
 
     static void updateFacesClosestSites(
         VoronoiQuadtreeNode& node,
