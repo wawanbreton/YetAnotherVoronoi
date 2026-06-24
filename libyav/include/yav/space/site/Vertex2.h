@@ -15,9 +15,15 @@ class Vertex2 final : public AbstractSite
 public:
     explicit Vertex2(const Point2& position);
 
-    virtual double distanceTo(const Point2& point) const override;
-    virtual Point2 basePoint() const override;
-    virtual std::vector<Point2> definingPoints() const override;
+    const Point2& position() const;
+
+    double distanceTo(const Point2& point) const override;
+
+    std::vector<Point2> definingPoints() const override;
+
+    bool intersects(const Box2& box) const override;
+
+    Point2 centroid() const override;
 
 private:
     Point2 position_;

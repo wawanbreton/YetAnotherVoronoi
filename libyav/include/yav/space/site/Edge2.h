@@ -15,9 +15,15 @@ class Edge2 final : public AbstractSite
 public:
     explicit Edge2(const Segment2& segment);
 
-    virtual double distanceTo(const Point2& point) const override;
-    virtual Point2 basePoint() const override;
-    virtual std::vector<Point2> definingPoints() const override;
+    const Segment2& segment() const;
+
+    double distanceTo(const Point2& point) const override;
+
+    std::vector<Point2> definingPoints() const override;
+
+    bool intersects(const Box2& box) const override;
+
+    Point2 centroid() const override;
 
 private:
     Segment2 segment_;

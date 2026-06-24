@@ -39,17 +39,6 @@ std::shared_ptr<AbstractSite> Space2::addVertex(const Point2& vertex)
     return addSite(std::make_shared<Vertex2>(vertex));
 }
 
-double Space2::distance(const std::shared_ptr<AbstractSite>& site, const Point2& position) const
-{
-    if (auto site_vertex = std::dynamic_pointer_cast<Vertex2>(site))
-    {
-        return bg::distance(site_vertex->basePoint(), position);
-    }
-
-    spdlog::warn("Unusupported site type for distance calculation");
-    return std::numeric_limits<double>::infinity();
-}
-
 Point2 Space2::calculateEquidistantPosition(
     const std::shared_ptr<AbstractSite>& site1,
     const std::shared_ptr<AbstractSite>& site2,
@@ -61,9 +50,9 @@ Point2 Space2::calculateEquidistantPosition(
 
     if (vertex1 && vertex2 && vertex3)
     {
-        const Point2 point1 = vertex1->basePoint();
-        const Point2 point2 = vertex2->basePoint();
-        const Point2 point3 = vertex3->basePoint();
+        const Point2& point1 = vertex1->position();
+        const Point2& point2 = vertex2->position();
+        const Point2& point3 = vertex3->position();
 
         Point2 midpoint12;
         Point2 midpoint13;
@@ -95,7 +84,7 @@ Segment2 Space2::closestSegmentToSide(const std::shared_ptr<AbstractSite>& site,
     if (auto vertex = std::dynamic_pointer_cast<Vertex2>(site))
     {
         Segment2 shortest_segment;
-        bg::closest_points(side, vertex->basePoint(), shortest_segment);
+        bg::closest_points(side, vertex->position(), shortest_segment);
         return shortest_segment;
     }
 
@@ -114,8 +103,8 @@ std::optional<Point2> Space2::calculateBisectorVertexAlongSegment(
 
     if (start_vertex && end_vertex)
     {
-        const Point2 start = start_vertex->basePoint();
-        const Point2 end = end_vertex->basePoint();
+        const Point2& start = start_vertex->position();
+        const Point2& end = end_vertex->position();
         const Segment2 sites_segment(start, end);
         const Segment2 segment_bisector = rotate90(sites_segment, false);
         const Line2 bisector = bg::detail::make::make_infinite_line<double>(segment_bisector);

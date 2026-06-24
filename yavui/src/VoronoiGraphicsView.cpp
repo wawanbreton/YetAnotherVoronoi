@@ -40,7 +40,7 @@ void VoronoiGraphicsView::setSpace(const yav::Space2& space)
         if (const std::shared_ptr<yav::Vertex2> site_vertex2 = std::dynamic_pointer_cast<yav::Vertex2>(site))
         {
             QRectF rect(0, 0, 0.01, 0.01);
-            rect.moveCenter(QPointF(site_vertex2->basePoint().x(), site_vertex2->basePoint().y()));
+            rect.moveCenter(QPointF(site_vertex2->position().x(), site_vertex2->position().y()));
             scene_->addEllipse(rect, Qt::NoPen, QBrush("#e74c3c"));
         }
     }
@@ -116,7 +116,7 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
     for (const auto& [corner_index, closest_site] : node->cornerClosestSites() | std::views::enumerate)
     {
         const yav::Point2 corner = node->cornerAt(corner_index);
-        const yav::Point2 site_pos = closest_site->basePoint();
+        const yav::Point2 site_pos = closest_site->centroid();
         scene_->addLine(corner.x(), corner.y(), site_pos.x(), site_pos.y(), QPen(QColor("#ffd600"), 0.0002))->setParentItem(overlay_);
         spdlog::info("V-site to corner {}@{}: {}", corner_index, corner, site_pos);
     }
@@ -124,7 +124,7 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
     const QPen edge_site_pen(QColor("#ff00d6"), 0.0002);
     for (const yav::FaceSite& edge_site : node->edgeSites())
     {
-        const yav::Point2 site_pos = edge_site.site->basePoint();
+        const yav::Point2 site_pos = edge_site.site->centroid();
         scene_
             ->addLine(
                 edge_site.closest_segment_part.first.x(),
@@ -146,7 +146,7 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
 
     for (const yav::AbstractSite::Ptr& interior_site : node->interiorSites())
     {
-        const yav::Point2 site_pos = interior_site->basePoint();
+        const yav::Point2 site_pos = interior_site->centroid();
         const yav::Point2& center = node->center();
         scene_->addLine(center.x(), center.y(), site_pos.x(), site_pos.y(), QPen(QColor("#8fff00"), 0.0002))->setParentItem(overlay_);
     }

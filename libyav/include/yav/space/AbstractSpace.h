@@ -26,8 +26,6 @@ public:
 
     const std::vector<std::shared_ptr<AbstractSite>>& sites() const;
 
-    virtual double distance(const std::shared_ptr<AbstractSite>& site, const Point2& position) const = 0;
-
     virtual std::optional<Point2> calculateBisectorVertexAlongSegment(
         const std::shared_ptr<AbstractSite>& closest_site_start,
         const std::shared_ptr<AbstractSite>& closest_site_end,

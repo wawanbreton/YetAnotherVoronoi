@@ -6,6 +6,7 @@
 #include <memory>
 #include <vector>
 
+#include "yav/geometry/Box2.h"
 #include "yav/geometry/Point2.h"
 
 namespace yav
@@ -21,11 +22,12 @@ public:
 
     virtual double distanceTo(const Point2& point) const = 0;
 
-    /** Returns a point guaranteed to belong to the site geometry. */
-    virtual Point2 basePoint() const = 0;
-
     /** Returns representative points used for global bounds estimation. */
     virtual std::vector<Point2> definingPoints() const = 0;
+
+    virtual bool intersects(const Box2& box) const = 0;
+
+    virtual Point2 centroid() const = 0;
 };
 
 } // namespace yav

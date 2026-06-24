@@ -278,7 +278,7 @@ void Generator::dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vect
     for (const AbstractSite::Ptr& interior_site : candidate_sites)
     {
         // Optimize this by distributing the interior sites to the proper child instead (based on position relative to center)
-        if (node.containsPoint(interior_site->basePoint()))
+        if (interior_site->intersects(node.region()))
         {
             node.addInteriorSite(interior_site);
         }

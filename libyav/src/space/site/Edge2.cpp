@@ -6,6 +6,8 @@
 #include <boost/geometry/algorithms/distance.hpp>
 
 
+namespace bg = boost::geometry;
+
 namespace yav
 {
 
@@ -14,19 +16,29 @@ Edge2::Edge2(const Segment2& segment)
 {
 }
 
-double Edge2::distanceTo(const Point2& point) const
+const Segment2& Edge2::segment() const
 {
-    return boost::geometry::distance(point, segment_);
+    return segment_;
 }
 
-Point2 Edge2::basePoint() const
+double Edge2::distanceTo(const Point2& point) const
 {
-    return segment_.first;
+    return bg::distance(point, segment_);
 }
 
 std::vector<Point2> Edge2::definingPoints() const
 {
     return { segment_.first, segment_.second };
+}
+
+bool Edge2::intersects(const Box2& box) const
+{
+    return bg::intersects(box, segment_);
+}
+
+Point2 Edge2::centroid() const
+{
+    return bg::return_centroid<Point2>(segment_);
 }
 
 } // namespace yav
