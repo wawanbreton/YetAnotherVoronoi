@@ -32,6 +32,13 @@ private:
     static void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const yav::AbstractSpace& space);
 
 private:
+    enum class NodeState
+    {
+        Undefined, // We don't enough data for this node yet, keep splitting
+        Terminal, // Node is terminal and can be skipper
+        Approximateable // Node contains a bisector that can be approximated now
+    };
+
     std::tuple<std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         build(const Space2& input_space) const;
 
@@ -39,7 +46,7 @@ private:
 
     static bool isEmpty(const VoronoiQuadtreeNode& node);
 
-    bool isReadyForApproximation(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const;
+    NodeState calculateNodeState(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const;
 
     static void dispatchInteriorSites(VoronoiQuadtreeNode& node, const std::vector<std::shared_ptr<AbstractSite>>& candidate_sites);
 
@@ -53,7 +60,7 @@ private:
         const std::set<std::shared_ptr<AbstractSite>>& candidate_sites,
         const AbstractSpace& input_space);
 
-    static bool containsFlatBisector(const VoronoiQuadtreeNode &node, const AbstractSpace& input_space);
+    static bool containsFlatBisector(const VoronoiQuadtreeNode& node, const AbstractSpace& input_space);
 
     const size_t maximum_level_ = 6;
 };

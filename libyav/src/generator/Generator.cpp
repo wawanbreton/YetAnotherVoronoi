@@ -86,11 +86,17 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     std::vector<Point2> crossings;
     std::vector<std::pair<AbstractSite::Ptr, AbstractSite::Ptr>> crossing_sites;
 
-    std::array<std::vector<AbstractSite::Ptr>, VoronoiQuadtreeNode::corners_count> face_sites_by_face;
-    for (const FaceSite& face_site : leaf_node.edgeSites())
+    std::optional<FaceSite> edge_site;
+    if (! leaf_node.edgeSites().empty())
     {
-        face_sites_by_face[face_site.face_index].push_back(face_site.site);
+        edge_site = leaf_node.edgeSites().front();
     }
+
+    // std::array<std::vector<AbstractSite::Ptr>, VoronoiQuadtreeNode::corners_count> face_sites_by_face;
+    // for (const FaceSite& face_site : leaf_node.edgeSites())
+    // {
+    //     face_sites_by_face[face_site.face_index].push_back(face_site.site);
+    // }
 
     // for (const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites :
     //          std::views::cartesian_product(all_related_sites, all_related_sites))
@@ -108,22 +114,20 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         const AbstractSite::Ptr& second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index)->site;
         const Segment2 edge(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index));
 
-        std::vector<AbstractSite::Ptr>& next_sites = face_sites_by_face[first_corner_index];
-        next_sites.push_back(second_corner_site);
-
-        for (const AbstractSite::Ptr& other_site : next_sites)
+        if (edge_site.has_value() && edge_site->face_index == first_corner_index)
         {
-            if (first_corner_site == other_site)
-            {
-                continue;
-            }
-
-            std::optional<Point2> bisector_intersection = space.calculateBisectorVertexAlongSegment(first_corner_site, other_site, edge);
-
+            crossings.push_back(edge_site->closest_segment_part.first);
+            crossings.push_back(edge_site->closest_segment_part.second);
+            crossing_sites.push_back({ first_corner_site, edge_site->site });
+        }
+        else if (first_corner_site != second_corner_site)
+        {
+            std::optional<Point2> bisector_intersection
+                = space.calculateBisectorVertexAlongSegment(first_corner_site, second_corner_site, edge);
             if (bisector_intersection.has_value())
             {
                 crossings.push_back(*bisector_intersection);
-                crossing_sites.push_back({ first_corner_site, other_site });
+                crossing_sites.push_back({ first_corner_site, second_corner_site });
             }
         }
     }
@@ -153,48 +157,95 @@ bool Generator::isEmpty(const VoronoiQuadtreeNode& node)
     return node.allRelatedSites().size() == 1;
 }
 
-bool Generator::isReadyForApproximation(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const
+Generator::NodeState Generator::calculateNodeState(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const
 {
-    // if (node.edgeSites().empty() && node.interiorSites().empty())
+    std::set<AbstractSite::Ptr> unique_corner_sites = node.uniqueCornerClosestSites();
+    const std::vector<FaceSite>& edge_sites = node.edgeSites();
+    const std::vector<AbstractSite::Ptr>& interior_sites = node.interiorSites();
+
+    // Interior sites are allowed as long as they also are corner closest sites
+    for (const AbstractSite::Ptr& interior_site : interior_sites)
     {
-        const std::set<AbstractSite::Ptr> unique_corner_closest_sites = node.allRelatedSites();
-        if (unique_corner_closest_sites.size() <= 3)
+        if (! unique_corner_sites.contains(interior_site))
         {
-            std::vector<AbstractSite::Ptr> unique_sites;
-            unique_sites.reserve(unique_corner_closest_sites.size());
-            for (const AbstractSite::Ptr site : unique_corner_closest_sites)
+            return NodeState::Undefined;
+        }
+    }
+
+    const size_t total_exterior_sites = unique_corner_sites.size() + edge_sites.size();
+    if (total_exterior_sites <= 1)
+    {
+        return NodeState::Terminal;
+    }
+
+    if (total_exterior_sites == 2)
+    {
+        return NodeState::Approximateable;
+    }
+
+    if (total_exterior_sites == 3)
+    {
+        if (edge_sites.empty() || edge_sites.size() == 1)
+        {
+            std::vector<AbstractSite::Ptr> unique_sites_vector;
+            unique_sites_vector.reserve(total_exterior_sites);
+            unique_sites_vector.insert(unique_sites_vector.end(), unique_corner_sites.begin(), unique_corner_sites.end());
+            if (edge_sites.size() == 1)
             {
-                unique_sites.push_back(site);
+                unique_sites_vector.push_back(edge_sites.front().site);
             }
 
-            bool is_equidistant_inside;
-            if (unique_corner_closest_sites.size() < 3)
+            const Point2 equidistant_point
+                = space.calculateEquidistantPosition(unique_sites_vector[0], unique_sites_vector[1], unique_sites_vector[2]);
+            if (node.containsPoint(equidistant_point)
+                && std::ranges::all_of(
+                    std::views::cartesian_product(unique_sites_vector, unique_sites_vector),
+                    [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
+                    {
+                        return sites.first == sites.second || space.isBisectorFlatWithinRegion(sites.first, sites.second, node.region());
+                    }))
             {
-                is_equidistant_inside = true;
-            }
-            else
-            {
-                const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
-                is_equidistant_inside = node.containsPoint(equidistant_point);
-            }
-
-            if (is_equidistant_inside)
-            {
-                if (std::ranges::all_of(
-                        std::views::cartesian_product(unique_corner_closest_sites, unique_corner_closest_sites),
-                        [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
-                        {
-                            return sites.first == sites.second
-                                || space.isBisectorFlatWithinRegion(sites.first, sites.second, node.region());
-                        }))
-                {
-                    return true;
-                }
+                return NodeState::Approximateable;
             }
         }
     }
 
-    return false;
+    // const std::set<AbstractSite::Ptr> unique_corner_closest_sites = node.allRelatedSites();
+    // if (unique_corner_closest_sites.size() <= 3)
+    // {
+    //     std::vector<AbstractSite::Ptr> unique_sites;
+    //     unique_sites.reserve(unique_corner_closest_sites.size());
+    //     for (const AbstractSite::Ptr site : unique_corner_closest_sites)
+    //     {
+    //         unique_sites.push_back(site);
+    //     }
+
+    //     bool is_equidistant_inside;
+    //     if (unique_corner_closest_sites.size() < 3)
+    //     {
+    //         is_equidistant_inside = true;
+    //     }
+    //     else
+    //     {
+    //         const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
+    //         is_equidistant_inside = node.containsPoint(equidistant_point);
+    //     }
+
+    //     if (is_equidistant_inside)
+    //     {
+    //         if (std::ranges::all_of(
+    //                 std::views::cartesian_product(unique_corner_closest_sites, unique_corner_closest_sites),
+    //                 [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
+    //                 {
+    //                     return sites.first == sites.second || space.isBisectorFlatWithinRegion(sites.first, sites.second, node.region());
+    //                 }))
+    //         {
+    //             return true;
+    //         }
+    //     }
+    // }
+
+    return NodeState::Undefined;
 }
 
 std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::build(const Space2& input_space) const
@@ -214,19 +265,21 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
         const VoronoiQuadtreeNode::Ptr node = node_queue.front();
         node_queue.pop();
 
-        if (isEmpty(*node))
-        {
-            // The node for sure does not contain a bisector, so we are done with it
-            continue;
-        }
+        const NodeState node_state = calculateNodeState(*node, input_space);
 
-        if (isReadyForApproximation(*node, input_space))
+        switch (node_state)
         {
+        case NodeState::Terminal:
+            // The node for sure does not contain a bisector, so we are done with it
+            break;
+
+        case NodeState::Approximateable:
             // Node is defined enough for approximation, mark it as leaf to be approximated
             leaves.push_back(node);
-        }
-        else
-        {
+            break;
+
+        case NodeState::Undefined:
+            // This node has too many related sites, split it to finely define it
             node->split();
 
             const std::set<AbstractSite::Ptr> all_related_sites = node->allRelatedSites();
@@ -247,6 +300,8 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
 
                 node_queue.push(child);
             }
+
+            break;
         }
     }
 
@@ -366,7 +421,11 @@ void Generator::updateFacesClosestSites(
             double covered_distance_end = bg::distance(side.segment.second, *equidistant_corner_end);
             if ((covered_distance_start + covered_distance_end) < side.segment_length)
             {
-                node.addEdgeSite(FaceSite{ site, side_index, side.segment, Segment2(*equidistant_corner_start, *equidistant_corner_end) });
+                node.addEdgeSite(
+                    FaceSite{ site,
+                              static_cast<size_t>(side_index),
+                              side.segment,
+                              Segment2(*equidistant_corner_start, *equidistant_corner_end) });
                 // break;
             }
         }
