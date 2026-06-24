@@ -22,14 +22,17 @@ class Generator
 public:
     Generator(const size_t maximum_level = 6);
 
-    std::tuple<Diagram, std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
+    std::tuple<std::shared_ptr<Diagram>, std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         generate(const Space2& input_space) const;
 
 private:
     static std::vector<std::shared_ptr<AbstractSite>> uniqueSitesFromCrossings(
         const std::vector<std::pair<std::shared_ptr<AbstractSite>, std::shared_ptr<AbstractSite>>>& edge_site_pairs);
 
-    static void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const yav::AbstractSpace& space);
+    static void addApproximationFromLeaf(
+        const VoronoiQuadtreeNode& leaf_node,
+        const std::shared_ptr<yav::Diagram>& diagram,
+        const yav::AbstractSpace& space);
 
 private:
     enum class NodeState

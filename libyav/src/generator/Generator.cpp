@@ -28,7 +28,8 @@ Generator::Generator(const size_t maximum_level)
 {
 }
 
-std::tuple<Diagram, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Generator::generate(const Space2& input_space) const
+std::tuple<Diagram::Ptr, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>>
+    Generator::generate(const Space2& input_space) const
 {
     if (input_space.sites().empty())
     {
@@ -43,7 +44,7 @@ std::tuple<Diagram, VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::P
         return {};
     }
 
-    Diagram diagram;
+    auto diagram = std::make_shared<Diagram>();
 
     const auto [root, leaves] = build(input_space);
 
@@ -81,7 +82,7 @@ std::vector<std::shared_ptr<AbstractSite>> Generator::uniqueSitesFromCrossings(
     return result;
 }
 
-void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const AbstractSpace& space)
+void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, const Diagram::Ptr& diagram, const AbstractSpace& space)
 {
     std::vector<Point2> crossings;
     std::vector<std::pair<AbstractSite::Ptr, AbstractSite::Ptr>> crossing_sites;
@@ -92,21 +93,6 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         edge_site = leaf_node.edgeSites().front();
     }
 
-    // std::array<std::vector<AbstractSite::Ptr>, VoronoiQuadtreeNode::corners_count> face_sites_by_face;
-    // for (const FaceSite& face_site : leaf_node.edgeSites())
-    // {
-    //     face_sites_by_face[face_site.face_index].push_back(face_site.site);
-    // }
-
-    // for (const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites :
-    //          std::views::cartesian_product(all_related_sites, all_related_sites))
-    // {
-    //     if (sites.first == sites.second)
-    //     {
-    //         continue;
-    //     }
-    // }
-
     for (size_t first_corner_index = 0; first_corner_index < VoronoiQuadtreeNode::corners_count; ++first_corner_index)
     {
         const size_t second_corner_index = (first_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
@@ -116,11 +102,6 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
 
         if (edge_site.has_value() && edge_site->face_index == first_corner_index)
         {
-            if (first_corner_site == second_corner_site)
-            {
-                spdlog::warn("THIS IS WEIRD");
-            }
-
             crossings.push_back(edge_site->closest_segment_part.first);
             crossings.push_back(edge_site->closest_segment_part.second);
             crossing_sites.push_back({ first_corner_site, edge_site->site });
@@ -141,14 +122,14 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
 
     if (crossings.size() == 2)
     {
-        diagram.addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
+        diagram->addBoundarySegment(Segment2(crossings[0], crossings[1]), unique_sites);
     }
     else if (crossings.size() == 3)
     {
         const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
-        diagram.addBoundarySegment(Segment2(equidistant_point, crossings[0]), unique_sites);
-        diagram.addBoundarySegment(Segment2(equidistant_point, crossings[1]), unique_sites);
-        diagram.addBoundarySegment(Segment2(equidistant_point, crossings[2]), unique_sites);
+        diagram->addBoundarySegment(Segment2(equidistant_point, crossings[0]), unique_sites);
+        diagram->addBoundarySegment(Segment2(equidistant_point, crossings[1]), unique_sites);
+        diagram->addBoundarySegment(Segment2(equidistant_point, crossings[2]), unique_sites);
     }
 
     else if (! crossings.empty())
@@ -214,41 +195,6 @@ Generator::NodeState Generator::calculateNodeState(const VoronoiQuadtreeNode& no
             }
         }
     }
-
-    // const std::set<AbstractSite::Ptr> unique_corner_closest_sites = node.allRelatedSites();
-    // if (unique_corner_closest_sites.size() <= 3)
-    // {
-    //     std::vector<AbstractSite::Ptr> unique_sites;
-    //     unique_sites.reserve(unique_corner_closest_sites.size());
-    //     for (const AbstractSite::Ptr site : unique_corner_closest_sites)
-    //     {
-    //         unique_sites.push_back(site);
-    //     }
-
-    //     bool is_equidistant_inside;
-    //     if (unique_corner_closest_sites.size() < 3)
-    //     {
-    //         is_equidistant_inside = true;
-    //     }
-    //     else
-    //     {
-    //         const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
-    //         is_equidistant_inside = node.containsPoint(equidistant_point);
-    //     }
-
-    //     if (is_equidistant_inside)
-    //     {
-    //         if (std::ranges::all_of(
-    //                 std::views::cartesian_product(unique_corner_closest_sites, unique_corner_closest_sites),
-    //                 [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
-    //                 {
-    //                     return sites.first == sites.second || space.isBisectorFlatWithinRegion(sites.first, sites.second, node.region());
-    //                 }))
-    //         {
-    //             return true;
-    //         }
-    //     }
-    // }
 
     return NodeState::Undefined;
 }

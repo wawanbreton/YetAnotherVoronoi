@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     spdlog::info("Generate diagram with {} sites", space.sites().size());
     spdlog::stopwatch timer;
     auto [voronoi_diagram, tree, leaves] = generator.generate(space);
-    spdlog::info("Generated {} cells in {}", voronoi_diagram.cells().size(), timer.elapsed());
+    spdlog::info("Generated {} cells in {}", voronoi_diagram->cells().size(), timer.elapsed());
 
     if (options_result.count("no-ui") != 0)
     {
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
 
     VoronoiGraphicsView graphics_view;
     graphics_view.setSpace(space);
-    graphics_view.setDiagram(voronoi_diagram);
+    graphics_view.setDiagram(*voronoi_diagram);
 
     if (options_result.count("tree"))
     {

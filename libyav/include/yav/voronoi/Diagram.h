@@ -20,9 +20,11 @@ class Cell;
 class Diagram
 {
 public:
+    using Ptr = std::shared_ptr<Diagram>;
+
     Diagram();
 
-    void addBoundarySegment(const Segment2& segment, const std::vector<std::shared_ptr<AbstractSite> > &adjacent_sites);
+    void addBoundarySegment(const Segment2& segment, const std::vector<std::shared_ptr<AbstractSite>>& adjacent_sites);
 
     const std::vector<Segment2>& boundarySegments() const;
     const std::vector<std::shared_ptr<Cell>>& cells() const;
