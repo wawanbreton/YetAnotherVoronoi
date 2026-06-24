@@ -116,6 +116,11 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
 
         if (edge_site.has_value() && edge_site->face_index == first_corner_index)
         {
+            if (first_corner_site == second_corner_site)
+            {
+                spdlog::warn("THIS IS WEIRD");
+            }
+
             crossings.push_back(edge_site->closest_segment_part.first);
             crossings.push_back(edge_site->closest_segment_part.second);
             crossing_sites.push_back({ first_corner_site, edge_site->site });
@@ -367,6 +372,7 @@ void Generator::updateFacesClosestSites(
     {
         Segment2 segment;
         double segment_length;
+        size_t index;
         std::optional<ClosestSite>* closest_site_start;
         std::optional<ClosestSite>* closest_site_end;
     };
@@ -383,6 +389,7 @@ void Generator::updateFacesClosestSites(
             NodeSide side;
             side.segment = Segment2(node.cornerAt(start_corner_index), node.cornerAt(end_corner_index));
             side.segment_length = bg::distance(side.segment.first, side.segment.second);
+            side.index = start_corner_index;
             side.closest_site_start = closest_site_start;
             side.closest_site_end = closest_site_end;
             sides.push_back(std::move(side));
@@ -401,7 +408,7 @@ void Generator::updateFacesClosestSites(
             continue;
         }
 
-        for (const auto& [side_index, side] : sides | std::ranges::views::enumerate)
+        for (const NodeSide& side : sides)
         {
             std::optional<Point2> equidistant_corner_start
                 = input_space.calculateBisectorVertexAlongSegment(side.closest_site_start->value().site, site, side.segment);
@@ -421,12 +428,11 @@ void Generator::updateFacesClosestSites(
             double covered_distance_end = bg::distance(side.segment.second, *equidistant_corner_end);
             if ((covered_distance_start + covered_distance_end) < side.segment_length)
             {
-                node.addEdgeSite(
-                    FaceSite{ site,
-                              static_cast<size_t>(side_index),
-                              side.segment,
-                              Segment2(*equidistant_corner_start, *equidistant_corner_end) });
-                // break;
+                node.addEdgeSite(FaceSite{ site,
+                                           static_cast<size_t>(side.index),
+                                           side.segment,
+                                           Segment2(*equidistant_corner_start, *equidistant_corner_end) });
+                break;
             }
         }
     }
