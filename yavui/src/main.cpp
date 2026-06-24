@@ -31,7 +31,8 @@ int main(int argc, char** argv)
         ("t,tree", "Display the leaves of the tree")
         ("n,no-ui", "Do not display the UI, stop after execution")
         ("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>())
-        ("random", "Number of random points to be generated", cxxopts::value<size_t>());
+        ("random-points", "Number of random points to be generated", cxxopts::value<size_t>())
+        ("random-edges", "Number of random edges to be generated", cxxopts::value<size_t>());
     // clang-format on
     options.parse_positional({ "file" });
     options.positional_help("<file>");
@@ -39,7 +40,8 @@ int main(int argc, char** argv)
 
     const cxxopts::ParseResult options_result = options.parse(argc, argv);
 
-    if (options_result.count("help") > 0U || (options_result.count("file") == 0 && options_result.count("random") == 0))
+    if (options_result.count("help") > 0U
+        || (options_result.count("file") == 0 && options_result.count("random-points") == 0 && options_result.count("random-edges") == 0))
     {
         std::cout << options.help() << std::endl;
         return 0;
@@ -75,12 +77,23 @@ int main(int argc, char** argv)
         }
     }
 
-    if (options_result.count("random") != 0)
+    if (options_result.count("random-points") != 0)
     {
-        auto points = options_result["random"].as<size_t>();
+        auto points = options_result["random-points"].as<size_t>();
         for (size_t i = 0; i < points; ++i)
         {
             space.addVertex(yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX));
+        }
+    }
+
+    if (options_result.count("random-edges") != 0)
+    {
+        auto edges = options_result["random-edges"].as<size_t>();
+        for (size_t i = 0; i < edges; ++i)
+        {
+            space.addEdge(yav::Segment2(
+                yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX),
+                yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX)));
         }
     }
 

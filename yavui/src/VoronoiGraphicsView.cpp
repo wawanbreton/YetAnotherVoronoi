@@ -35,13 +35,20 @@ VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
 
 void VoronoiGraphicsView::setSpace(const yav::Space2& space)
 {
+    const QBrush sites_brush("#e74c3c");
+
     for (const yav::AbstractSite::Ptr site : space.sites())
     {
         if (const std::shared_ptr<yav::Vertex2> site_vertex2 = std::dynamic_pointer_cast<yav::Vertex2>(site))
         {
             QRectF rect(0, 0, 0.01, 0.01);
             rect.moveCenter(QPointF(site_vertex2->position().x(), site_vertex2->position().y()));
-            scene_->addEllipse(rect, Qt::NoPen, QBrush("#e74c3c"));
+            scene_->addEllipse(rect, Qt::NoPen, sites_brush);
+        }
+        else if (const std::shared_ptr<yav::Edge2> site_edge2 = std::dynamic_pointer_cast<yav::Edge2>(site))
+        {
+            const yav::Segment2& segment = site_edge2->segment();
+            scene_->addLine(segment.first.x(), segment.first.y(), segment.second.x(), segment.second.y(), QPen(sites_brush, 0.001));
         }
     }
 }
