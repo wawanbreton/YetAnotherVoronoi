@@ -34,6 +34,19 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(boost_geometry)
 
 FetchContent_Declare(
+  lapack
+  GIT_REPOSITORY https://github.com/Reference-LAPACK/lapack.git
+  GIT_TAG v3.12.1
+)
+
+FetchContent_MakeAvailable(lapack)
+
+set(BLAS_LIBRARY blas CACHE STRING "" FORCE)
+set(LAPACK_LIBRARY lapack CACHE STRING "" FORCE)
+set(ARMA_USE_BLAS ON CACHE BOOL "" FORCE)
+set(ARMA_USE_LAPACK ON CACHE BOOL "" FORCE)
+
+FetchContent_Declare(
   armadillo
   GIT_REPOSITORY https://gitlab.com/conradsnicta/armadillo-code
   GIT_TAG 15.2.6
