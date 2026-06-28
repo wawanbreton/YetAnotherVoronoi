@@ -18,7 +18,6 @@ struct FaceSite
     std::shared_ptr<AbstractSite> site;
     size_t face_index;
     Segment2 face;
-    Segment2 closest_segment_part;
 };
 
 } // namespace yav

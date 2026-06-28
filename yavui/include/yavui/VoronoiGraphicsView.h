@@ -15,7 +15,7 @@ class VoronoiQuadtreeNode;
 
 class VoronoiGraphicsView : public QGraphicsView
 {
-    // Q_OBJECT
+    Q_OBJECT
 
 public:
     explicit VoronoiGraphicsView(QWidget* parent = nullptr);
@@ -30,6 +30,9 @@ public:
 
     void autoFit();
 
+signals:
+    void approximateNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node);
+
 protected:
     virtual void wheelEvent(QWheelEvent* event) override;
 
@@ -38,6 +41,8 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent* event) override;
 
     virtual void mouseMoveEvent(QMouseEvent* event) override;
+
+    virtual void keyPressEvent(QKeyEvent* event) override;
 
 private:
     QGraphicsItem* addTreeNode(

@@ -13,6 +13,8 @@ namespace yav
 class Vertex2 final : public AbstractSite
 {
 public:
+    using Ptr = std::shared_ptr<Vertex2>;
+
     explicit Vertex2(const Point2& position);
 
     const Point2& position() const;

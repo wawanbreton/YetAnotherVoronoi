@@ -4,7 +4,10 @@
 #include "yav/geometry/Segment2.h"
 
 #include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/arithmetic/dot_product.hpp>
 
+
+namespace bg = boost::geometry;
 
 namespace yav
 {
@@ -12,7 +15,7 @@ namespace yav
 Segment2 rotate90(const Segment2& segment, const bool ccw)
 {
     Point2 midpoint;
-    boost::geometry::centroid(segment, midpoint);
+    bg::centroid(segment, midpoint);
 
     const Point2& start = segment.first;
     const Point2& end = segment.second;
@@ -26,6 +29,24 @@ Segment2 rotate90(const Segment2& segment, const bool ccw)
     }
 
     return result;
+}
+
+PointPositionOnSegment projectedPointsLiesOnSegment(const Segment2& segment, const Point2& point)
+{
+    const Point2 vector = segment.second - segment.first;
+
+    const double projection = bg::dot_product(point - segment.first, vector);
+    const double length_squared = bg::dot_product(vector, vector);
+
+    if (projection < 0)
+    {
+        return PointPositionOnSegment::Before;
+    }
+    if (projection > length_squared)
+    {
+        return PointPositionOnSegment::After;
+    }
+    return PointPositionOnSegment::Inside;
 }
 
 } // namespace yav

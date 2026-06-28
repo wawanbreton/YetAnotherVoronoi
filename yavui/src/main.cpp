@@ -10,6 +10,7 @@
 #include <set>
 #include <string>
 #include <yav/generator/Generator.h>
+#include <yav/generator/VoronoiQuadtreeNode.h>
 #include <yav/space/Space2.h>
 #include <yav/voronoi/Diagram.h>
 
@@ -100,7 +101,7 @@ int main(int argc, char** argv)
     space.calculateAutoBoundingBox(1.2);
     spdlog::info("Using bounding box {}", space.boundingBox());
 
-    yav::Generator generator(8);
+    yav::Generator generator(6);
 
     spdlog::info("Generate diagram with {} sites", space.sites().size());
     spdlog::stopwatch timer;
@@ -131,6 +132,16 @@ int main(int argc, char** argv)
     graphics_view.resize(800, 600);
     graphics_view.autoFit();
     graphics_view.show();
+
+    QObject::connect(
+        &graphics_view,
+        &VoronoiGraphicsView::approximateNode,
+        &graphics_view,
+        [&space](const yav::VoronoiQuadtreeNode::Ptr& node)
+        {
+            yav::Diagram local_diagram; // Avoid modifying the originally generated diagram
+            yav::Generator::addApproximationFromLeaf(*node, local_diagram, space);
+        });
 
     return app.exec();
 }

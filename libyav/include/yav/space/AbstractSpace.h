@@ -26,10 +26,11 @@ public:
 
     const std::vector<std::shared_ptr<AbstractSite>>& sites() const;
 
-    virtual std::optional<Point2> calculateBisectorVertexAlongSegment(
+    virtual std::vector<Point2> calculateBisectorVerticesAlongSegment(
         const std::shared_ptr<AbstractSite>& closest_site_start,
         const std::shared_ptr<AbstractSite>& closest_site_end,
-        const Segment2& segment) const
+        const Segment2& segment,
+        const std::shared_ptr<AbstractSite>& edge_site) const
         = 0;
 
     /*!
@@ -49,8 +50,6 @@ public:
 
     virtual std::shared_ptr<AbstractSite>
         findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const = 0;
-
-    virtual Segment2 closestSegmentToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const = 0;
 
     void calculateAutoBoundingBox(const double scale = 1.2);
     const Box2& boundingBox() const;

@@ -27,7 +27,10 @@ FetchContent_MakeAvailable(rapidobj)
 
 qt_standard_project_setup(REQUIRES 6.7)
 
-qt_add_executable(yavui src/main.cpp src/VoronoiGraphicsView.cpp)
+qt_add_executable(yavui
+  src/main.cpp
+  include/yavui/VoronoiGraphicsView.h src/VoronoiGraphicsView.cpp
+)
 
 target_include_directories(yavui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(yavui PRIVATE yav::libyav Qt6::Widgets cxxopts::cxxopts rapidobj)

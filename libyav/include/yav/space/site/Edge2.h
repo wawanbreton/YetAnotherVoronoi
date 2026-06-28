@@ -13,6 +13,8 @@ namespace yav
 class Edge2 final : public AbstractSite
 {
 public:
+    using Ptr = std::shared_ptr<Edge2>;
+
     explicit Edge2(const Segment2& segment);
 
     const Segment2& segment() const;

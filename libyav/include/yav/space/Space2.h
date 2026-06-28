@@ -23,10 +23,11 @@ public:
     std::shared_ptr<AbstractSite> addEdge(const Segment2& segment);
     std::shared_ptr<AbstractSite> addVertex(const Point2& vertex);
 
-    std::optional<Point2> calculateBisectorVertexAlongSegment(
+    std::vector<Point2> calculateBisectorVerticesAlongSegment(
         const std::shared_ptr<AbstractSite>& closest_site_start,
         const std::shared_ptr<AbstractSite>& closest_site_end,
-        const Segment2& segment) const override;
+        const Segment2& segment,
+        const std::shared_ptr<AbstractSite>& edge_site) const override;
 
     bool isBisectorFlatWithinRegion(
         const std::shared_ptr<AbstractSite>& site1,
@@ -41,7 +42,19 @@ public:
     std::shared_ptr<AbstractSite>
         findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const override;
 
-    Segment2 closestSegmentToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const override;
+private:
+    std::vector<Point2> calculateVerticesBisectorAlongSegment(const Point2& vertex1, const Point2& vertex2, const Segment2& segment) const;
+
+    std::vector<Point2> calculateEdgeVertexBisectorAlongSegment(
+        const Point2& vertex_site_position,
+        const Segment2& edge_site_segment,
+        const Segment2& segment) const;
+
+    std::vector<Point2> calculateEdgeVertexBisectorAlongSegment(
+        const Point2& vertex_site_position,
+        const Segment2& edge_site_segment,
+        const Segment2& segment,
+        const PointPositionOnSegment position_on_segment) const;
 };
 
 } // namespace yav

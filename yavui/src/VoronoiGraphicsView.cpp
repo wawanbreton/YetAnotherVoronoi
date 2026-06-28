@@ -21,6 +21,8 @@
 #include <spdlog/spdlog.h>
 
 
+namespace bg = boost::geometry;
+
 VoronoiGraphicsView::VoronoiGraphicsView(QWidget* parent)
     : min_zoom_(35)
     , max_zoom_(100)
@@ -132,23 +134,9 @@ void VoronoiGraphicsView::setOverlayNode(const std::shared_ptr<yav::VoronoiQuadt
     for (const yav::FaceSite& edge_site : node->edgeSites())
     {
         const yav::Point2 site_pos = edge_site.site->centroid();
-        scene_
-            ->addLine(
-                edge_site.closest_segment_part.first.x(),
-                edge_site.closest_segment_part.first.y(),
-                site_pos.x(),
-                site_pos.y(),
-                edge_site_pen)
-            ->setParentItem(overlay_);
-        scene_
-            ->addLine(
-                edge_site.closest_segment_part.second.x(),
-                edge_site.closest_segment_part.second.y(),
-                site_pos.x(),
-                site_pos.y(),
-                edge_site_pen)
-            ->setParentItem(overlay_);
-        spdlog::info("F-site to edge {}: {}-{}", site_pos, edge_site.closest_segment_part.first, edge_site.closest_segment_part.second);
+        const yav::Point2 segment_pos = bg::return_centroid<yav::Point2>(edge_site.face);
+        scene_->addLine(segment_pos.x(), segment_pos.y(), site_pos.x(), site_pos.y(), edge_site_pen)->setParentItem(overlay_);
+        spdlog::info("F-site to edge {}: {}", site_pos, segment_pos);
     }
 
     for (const yav::AbstractSite::Ptr& interior_site : node->interiorSites())
@@ -277,6 +265,16 @@ void VoronoiGraphicsView::mouseMoveEvent(QMouseEvent* event)
     }
 
     QGraphicsView::mouseMoveEvent(event);
+}
+
+void VoronoiGraphicsView::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_A && current_overlay_node_)
+    {
+        emit approximateNode(current_overlay_node_);
+    }
+
+    QGraphicsView::keyPressEvent(event);
 }
 
 void VoronoiGraphicsView::zoom(qreal zoom)

@@ -3,6 +3,7 @@
 
 #include "yav/space/Space2.h"
 
+#include <armadillo>
 #include <ranges>
 
 #include <boost/geometry/algorithms/centroid.hpp>
@@ -10,6 +11,7 @@
 #include <boost/geometry/algorithms/detail/make/make.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
+#include <boost/geometry/arithmetic/dot_product.hpp>
 #include <boost/geometry/arithmetic/infinite_line_functions.hpp>
 #include <spdlog/spdlog.h>
 
@@ -79,47 +81,204 @@ Point2 Space2::calculateEquidistantPosition(
     return Point2();
 }
 
-Segment2 Space2::closestSegmentToSide(const std::shared_ptr<AbstractSite>& site, const Segment2& side) const
+std::vector<Point2>
+    Space2::calculateVerticesBisectorAlongSegment(const Point2& vertex1, const Point2& vertex2, const Segment2& segment) const
 {
-    if (auto vertex = std::dynamic_pointer_cast<Vertex2>(site))
+    const Segment2 sites_segment(vertex1, vertex2);
+    const Segment2 segment_bisector = rotate90(sites_segment, false);
+    const Line2 bisector = bg::detail::make::make_infinite_line<double>(segment_bisector);
+    const Line2 infinite_segment = bg::detail::make::make_infinite_line<double>(segment);
+    Point2 result;
+    if (bg::arithmetic::intersection_point(bisector, infinite_segment, result) && bg::intersects(result, segment))
     {
-        Segment2 shortest_segment;
-        bg::closest_points(side, vertex->position(), shortest_segment);
-        return shortest_segment;
+        return { result };
     }
 
-    spdlog::warn("Unusupported site type for closest distance to side calculation");
-    return Segment2();
+    return {};
 }
 
-std::optional<Point2> Space2::calculateBisectorVertexAlongSegment(
-    const AbstractSite::Ptr& closest_site_start,
-    const AbstractSite::Ptr& closest_site_end,
+std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
+    const Point2& vertex_site_position,
+    const Segment2& edge_site_segment,
     const Segment2& segment) const
 {
-    auto start_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
-    auto end_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_end);
-    Point2 result;
+    const PointPositionOnSegment start_position_on_segment = projectedPointsLiesOnSegment(edge_site_segment, segment.first);
+    const PointPositionOnSegment end_position_on_segment = projectedPointsLiesOnSegment(edge_site_segment, segment.second);
 
-    if (start_vertex && end_vertex)
+    if (start_position_on_segment == end_position_on_segment)
     {
-        const Point2& start = start_vertex->position();
-        const Point2& end = end_vertex->position();
-        const Segment2 sites_segment(start, end);
-        const Segment2 segment_bisector = rotate90(sites_segment, false);
-        const Line2 bisector = bg::detail::make::make_infinite_line<double>(segment_bisector);
-        const Line2 infinite_segment = bg::detail::make::make_infinite_line<double>(segment);
-        if (bg::arithmetic::intersection_point(bisector, infinite_segment, result) && bg::intersects(result, segment))
+        // Segment is fully contained in the same Voronoi region of the edge
+        return calculateEdgeVertexBisectorAlongSegment(vertex_site_position, edge_site_segment, segment, start_position_on_segment);
+    }
+    else
+    {
+        // Segment is not fully contained in the same Voronoi region of the edge, we have to split it
+    }
+
+    return {};
+}
+
+std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
+    const Point2& vertex_site_position,
+    const Segment2& edge_site_segment,
+    const Segment2& segment,
+    const PointPositionOnSegment position_on_segment) const
+{
+    if (position_on_segment == PointPositionOnSegment::Before)
+    {
+        // Segment is in the Voronoi region of the first vertex, bisector is a straight line as for vertex/vertex
+        return calculateVerticesBisectorAlongSegment(edge_site_segment.first, vertex_site_position, segment);
+    }
+    else if (position_on_segment == PointPositionOnSegment::After)
+    {
+        // Segment is in the Voronoi region of the second vertex, bisector is a straight line as for vertex/vertex
+        return calculateVerticesBisectorAlongSegment(edge_site_segment.second, vertex_site_position, segment);
+    }
+    else
+    {
+        // Segment is in the edge Voronoi region, bisector is a parabol
+
+        // --- Step 1: Get line equation from edge_site_segment (directrix) ---
+        // Get edge line equation
+        const Line2 line = bg::detail::make::make_infinite_line<double>(edge_site_segment);
+        const double a = line.a; // Coefficients from line equation: a*x + b*y + c = 0
+        const double b = line.b;
+        const double c = line.c;
+        const double denom = a * a + b * b; // Normalization factor
+
+        // --- Step 2: Parameterize test segment: X(t) = S + t*(E - S) ---
+        const Point2& S = segment.first;
+        const Point2& E = segment.second;
+        const Point2 SE = E - S;
+        const double dx = SE.x();
+        const double dy = SE.y();
+
+        // --- Step 3: Substitute X(t) into parabola equation ---
+        // Parabola: (x - x_p)² + (y - y_p)² = (a*x + b*y + c)² / denom
+        const double x_p = vertex_site_position.x();
+        const double y_p = vertex_site_position.y();
+
+        // Precompute constants
+        const double C1 = S.x() - x_p; // x_s - x_p
+        const double C2 = S.y() - y_p; // y_s - y_p
+        const double C3 = a * S.x() + b * S.y() + c; // Line equation at S
+        const double C4 = a * dx + b * dy; // Derivative of line equation along segment
+
+        // Coefficients of quadratic: A*t² + B*t + C = 0
+        const double A = (dx * dx + dy * dy) * denom - C4 * C4;
+        const double B = 2 * (dx * C1 + dy * C2) * denom - 2 * C3 * C4;
+        const double C = (C1 * C1 + C2 * C2) * denom - C3 * C3;
+
+        std::vector<Point2> intersections;
+
+        if (std::abs(A) < 1e-12)
         {
-            return result;
+            // Linear case: B*t + C = 0
+            if (std::abs(B) > 1e-12)
+            {
+                double t = -C / B;
+                if (t >= 0.0 && t <= 1.0)
+                {
+                    intersections.emplace_back(S.x() + t * dx, S.y() + t * dy);
+                }
+            }
+        }
+        else
+        {
+            // Quadratic case
+            double discriminant = B * B - 4 * A * C;
+            if (discriminant >= 0)
+            {
+                double sqrt_disc = std::sqrt(discriminant);
+                double t1 = (-B + sqrt_disc) / (2 * A);
+                double t2 = (-B - sqrt_disc) / (2 * A);
+
+                for (double t : { t1, t2 })
+                {
+                    if (t >= 0.0 && t <= 1.0 && std::isfinite(t))
+                    {
+                        intersections.emplace_back(S.x() + t * dx, S.y() + t * dy);
+                    }
+                }
+            }
+        }
+
+        // --- Step 4: Solve with Armadillo (handles all cases) ---
+        // arma::vec coeffs = { C, B, A }; // Polynomial: C + B*t + A*t²
+        // arma::cx_vec roots = arma::roots(coeffs); // Complex roots
+        // constexpr double eps = 1e-10;
+        // for (arma::cx_double root : roots)
+        // {
+        //     // 1. Skip non-real or infinite roots
+        //     if (std::abs(root.imag()) > eps || ! std::isfinite(root.real()))
+        //     {
+        //         continue;
+        //     }
+
+        //     double t = root.real();
+        //     // 2. Strict check: t must be in [0, 1] (with tiny tolerance for FP errors)
+        //     if (t >= -eps && t <= 1.0 + eps)
+        //     {
+        //         intersections.emplace_back(S.x() + t * dx, S.y() + t * dy);
+        //     }
+        // }
+
+        return intersections;
+    }
+}
+
+std::vector<Point2> Space2::calculateBisectorVerticesAlongSegment(
+    const AbstractSite::Ptr& closest_site_start,
+    const AbstractSite::Ptr& closest_site_end,
+    const Segment2& segment,
+    const std::shared_ptr<AbstractSite>& edge_site) const
+{
+    const auto start_site_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
+    const auto start_site_edge = std::dynamic_pointer_cast<Edge2>(closest_site_start);
+
+    const auto end_site_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_end);
+    const auto end_site_edge = std::dynamic_pointer_cast<Edge2>(closest_site_end);
+
+    if (edge_site)
+    {
+        std::vector<Point2> result = calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr);
+
+        if (closest_site_start != closest_site_end)
+        {
+            std::vector<Point2> result_end = calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr);
+            result.insert(result.end(), result_end.begin(), result_end.end());
+            // std::ranges::move(calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr), result.end());
+        }
+
+        return result;
+    }
+    else if (closest_site_end != closest_site_start)
+    {
+        if (start_site_vertex && end_site_vertex)
+        {
+            return calculateVerticesBisectorAlongSegment(start_site_vertex->position(), end_site_vertex->position(), segment);
+        }
+        else if (start_site_vertex && end_site_edge || start_site_edge && end_site_vertex)
+        {
+            const Vertex2::Ptr& site_vertex = start_site_vertex ? start_site_vertex : end_site_vertex;
+            const Edge2::Ptr& site_edge = start_site_edge ? start_site_edge : end_site_edge;
+
+            const Point2& site_vertex_position = site_vertex->position();
+            const Segment2& site_edge_segment = site_edge->segment();
+
+            return calculateEdgeVertexBisectorAlongSegment(site_vertex_position, site_edge_segment, segment);
+        }
+        else
+        {
+            spdlog::warn("Unusupported combination of sites for bisector calculation without edge site");
         }
     }
     else
     {
-        spdlog::warn("Unusupported combination of sites for bisector calculation");
+        // Start and end sites are similar, and there is no edge-site, si obviously no bisector here
     }
 
-    return std::nullopt;
+    return {};
 }
 
 bool Space2::isBisectorFlatWithinRegion(
