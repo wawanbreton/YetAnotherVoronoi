@@ -155,6 +155,28 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     }
 }
 
+void Generator::splitNode(VoronoiQuadtreeNode& node, const AbstractSpace& space)
+{
+    node.split();
+
+    const std::set<AbstractSite::Ptr> all_related_sites = node.allRelatedSites();
+
+    for (auto [child_index, child] : node.children() | std::views::enumerate)
+    {
+        // Assign obvious child V-site, which is the one of the parent at the shared corner
+        child->setCornerClosestSite(child_index, node.cornerClosestSiteAt(child_index));
+
+        // Assign child I-sites, which is a subset of the parent I-sites
+        dispatchInteriorSites(*child, node.interiorSites());
+
+        // Assign remaining children V-sites, which is a subset of the parent I/V/F-sites
+        updateCornerClosestSites(*child, all_related_sites, space, child_index);
+
+        // Assign child F-sites, which is a subset of the parent I/V/F-sites (and requires the child V-sites)
+        updateFacesClosestSites(*child, all_related_sites, space);
+    }
+}
+
 bool Generator::isEmpty(const VoronoiQuadtreeNode& node)
 {
     return node.allRelatedSites().size() == 1;
@@ -257,24 +279,10 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
             else
             {
                 // This node has too many related sites, split it to finely define it
-                node->split();
+                splitNode(*node, input_space);
 
-                const std::set<AbstractSite::Ptr> all_related_sites = node->allRelatedSites();
-
-                for (auto [child_index, child] : node->children() | std::views::enumerate)
+                for (const VoronoiQuadtreeNode::Ptr& child : node->children())
                 {
-                    // Assign obvious child V-site, which is the one of the parent at the shared corner
-                    child->setCornerClosestSite(child_index, node->cornerClosestSiteAt(child_index));
-
-                    // Assign child I-sites, which is a subset of the parent I-sites
-                    dispatchInteriorSites(*child, node->interiorSites());
-
-                    // Assign remaining children V-sites, which is a subset of the parent I/V/F-sites
-                    updateCornerClosestSites(*child, all_related_sites, input_space, child_index);
-
-                    // Assign child F-sites, which is a subset of the parent I/V/F-sites (and requires the child V-sites)
-                    updateFacesClosestSites(*child, all_related_sites, input_space);
-
                     node_queue.push(child);
                 }
             }
@@ -379,13 +387,16 @@ void Generator::updateFacesClosestSites(
             const std::vector<Point2> equidistant_positions
                 = input_space.calculateBisectorVerticesAlongSegment(side.closest_site_start, side.closest_site_end, side.segment, site);
 
-            if (! equidistant_positions.empty())
+            if (equidistant_positions.size() == 2)
             {
-                double covered_distance_start = bg::distance(side.segment.first, side.closest_site_start);
-                double covered_distance_end = bg::distance(side.segment.second, side.closest_site_end);
-                if ((covered_distance_start + covered_distance_end) < side.segment_length)
+                // double covered_distance_start = side.closest_site_start->distanceTo(side.segment.first);
+                // double covered_distance_end = side.closest_site_end->distanceTo(side.segment.second);
+                // if ((covered_distance_start + covered_distance_end) < side.segment_length)
                 {
-                    node.addEdgeSite(FaceSite{ site, static_cast<size_t>(side.index), side.segment });
+                    node.addEdgeSite(FaceSite{ site,
+                                               static_cast<size_t>(side.index),
+                                               side.segment,
+                                               Segment2(equidistant_positions.front(), equidistant_positions.back()) });
                     // break;
                 }
             }

@@ -92,10 +92,9 @@ int main(int argc, char** argv)
         auto edges = options_result["random-edges"].as<size_t>();
         for (size_t i = 0; i < edges; ++i)
         {
-            space.addEdge(
-                yav::Segment2(
-                    yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX),
-                    yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX)));
+            space.addEdge(yav::Segment2(
+                yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX),
+                yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX)));
         }
     }
 
@@ -142,6 +141,15 @@ int main(int argc, char** argv)
         {
             yav::Diagram local_diagram; // Avoid modifying the originally generated diagram
             yav::Generator::addApproximationFromLeaf(*node, local_diagram, space);
+        });
+
+    QObject::connect(
+        &graphics_view,
+        &VoronoiGraphicsView::splitNode,
+        &graphics_view,
+        [&space](const yav::VoronoiQuadtreeNode::Ptr& node)
+        {
+            yav::Generator::splitNode(*node, space);
         });
 
     return app.exec();

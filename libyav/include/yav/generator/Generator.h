@@ -26,8 +26,9 @@ public:
     std::tuple<std::shared_ptr<Diagram>, std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         generate(const Space2& input_space) const;
 
-    static void
-        addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram &diagram, const yav::AbstractSpace& space);
+    static void addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, Diagram& diagram, const yav::AbstractSpace& space);
+
+    static void splitNode(VoronoiQuadtreeNode& node, const yav::AbstractSpace& space);
 
 private:
     static std::vector<std::shared_ptr<AbstractSite>> uniqueSitesFromCrossings(

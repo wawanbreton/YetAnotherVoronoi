@@ -238,7 +238,7 @@ std::vector<Point2> Space2::calculateBisectorVerticesAlongSegment(
 
         if (closest_site_start != closest_site_end)
         {
-            std::vector<Point2> result_end = calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr);
+            std::vector<Point2> result_end = calculateBisectorVerticesAlongSegment(closest_site_end, edge_site, segment, nullptr);
             result.insert(result.end(), result_end.begin(), result_end.end());
             // std::ranges::move(calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr), result.end());
         }

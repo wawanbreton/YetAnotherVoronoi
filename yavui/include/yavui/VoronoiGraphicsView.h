@@ -33,6 +33,8 @@ public:
 signals:
     void approximateNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node);
 
+    void splitNode(const std::shared_ptr<yav::VoronoiQuadtreeNode>& node);
+
 protected:
     virtual void wheelEvent(QWheelEvent* event) override;
 
