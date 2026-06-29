@@ -143,7 +143,8 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
     }
     else if (crossings.size() == 3)
     {
-        const Point2 equidistant_point = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]);
+        const Point2 equidistant_point
+            = space.calculateEquidistantPosition(unique_sites[0], unique_sites[1], unique_sites[2]).value_or(leaf_node.center());
         diagram.addBoundarySegment(Segment2(equidistant_point, crossings[0]), unique_sites);
         diagram.addBoundarySegment(Segment2(equidistant_point, crossings[1]), unique_sites);
         diagram.addBoundarySegment(Segment2(equidistant_point, crossings[2]), unique_sites);
@@ -198,9 +199,9 @@ Generator::NodeState Generator::calculateNodeState(const VoronoiQuadtreeNode& no
     {
         if (edge_sites.empty() || edge_sites.size() == 1)
         {
-            const Point2 equidistant_point
+            const std::optional<Point2> equidistant_point
                 = space.calculateEquidistantPosition(all_exterior_sites[0], all_exterior_sites[1], all_exterior_sites[2]);
-            if (node.containsPoint(equidistant_point)
+            if (equidistant_point.has_value() && node.containsPoint(*equidistant_point)
                 && std::ranges::all_of(
                     std::views::cartesian_product(all_exterior_sites, all_exterior_sites),
                     [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
@@ -380,9 +381,9 @@ void Generator::updateFacesClosestSites(
 
             if (! equidistant_positions.empty())
             {
-                // double covered_distance_start = bg::distance(side.segment.first, *equidistant_corner_start);
-                // double covered_distance_end = bg::distance(side.segment.second, *equidistant_corner_end);
-                // if ((covered_distance_start + covered_distance_end) < side.segment_length)
+                double covered_distance_start = bg::distance(side.segment.first, side.closest_site_start);
+                double covered_distance_end = bg::distance(side.segment.second, side.closest_site_end);
+                if ((covered_distance_start + covered_distance_end) < side.segment_length)
                 {
                     node.addEdgeSite(FaceSite{ site, static_cast<size_t>(side.index), side.segment });
                     // break;

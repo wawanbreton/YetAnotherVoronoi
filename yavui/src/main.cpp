@@ -92,16 +92,17 @@ int main(int argc, char** argv)
         auto edges = options_result["random-edges"].as<size_t>();
         for (size_t i = 0; i < edges; ++i)
         {
-            space.addEdge(yav::Segment2(
-                yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX),
-                yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX)));
+            space.addEdge(
+                yav::Segment2(
+                    yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX),
+                    yav::Point2(static_cast<double>(std::rand()) / RAND_MAX, static_cast<double>(std::rand()) / RAND_MAX)));
         }
     }
 
     space.calculateAutoBoundingBox(1.2);
     spdlog::info("Using bounding box {}", space.boundingBox());
 
-    yav::Generator generator(6);
+    yav::Generator generator(8);
 
     spdlog::info("Generate diagram with {} sites", space.sites().size());
     spdlog::stopwatch timer;

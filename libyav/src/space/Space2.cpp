@@ -41,7 +41,7 @@ std::shared_ptr<AbstractSite> Space2::addVertex(const Point2& vertex)
     return addSite(std::make_shared<Vertex2>(vertex));
 }
 
-Point2 Space2::calculateEquidistantPosition(
+std::optional<Point2> Space2::calculateEquidistantPosition(
     const std::shared_ptr<AbstractSite>& site1,
     const std::shared_ptr<AbstractSite>& site2,
     const std::shared_ptr<AbstractSite>& site3) const
@@ -69,16 +69,9 @@ Point2 Space2::calculateEquidistantPosition(
         {
             return equidistant_position;
         }
-
-        spdlog::warn("Unable to calculate equidistant point from perpendicular bisectors, defaulting to centroid");
-        return (point1 + point2 + point3) / 3.0;
-    }
-    else
-    {
-        spdlog::warn("Unusupported combination of sites for equidistant point calculation");
     }
 
-    return Point2();
+    return std::nullopt;
 }
 
 std::vector<Point2>
