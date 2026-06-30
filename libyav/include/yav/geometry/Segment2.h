@@ -3,6 +3,8 @@
 
 #pragma once
 
+#include <optional>
+
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/segment.hpp>
 #include <fmt/format.h>
@@ -24,6 +26,8 @@ enum class PointPositionOnSegment
 [[nodiscard]] Segment2 rotate90(const Segment2& segment, const bool ccw);
 
 [[nodiscard]] PointPositionOnSegment projectedPointsLiesOnSegment(const Segment2& segment, const Point2& point);
+
+[[nodiscard]] std::optional<Segment2> intersectSegmentParts(const Segment2& segment, const Segment2& part1, const Segment2& part2);
 
 } // namespace yav
 

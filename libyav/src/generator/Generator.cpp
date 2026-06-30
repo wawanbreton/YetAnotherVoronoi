@@ -98,26 +98,28 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         const size_t second_corner_index = (first_corner_index + 1) % VoronoiQuadtreeNode::corners_count;
         const AbstractSite::Ptr& first_corner_site = leaf_node.cornerClosestSiteAt(first_corner_index);
         const AbstractSite::Ptr& second_corner_site = leaf_node.cornerClosestSiteAt(second_corner_index);
-        const Segment2 edge(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index));
-        const AbstractSite::Ptr edge_site
-            = edge_site_opt.has_value() && edge_site_opt->face_index == first_corner_index ? edge_site_opt->site : nullptr;
 
-        std::vector<Point2> bisector_intersections
-            = space.calculateBisectorVerticesAlongSegment(first_corner_site, second_corner_site, edge, edge_site);
-
-        for (const Point2& bisector_intersection : bisector_intersections)
+        if (edge_site_opt.has_value() && edge_site_opt->face_index == first_corner_index)
         {
-            crossings.push_back(bisector_intersection);
-        }
+            crossings.push_back(edge_site_opt->closest_segment_part.first);
+            crossings.push_back(edge_site_opt->closest_segment_part.second);
 
-        if (edge_site)
-        {
-            crossing_sites.push_back({ first_corner_site, edge_site });
-            crossing_sites.push_back({ second_corner_site, edge_site });
+            crossing_sites.push_back({ first_corner_site, edge_site_opt->site });
+            crossing_sites.push_back({ second_corner_site, edge_site_opt->site });
         }
         else
         {
-            crossing_sites.push_back({ first_corner_site, second_corner_site });
+            const Segment2 edge(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index));
+
+            // std::vector<Point2> bisector_intersections
+            // = space.calculateBisectorVerticesAlongSegment(first_corner_site, second_corner_site, edge, edge_site);
+            std::optional<Segment2> segment_part = space.calculateSegmentPartClosestToSite(edge, first_corner_site, second_corner_site);
+
+            if (segment_part.has_value())
+            {
+                crossings.push_back(segment_part->first);
+                crossing_sites.push_back({ first_corner_site, second_corner_site });
+            }
         }
 
         // if (edge_site.has_value() && edge_site->face_index == first_corner_index)
@@ -384,23 +386,30 @@ void Generator::updateFacesClosestSites(
 
         for (const NodeSide& side : sides)
         {
-            const std::vector<Point2> equidistant_positions
-                = input_space.calculateBisectorVerticesAlongSegment(side.closest_site_start, side.closest_site_end, side.segment, site);
-
-            if (equidistant_positions.size() == 2)
+            std::optional<Segment2> closest_segment_part
+                = input_space.calculateSegmentPartClosestToSite(side.segment, side.closest_site_start, site);
+            if (! closest_segment_part.has_value())
             {
-                double covered_distance_start = bg::distance(side.segment.first, equidistant_positions[0]);
-                double covered_distance_end = bg::distance(side.segment.second, equidistant_positions[1]);
-                if ((covered_distance_start + covered_distance_end) < side.segment_length)
+                continue;
+            }
+
+            if (side.closest_site_end != side.closest_site_start)
+            {
+                std::optional<Segment2> closest_segment_part_end
+                    = input_space.calculateSegmentPartClosestToSite(side.segment, side.closest_site_end, site);
+                if (! closest_segment_part_end.has_value())
                 {
-                    node.addEdgeSite(
-                        FaceSite{ site,
-                                  static_cast<size_t>(side.index),
-                                  side.segment,
-                                  Segment2(equidistant_positions.front(), equidistant_positions.back()) });
-                    // break;
+                    continue;
+                }
+
+                closest_segment_part = intersectSegmentParts(side.segment, *closest_segment_part, *closest_segment_part_end);
+                if (! closest_segment_part.has_value())
+                {
+                    continue;
                 }
             }
+
+            node.addEdgeSite(FaceSite{ site, static_cast<size_t>(side.index), side.segment, *closest_segment_part });
         }
     }
 }

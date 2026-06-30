@@ -34,6 +34,22 @@ public:
         = 0;
 
     /*!
+     * \brief Calculates the portion of the segment that is closest to the given other_site, knowing that the given closest_site_start is
+     *        the closest to the start of the segment
+     * \param segment The segment we want to split
+     * \param closest_site_start The site that we know is the closest to the segment start
+     * \param other_site The other to be tested against the segment
+     * \return The portion of the segment that is closest to other_site than to closest_site_start, or nullopt if the whole segment
+     *         is closer to closest_site_start
+     * \note The returned segment shall be fully contained in the input segment, however it may be in inverted order
+     */
+    virtual std::optional<Segment2> calculateSegmentPartClosestToSite(
+        const Segment2& segment,
+        const std::shared_ptr<AbstractSite>& closest_site_start,
+        const std::shared_ptr<AbstractSite>& other_site) const
+        = 0;
+
+    /*!
      * Since this function is present only to optimize the calculations, the default implementation that returns always false is good enough
      * to work. Properly implementing it may save a lot of calculations though.
      */

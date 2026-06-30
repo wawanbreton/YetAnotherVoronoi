@@ -4,6 +4,7 @@
 #include "yav/geometry/Segment2.h"
 
 #include <boost/geometry/algorithms/centroid.hpp>
+#include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/arithmetic/dot_product.hpp>
 
 
@@ -47,6 +48,33 @@ PointPositionOnSegment projectedPointsLiesOnSegment(const Segment2& segment, con
         return PointPositionOnSegment::After;
     }
     return PointPositionOnSegment::Inside;
+}
+
+std::optional<Segment2> intersectSegmentParts(const Segment2& segment, const Segment2& part1, const Segment2& part2)
+{
+    const Point2 vector = segment.second - segment.first;
+    const double length_squared = bg::dot_product(vector, vector);
+
+    std::pair<double, double> projected_part1;
+    std::pair<double, double> projected_part2;
+
+    projected_part1.first = bg::dot_product(part1.first - segment.first, vector) / length_squared;
+    projected_part1.second = bg::dot_product(part1.second - segment.first, vector) / length_squared;
+    projected_part2.first = bg::dot_product(part2.first - segment.first, vector) / length_squared;
+    projected_part2.second = bg::dot_product(part2.second - segment.first, vector) / length_squared;
+
+    std::tie(projected_part1.first, projected_part1.second) = std::minmax(projected_part1.first, projected_part1.second);
+    std::tie(projected_part2.first, projected_part2.second) = std::minmax(projected_part2.first, projected_part2.second);
+
+    if (projected_part1.first >= projected_part2.second || projected_part1.second <= projected_part2.first)
+    {
+        return std::nullopt;
+    }
+
+    const std::pair<double, double> projected_intersection
+        = { std::max(projected_part1.first, projected_part2.first), std::min(projected_part1.second, projected_part2.second) };
+
+    return Segment2(segment.first + vector * projected_intersection.first, segment.first + vector * projected_intersection.second);
 }
 
 } // namespace yav

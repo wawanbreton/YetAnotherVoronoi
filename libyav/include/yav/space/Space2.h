@@ -29,6 +29,11 @@ public:
         const Segment2& segment,
         const std::shared_ptr<AbstractSite>& edge_site) const override;
 
+    std::optional<Segment2> calculateSegmentPartClosestToSite(
+        const Segment2& segment,
+        const std::shared_ptr<AbstractSite>& closest_site_start,
+        const std::shared_ptr<AbstractSite>& other_site) const override;
+
     bool isBisectorFlatWithinRegion(
         const std::shared_ptr<AbstractSite>& site1,
         const std::shared_ptr<AbstractSite>& site2,
@@ -43,7 +48,8 @@ public:
         findClosestSite(const Point2& position, const std::set<std::shared_ptr<AbstractSite>>& candidate_sites) const override;
 
 private:
-    std::vector<Point2> calculateVerticesBisectorAlongSegment(const Point2& vertex1, const Point2& vertex2, const Segment2& segment) const;
+    std::optional<Point2>
+        calculateVerticesBisectorAlongSegment(const Point2& vertex1, const Point2& vertex2, const Segment2& segment) const;
 
     std::vector<Point2> calculateEdgeVertexBisectorAlongSegment(
         const Point2& vertex_site_position,

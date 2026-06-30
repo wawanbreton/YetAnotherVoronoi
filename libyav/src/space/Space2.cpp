@@ -41,6 +41,52 @@ std::shared_ptr<AbstractSite> Space2::addVertex(const Point2& vertex)
     return addSite(std::make_shared<Vertex2>(vertex));
 }
 
+std::optional<Segment2> Space2::calculateSegmentPartClosestToSite(
+    const Segment2& segment,
+    const std::shared_ptr<AbstractSite>& closest_site_start,
+    const std::shared_ptr<AbstractSite>& other_site) const
+{
+    const auto closest_site_start_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
+    const auto closest_site_start_edge = std::dynamic_pointer_cast<Edge2>(closest_site_start);
+
+    const auto other_site_vertex = std::dynamic_pointer_cast<Vertex2>(other_site);
+    const auto other_site_edge = std::dynamic_pointer_cast<Edge2>(other_site);
+
+    if (closest_site_start_vertex && other_site_vertex)
+    {
+        const std::optional<Point2> intersection
+            = calculateVerticesBisectorAlongSegment(closest_site_start_vertex->position(), other_site_vertex->position(), segment);
+        if (intersection.has_value())
+        {
+            return Segment2(*intersection, segment.second);
+        }
+    }
+    else if (closest_site_start_vertex && other_site_edge || closest_site_start_edge && other_site_vertex)
+    {
+        const Vertex2::Ptr& site_vertex = closest_site_start_vertex ? closest_site_start_vertex : other_site_vertex;
+        const Edge2::Ptr& site_edge = closest_site_start_edge ? closest_site_start_edge : other_site_edge;
+
+        const Point2& site_vertex_position = site_vertex->position();
+        const Segment2& site_edge_segment = site_edge->segment();
+
+        std::vector<Point2> intersections = calculateEdgeVertexBisectorAlongSegment(site_vertex_position, site_edge_segment, segment);
+        if (intersections.size() == 1)
+        {
+            return Segment2(intersections.front(), segment.second);
+        }
+        else if (intersections.size() == 2)
+        {
+            return Segment2(intersections.front(), intersections.back());
+        }
+    }
+    else
+    {
+        spdlog::warn("Unusupported combination of sites for bisector calculation without edge site");
+    }
+
+    return std::nullopt;
+}
+
 std::optional<Point2> Space2::calculateEquidistantPosition(
     const std::shared_ptr<AbstractSite>& site1,
     const std::shared_ptr<AbstractSite>& site2,
@@ -74,7 +120,7 @@ std::optional<Point2> Space2::calculateEquidistantPosition(
     return std::nullopt;
 }
 
-std::vector<Point2>
+std::optional<Point2>
     Space2::calculateVerticesBisectorAlongSegment(const Point2& vertex1, const Point2& vertex2, const Segment2& segment) const
 {
     const Segment2 sites_segment(vertex1, vertex2);
@@ -85,10 +131,10 @@ std::vector<Point2>
     if (bg::arithmetic::intersection_point(bisector, infinite_segment, result)
         && projectedPointsLiesOnSegment(segment, result) == PointPositionOnSegment::Inside)
     {
-        return { result };
+        return result;
     }
 
-    return {};
+    return std::nullopt;
 }
 
 std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
@@ -121,12 +167,14 @@ std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
     if (position_on_segment == PointPositionOnSegment::Before)
     {
         // Segment is in the Voronoi region of the first vertex, bisector is a straight line as for vertex/vertex
-        return calculateVerticesBisectorAlongSegment(edge_site_segment.first, vertex_site_position, segment);
+        std::optional<Point2> intersection = calculateVerticesBisectorAlongSegment(edge_site_segment.first, vertex_site_position, segment);
+        return intersection.has_value() ? std::vector<Point2>{ intersection.value() } : std::vector<Point2>{};
     }
     else if (position_on_segment == PointPositionOnSegment::After)
     {
         // Segment is in the Voronoi region of the second vertex, bisector is a straight line as for vertex/vertex
-        return calculateVerticesBisectorAlongSegment(edge_site_segment.second, vertex_site_position, segment);
+        std::optional<Point2> intersection = calculateVerticesBisectorAlongSegment(edge_site_segment.second, vertex_site_position, segment);
+        return intersection.has_value() ? std::vector<Point2>{ intersection.value() } : std::vector<Point2>{};
     }
     else
     {
@@ -250,7 +298,9 @@ std::vector<Point2> Space2::calculateBisectorVerticesAlongSegment(
     {
         if (start_site_vertex && end_site_vertex)
         {
-            return calculateVerticesBisectorAlongSegment(start_site_vertex->position(), end_site_vertex->position(), segment);
+            const std::optional<Point2> intersection
+                = calculateVerticesBisectorAlongSegment(start_site_vertex->position(), end_site_vertex->position(), segment);
+            return intersection.has_value() ? std::vector<Point2>{ intersection.value() } : std::vector<Point2>{};
         }
         else if (start_site_vertex && end_site_edge || start_site_edge && end_site_vertex)
         {
