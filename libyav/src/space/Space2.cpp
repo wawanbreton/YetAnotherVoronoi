@@ -82,7 +82,8 @@ std::vector<Point2>
     const Line2 bisector = bg::detail::make::make_infinite_line<double>(segment_bisector);
     const Line2 infinite_segment = bg::detail::make::make_infinite_line<double>(segment);
     Point2 result;
-    if (bg::arithmetic::intersection_point(bisector, infinite_segment, result) && bg::intersects(result, segment))
+    if (bg::arithmetic::intersection_point(bisector, infinite_segment, result)
+        && projectedPointsLiesOnSegment(segment, result) == PointPositionOnSegment::Inside)
     {
         return { result };
     }

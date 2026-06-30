@@ -389,14 +389,15 @@ void Generator::updateFacesClosestSites(
 
             if (equidistant_positions.size() == 2)
             {
-                // double covered_distance_start = side.closest_site_start->distanceTo(side.segment.first);
-                // double covered_distance_end = side.closest_site_end->distanceTo(side.segment.second);
-                // if ((covered_distance_start + covered_distance_end) < side.segment_length)
+                double covered_distance_start = bg::distance(side.segment.first, equidistant_positions[0]);
+                double covered_distance_end = bg::distance(side.segment.second, equidistant_positions[1]);
+                if ((covered_distance_start + covered_distance_end) < side.segment_length)
                 {
-                    node.addEdgeSite(FaceSite{ site,
-                                               static_cast<size_t>(side.index),
-                                               side.segment,
-                                               Segment2(equidistant_positions.front(), equidistant_positions.back()) });
+                    node.addEdgeSite(
+                        FaceSite{ site,
+                                  static_cast<size_t>(side.index),
+                                  side.segment,
+                                  Segment2(equidistant_positions.front(), equidistant_positions.back()) });
                     // break;
                 }
             }
