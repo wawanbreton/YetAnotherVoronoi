@@ -63,8 +63,8 @@ std::optional<Segment2> intersectSegmentParts(const Segment2& segment, const Seg
     projected_part2.first = bg::dot_product(part2.first - segment.first, vector) / length_squared;
     projected_part2.second = bg::dot_product(part2.second - segment.first, vector) / length_squared;
 
-    std::tie(projected_part1.first, projected_part1.second) = std::minmax(projected_part1.first, projected_part1.second);
-    std::tie(projected_part2.first, projected_part2.second) = std::minmax(projected_part2.first, projected_part2.second);
+    std::tie(projected_part1.first, projected_part1.second) = std::minmax({ projected_part1.first, projected_part1.second });
+    std::tie(projected_part2.first, projected_part2.second) = std::minmax({ projected_part2.first, projected_part2.second });
 
     if (projected_part1.first >= projected_part2.second || projected_part1.second <= projected_part2.first)
     {

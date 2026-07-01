@@ -395,8 +395,10 @@ void Generator::updateFacesClosestSites(
 
             if (side.closest_site_end != side.closest_site_start)
             {
-                std::optional<Segment2> closest_segment_part_end
-                    = input_space.calculateSegmentPartClosestToSite(side.segment, side.closest_site_end, site);
+                std::optional<Segment2> closest_segment_part_end = input_space.calculateSegmentPartClosestToSite(
+                    Segment2(side.segment.second, side.segment.first),
+                    side.closest_site_end,
+                    site);
                 if (! closest_segment_part_end.has_value())
                 {
                     continue;
