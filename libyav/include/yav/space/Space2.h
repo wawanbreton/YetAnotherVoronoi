@@ -23,12 +23,6 @@ public:
     std::shared_ptr<AbstractSite> addEdge(const Segment2& segment);
     std::shared_ptr<AbstractSite> addVertex(const Point2& vertex);
 
-    std::vector<Point2> calculateBisectorVerticesAlongSegment(
-        const std::shared_ptr<AbstractSite>& closest_site_start,
-        const std::shared_ptr<AbstractSite>& closest_site_end,
-        const Segment2& segment,
-        const std::shared_ptr<AbstractSite>& edge_site) const override;
-
     std::optional<Segment2> calculateSegmentPartClosestToSite(
         const Segment2& segment,
         const std::shared_ptr<AbstractSite>& closest_site_start,

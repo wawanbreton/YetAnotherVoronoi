@@ -269,62 +269,6 @@ std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
     }
 }
 
-std::vector<Point2> Space2::calculateBisectorVerticesAlongSegment(
-    const AbstractSite::Ptr& closest_site_start,
-    const AbstractSite::Ptr& closest_site_end,
-    const Segment2& segment,
-    const std::shared_ptr<AbstractSite>& edge_site) const
-{
-    const auto start_site_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_start);
-    const auto start_site_edge = std::dynamic_pointer_cast<Edge2>(closest_site_start);
-
-    const auto end_site_vertex = std::dynamic_pointer_cast<Vertex2>(closest_site_end);
-    const auto end_site_edge = std::dynamic_pointer_cast<Edge2>(closest_site_end);
-
-    if (edge_site)
-    {
-        std::vector<Point2> result = calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr);
-
-        if (closest_site_start != closest_site_end)
-        {
-            std::vector<Point2> result_end = calculateBisectorVerticesAlongSegment(closest_site_end, edge_site, segment, nullptr);
-            result.insert(result.end(), result_end.begin(), result_end.end());
-            // std::ranges::move(calculateBisectorVerticesAlongSegment(closest_site_start, edge_site, segment, nullptr), result.end());
-        }
-
-        return result;
-    }
-    else if (closest_site_end != closest_site_start)
-    {
-        if (start_site_vertex && end_site_vertex)
-        {
-            const std::optional<Point2> intersection
-                = calculateVerticesBisectorAlongSegment(start_site_vertex->position(), end_site_vertex->position(), segment);
-            return intersection.has_value() ? std::vector<Point2>{ intersection.value() } : std::vector<Point2>{};
-        }
-        else if (start_site_vertex && end_site_edge || start_site_edge && end_site_vertex)
-        {
-            const Vertex2::Ptr& site_vertex = start_site_vertex ? start_site_vertex : end_site_vertex;
-            const Edge2::Ptr& site_edge = start_site_edge ? start_site_edge : end_site_edge;
-
-            const Point2& site_vertex_position = site_vertex->position();
-            const Segment2& site_edge_segment = site_edge->segment();
-
-            return calculateEdgeVertexBisectorAlongSegment(site_vertex_position, site_edge_segment, segment);
-        }
-        else
-        {
-            spdlog::warn("Unusupported combination of sites for bisector calculation without edge site");
-        }
-    }
-    else
-    {
-        // Start and end sites are similar, and there is no edge-site, si obviously no bisector here
-    }
-
-    return {};
-}
-
 bool Space2::isBisectorFlatWithinRegion(
     const std::shared_ptr<AbstractSite>& site1,
     const std::shared_ptr<AbstractSite>& site2,

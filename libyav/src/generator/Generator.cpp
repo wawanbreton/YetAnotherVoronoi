@@ -110,9 +110,6 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
         else
         {
             const Segment2 edge(leaf_node.cornerAt(first_corner_index), leaf_node.cornerAt(second_corner_index));
-
-            // std::vector<Point2> bisector_intersections
-            // = space.calculateBisectorVerticesAlongSegment(first_corner_site, second_corner_site, edge, edge_site);
             std::optional<Segment2> segment_part = space.calculateSegmentPartClosestToSite(edge, first_corner_site, second_corner_site);
 
             if (segment_part.has_value())
@@ -121,20 +118,6 @@ void Generator::addApproximationFromLeaf(const VoronoiQuadtreeNode& leaf_node, D
                 crossing_sites.push_back({ first_corner_site, second_corner_site });
             }
         }
-
-        // if (edge_site.has_value() && edge_site->face_index == first_corner_index)
-        // {
-        // }
-        // else if (first_corner_site != second_corner_site)
-        // {
-        //     std::optional<Point2> bisector_intersection
-        //         = space.calculateBisectorVerticesAlongSegment(first_corner_site, second_corner_site, edge);
-        //     if (bisector_intersection.has_value())
-        //     {
-        //         crossings.push_back(*bisector_intersection);
-        //         crossing_sites.push_back({ first_corner_site, second_corner_site });
-        //     }
-        // }
     }
 
     const std::vector<AbstractSite::Ptr> unique_sites = uniqueSitesFromCrossings(crossing_sites);

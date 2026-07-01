@@ -26,13 +26,6 @@ public:
 
     const std::vector<std::shared_ptr<AbstractSite>>& sites() const;
 
-    virtual std::vector<Point2> calculateBisectorVerticesAlongSegment(
-        const std::shared_ptr<AbstractSite>& closest_site_start,
-        const std::shared_ptr<AbstractSite>& closest_site_end,
-        const Segment2& segment,
-        const std::shared_ptr<AbstractSite>& edge_site) const
-        = 0;
-
     /*!
      * \brief Calculates the portion of the segment that is closest to the given other_site, knowing that the given closest_site_start is
      *        the closest to the start of the segment
