@@ -142,20 +142,88 @@ std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
     const Segment2& edge_site_segment,
     const Segment2& segment) const
 {
-    const PointPositionOnSegment start_position_on_segment = projectedPointsLiesOnSegment(edge_site_segment, segment.first);
-    const PointPositionOnSegment end_position_on_segment = projectedPointsLiesOnSegment(edge_site_segment, segment.second);
+    const Line2 segment_line = bg::detail::make::make_infinite_line<double>(segment);
 
-    if (start_position_on_segment == end_position_on_segment)
+    const Line2 perpendicular_start
+        = bg::detail::make::make_perpendicular_line<double>(edge_site_segment.first, edge_site_segment.second, edge_site_segment.first);
+    Point2 intersection_start;
+    bool has_intersection_start = false;
+    if (bg::arithmetic::intersection_point(perpendicular_start, segment_line, intersection_start)
+        && projectedPointsLiesOnSegment(segment, intersection_start) == PointPositionOnSegment::Inside)
+    {
+        has_intersection_start = true;
+    }
+    const PointPositionOnSegment position_start = projectedPointsLiesOnSegment(edge_site_segment, segment.first);
+
+    const Line2 perpendicular_end
+        = bg::detail::make::make_perpendicular_line<double>(edge_site_segment.first, edge_site_segment.second, edge_site_segment.second);
+    Point2 intersection_end;
+    bool has_intersection_end = false;
+    if (bg::arithmetic::intersection_point(perpendicular_end, segment_line, intersection_end)
+        && projectedPointsLiesOnSegment(segment, intersection_end) == PointPositionOnSegment::Inside)
+    {
+        has_intersection_end = true;
+    }
+    const PointPositionOnSegment position_end = projectedPointsLiesOnSegment(edge_site_segment, segment.second);
+
+    if (! has_intersection_start && ! has_intersection_end)
     {
         // Segment is fully contained in the same Voronoi region of the edge
-        return calculateEdgeVertexBisectorAlongSegment(vertex_site_position, edge_site_segment, segment, start_position_on_segment);
+        return calculateEdgeVertexBisectorAlongSegment(vertex_site_position, edge_site_segment, segment, position_start);
     }
     else
     {
         // Segment is not fully contained in the same Voronoi region of the edge, we have to split it
-    }
+        std::vector<Point2> intersections;
+        Segment2 segment_middle;
 
-    return {};
+        if (has_intersection_start)
+        {
+            const Segment2 segment_part(
+                position_start == PointPositionOnSegment::Before ? segment.first : segment.second,
+                intersection_start);
+            std::vector<Point2> intersections_start_part = calculateEdgeVertexBisectorAlongSegment(
+                vertex_site_position,
+                edge_site_segment,
+                segment_part,
+                PointPositionOnSegment::Before);
+            intersections.insert(intersections.end(), intersections_start_part.begin(), intersections_start_part.end());
+
+            segment_middle.first = intersection_start;
+        }
+        else
+        {
+            segment_middle.first = position_start == PointPositionOnSegment::Inside ? segment.first : segment.second;
+        }
+
+        if (has_intersection_end)
+        {
+            const Segment2 segment_part(position_start == PointPositionOnSegment::After ? segment.first : segment.second, intersection_end);
+            std::vector<Point2> intersections_end_part = calculateEdgeVertexBisectorAlongSegment(
+                vertex_site_position,
+                edge_site_segment,
+                segment_part,
+                PointPositionOnSegment::After);
+            intersections.insert(intersections.end(), intersections_end_part.begin(), intersections_end_part.end());
+
+            segment_middle.second = intersection_end;
+        }
+        else
+        {
+            segment_middle.second = position_start == PointPositionOnSegment::Inside ? segment.first : segment.second;
+        }
+
+        {
+            std::vector<Point2> intersections_middle_part = calculateEdgeVertexBisectorAlongSegment(
+                vertex_site_position,
+                edge_site_segment,
+                segment_middle,
+                PointPositionOnSegment::Inside);
+            intersections.insert(intersections.end(), intersections_middle_part.begin(), intersections_middle_part.end());
+        }
+
+        return intersections;
+    }
 }
 
 std::vector<Point2> Space2::calculateEdgeVertexBisectorAlongSegment(
