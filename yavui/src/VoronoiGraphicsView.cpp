@@ -297,7 +297,7 @@ void VoronoiGraphicsView::zoom(qreal zoom)
 
         resetTransform();
         const qreal scale_value = std::exp(((zoom / 5.0) - 1) * 1.6) * 0.005;
-        scale(scale_value, scale_value);
+        scale(scale_value, -scale_value);
 
         const QPoint cursor_center_pos = rect().center();
         const QPointF center_scene_pos = mapToScene(cursor_center_pos);
