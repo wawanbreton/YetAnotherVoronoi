@@ -21,7 +21,7 @@ class VoronoiQuadtreeNode;
 class Generator
 {
 public:
-    Generator(const size_t maximum_level = 6);
+    Generator(const size_t minimum_curves_depth = 6, const size_t maximum_depth = 10);
 
     std::tuple<std::shared_ptr<Diagram>, std::shared_ptr<VoronoiQuadtreeNode>, std::vector<std::shared_ptr<VoronoiQuadtreeNode>>>
         generate(const Space2& input_space) const;
@@ -66,7 +66,9 @@ private:
 
     static bool containsFlatBisector(const VoronoiQuadtreeNode& node, const AbstractSpace& input_space);
 
-    const size_t maximum_level_ = 6;
+private:
+    const size_t minimum_curves_depth_;
+    const size_t maximum_depth_;
 };
 
 } // namespace yav

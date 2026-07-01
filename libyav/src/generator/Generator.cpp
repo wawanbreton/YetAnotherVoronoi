@@ -23,8 +23,9 @@ namespace bg = boost::geometry;
 namespace yav
 {
 
-Generator::Generator(const size_t maximum_level)
-    : maximum_level_(maximum_level)
+Generator::Generator(const size_t minimum_curves_depth, const size_t maximum_depth)
+    : minimum_curves_depth_(minimum_curves_depth)
+    , maximum_depth_(maximum_depth)
 {
 }
 
@@ -169,6 +170,12 @@ bool Generator::isEmpty(const VoronoiQuadtreeNode& node)
 
 Generator::NodeState Generator::calculateNodeState(const VoronoiQuadtreeNode& node, const AbstractSpace& space) const
 {
+    if (node.level() >= maximum_depth_)
+    {
+        // Node is not defined enough for approximation, but we cannot split it further, so mark it as approximateable anyway
+        return NodeState::Approximateable;
+    }
+
     std::set<AbstractSite::Ptr> unique_corner_sites = node.uniqueCornerClosestSites();
     const std::vector<FaceSite>& edge_sites = node.edgeSites();
     const std::vector<AbstractSite::Ptr>& interior_sites = node.interiorSites();
@@ -196,7 +203,8 @@ Generator::NodeState Generator::calculateNodeState(const VoronoiQuadtreeNode& no
 
     if (all_exterior_sites.size() == 2)
     {
-        if (space.isBisectorFlatWithinRegion(all_exterior_sites[0], all_exterior_sites[1], node.region()))
+        if (node.level() >= minimum_curves_depth_
+            || space.isBisectorFlatWithinRegion(all_exterior_sites[0], all_exterior_sites[1], node.region()))
         {
             return NodeState::Approximateable;
         }
@@ -208,8 +216,8 @@ Generator::NodeState Generator::calculateNodeState(const VoronoiQuadtreeNode& no
         {
             const std::optional<Point2> equidistant_point
                 = space.calculateEquidistantPosition(all_exterior_sites[0], all_exterior_sites[1], all_exterior_sites[2]);
-            if (equidistant_point.has_value() && node.containsPoint(*equidistant_point)
-                && std::ranges::all_of(
+            if (equidistant_point.has_value() && node.containsPoint(*equidistant_point) && node.level() >= minimum_curves_depth_
+                || std::ranges::all_of(
                     std::views::cartesian_product(all_exterior_sites, all_exterior_sites),
                     [&node, &space](const std::pair<AbstractSite::Ptr, AbstractSite::Ptr>& sites)
                     {
@@ -255,21 +263,12 @@ std::tuple<VoronoiQuadtreeNode::Ptr, std::vector<VoronoiQuadtreeNode::Ptr>> Gene
             break;
 
         case NodeState::Undefined:
-            if (node->level() >= maximum_level_)
-            {
-                // Node is not defined enough for approximation, but we cannot split it further, so mark it as leaf to be roughly
-                // approximated
-                leaves.push_back(node);
-            }
-            else
-            {
-                // This node has too many related sites, split it to finely define it
-                splitNode(*node, input_space);
+            // This node has too many related sites, split it to finely define it
+            splitNode(*node, input_space);
 
-                for (const VoronoiQuadtreeNode::Ptr& child : node->children())
-                {
-                    node_queue.push(child);
-                }
+            for (const VoronoiQuadtreeNode::Ptr& child : node->children())
+            {
+                node_queue.push(child);
             }
 
             break;

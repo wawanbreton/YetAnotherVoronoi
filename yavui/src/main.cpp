@@ -31,7 +31,8 @@ int main(int argc, char** argv)
         ("l,leaves", "Display the generated quad/octree")
         ("t,tree", "Display the leaves of the tree")
         ("n,no-ui", "Do not display the UI, stop after execution")
-        ("p,depth", "Maximum depth of the octree", cxxopts::value<size_t>())
+        ("c,curves-depth", "Minimum depth to approximate the curved bisectors", cxxopts::value<size_t>())
+        ("m,max-depth", "Maximum depth to try and refine the nodes until they are fully approximateable", cxxopts::value<size_t>())
         ("file", "Path of the mesh file to be loaded", cxxopts::value<std::string>())
         ("random-points", "Number of random points to be generated", cxxopts::value<size_t>())
         ("random-edges", "Number of random edges to be generated", cxxopts::value<size_t>());
@@ -102,13 +103,19 @@ int main(int argc, char** argv)
     space.calculateAutoBoundingBox(1.2);
     spdlog::info("Using bounding box {}", space.boundingBox());
 
-    size_t maximum_depth = 6;
-    if (options_result.count("depth") != 0)
+    size_t curves_depth = 6;
+    if (options_result.count("curves-depth") != 0)
     {
-        maximum_depth = options_result["depth"].as<size_t>();
+        curves_depth = options_result["curves-depth"].as<size_t>();
     }
 
-    yav::Generator generator(maximum_depth);
+    size_t max_depth = 10;
+    if (options_result.count("max-depth") != 0)
+    {
+        max_depth = options_result["max-depth"].as<size_t>();
+    }
+
+    yav::Generator generator(curves_depth, max_depth);
 
     spdlog::info("Generate diagram with {} sites", space.sites().size());
     spdlog::stopwatch timer;
